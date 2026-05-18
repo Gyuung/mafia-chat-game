@@ -10,21 +10,14 @@ type Player = {
   name: string;
   role: Role;
   alive: boolean;
+  human: boolean;
 };
 
-type ChatMessage = {
+type Message = {
   id: string;
   sender: string;
   text: string;
   system?: boolean;
-};
-
-const phaseLabels: Record<Phase, string> = {
-  setup: "대기",
-  night: "밤",
-  day: "낮",
-  vote: "투표",
-  ended: "종료",
 };
 
 const roleLabels: Record<Role, string> = {
@@ -34,31 +27,52 @@ const roleLabels: Record<Role, string> = {
   citizen: "시민",
 };
 
-const initialNames = ["규웅", "민서", "지아", "현우", "서윤", "도윤"].join("\n");
+const roleDescriptions: Record<Role, string> = {
+  mafia: "밤마다 한 명을 제거하고 낮에는 정체를 숨기세요.",
+  doctor: "밤마다 한 명을 보호해 마피아의 공격을 막으세요.",
+  detective: "밤마다 한 명을 조사해 마피아인지 확인하세요.",
+  citizen: "토론과 투표로 마피아를 찾아내세요.",
+};
+
+const botNames = ["민서", "지아", "현우", "서윤", "도윤", "하준", "유나"];
+const botLines = [
+  "어젯밤 흐름을 보면 조용했던 사람이 수상해요.",
+  "너무 빨리 몰아가는 것도 마피아 같아요.",
+  "저는 일단 투표 전까지 더 들어보고 싶어요.",
+  "마피아라면 지금 시민인 척 방향을 틀 것 같아요.",
+  "발언이 적은 사람을 그냥 넘기면 안 될 것 같아요.",
+];
 
 function shuffle<T>(items: T[]) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-function createPlayers(names: string[]): Player[] {
-  const mafiaCount = Math.max(1, Math.floor(names.length / 4));
+function createId(prefix: string) {
+  return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+function createPlayers(myName: string, count: number): Player[] {
+  const names = shuffle(botNames).slice(0, count - 1);
+  const mafiaCount = Math.max(1, Math.floor(count / 4));
   const roles: Role[] = [
     ...Array<Role>(mafiaCount).fill("mafia"),
-    ...(names.length >= 5 ? (["doctor"] as Role[]) : []),
-    ...(names.length >= 6 ? (["detective"] as Role[]) : []),
+    ...(count >= 5 ? (["doctor"] as Role[]) : []),
+    ...(count >= 6 ? (["detective"] as Role[]) : []),
   ];
 
-  while (roles.length < names.length) {
-    roles.push("citizen");
-  }
+  while (roles.length < count) roles.push("citizen");
 
   const assignedRoles = shuffle(roles);
-  return names.map((name, index) => ({
-    id: `player-${index + 1}`,
-    name,
-    role: assignedRoles[index],
-    alive: true,
-  }));
+  return [
+    { id: "me", name: myName, role: assignedRoles[0], alive: true, human: true },
+    ...names.map((name, index) => ({
+      id: createId("bot"),
+      name,
+      role: assignedRoles[index + 1],
+      alive: true,
+      human: false,
+    })),
+  ];
 }
 
 function getWinner(players: Player[]) {
@@ -71,66 +85,51 @@ function getWinner(players: Player[]) {
   return null;
 }
 
+function pickRandom<T>(items: T[]) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
 export function MafiaGame() {
   const [phase, setPhase] = useState<Phase>("setup");
   const [round, setRound] = useState(1);
-  const [nameInput, setNameInput] = useState(initialNames);
+  const [myName, setMyName] = useState("나");
+  const [playerCount, setPlayerCount] = useState(6);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [speakerId, setSpeakerId] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
   const [chatText, setChatText] = useState("");
-  const [mafiaTargetId, setMafiaTargetId] = useState("");
-  const [doctorTargetId, setDoctorTargetId] = useState("");
-  const [detectiveTargetId, setDetectiveTargetId] = useState("");
-  const [votes, setVotes] = useState<Record<string, string>>({});
+  const [nightTargetId, setNightTargetId] = useState("");
+  const [voteTargetId, setVoteTargetId] = useState("");
   const [winner, setWinner] = useState<string | null>(null);
 
+  const me = players.find((player) => player.human) ?? null;
   const alivePlayers = useMemo(
     () => players.filter((player) => player.alive),
     [players],
   );
-  const mafiaPlayers = useMemo(
-    () => players.filter((player) => player.alive && player.role === "mafia"),
-    [players],
-  );
-  const doctor = players.find((player) => player.alive && player.role === "doctor");
-  const detective = players.find(
-    (player) => player.alive && player.role === "detective",
-  );
-  const voteComplete =
-    alivePlayers.length > 0 && Object.keys(votes).length === alivePlayers.length;
+  const visibleTargets = alivePlayers.filter((player) => player.id !== me?.id);
 
-  function addSystemMessage(text: string) {
+  function addMessage(sender: string, text: string, system = false) {
     setMessages((current) => [
       ...current,
-      { id: crypto.randomUUID(), sender: "사회자", text, system: true },
+      { id: createId("msg"), sender, text, system },
     ]);
   }
 
   function startGame() {
-    const names = nameInput
-      .split("\n")
-      .map((name) => name.trim())
-      .filter(Boolean)
-      .slice(0, 10);
+    const createdPlayers = createPlayers(myName.trim() || "나", playerCount);
+    const human = createdPlayers.find((player) => player.human);
 
-    if (names.length < 4) {
-      addSystemMessage("최소 4명이 필요합니다.");
-      return;
-    }
-
-    const nextPlayers = createPlayers(names);
-    setPlayers(nextPlayers);
-    setSpeakerId(nextPlayers[0].id);
-    setPhase("night");
+    setPlayers(createdPlayers);
     setRound(1);
+    setPhase("night");
     setWinner(null);
-    setVotes({});
+    setNightTargetId("");
+    setVoteTargetId("");
     setMessages([
       {
-        id: crypto.randomUUID(),
+        id: createId("msg"),
         sender: "사회자",
-        text: "게임을 시작합니다. 각자의 역할을 확인하고 1라운드 밤을 진행하세요.",
+        text: `게임이 시작되었습니다. 당신의 역할은 ${roleLabels[human?.role ?? "citizen"]}입니다.`,
         system: true,
       },
     ]);
@@ -138,82 +137,128 @@ export function MafiaGame() {
 
   function submitChat(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const speaker = players.find((player) => player.id === speakerId);
+    if (!me?.alive || !chatText.trim()) return;
 
-    if (!speaker || !speaker.alive || !chatText.trim()) return;
-
-    setMessages((current) => [
-      ...current,
-      { id: crypto.randomUUID(), sender: speaker.name, text: chatText.trim() },
-    ]);
+    addMessage(me.name, chatText.trim());
+    botDiscuss();
     setChatText("");
   }
 
-  function resolveNight() {
-    const target = players.find((player) => player.id === mafiaTargetId);
-    const saved = doctorTargetId && doctorTargetId === mafiaTargetId;
-    const inspected = players.find((player) => player.id === detectiveTargetId);
-    let nextPlayers = players;
+  function botDiscuss() {
+    const speakers = alivePlayers.filter((player) => !player.human);
+    const count = Math.min(2, speakers.length);
+    shuffle(speakers)
+      .slice(0, count)
+      .forEach((speaker) => {
+        addMessage(speaker.name, pickRandom(botLines));
+      });
+  }
 
-    if (target && !saved) {
-      nextPlayers = players.map((player) =>
-        player.id === target.id ? { ...player, alive: false } : player,
-      );
-      addSystemMessage(`밤 사이 ${target.name}님이 탈락했습니다.`);
-    } else if (target && saved) {
-      addSystemMessage("의사의 보호로 밤 공격이 실패했습니다.");
+  function resolveNight() {
+    if (!me) return;
+
+    let nextPlayers = [...players];
+    let protectedId: string | undefined;
+    let mafiaTargetId: string | undefined;
+
+    const alive = nextPlayers.filter((player) => player.alive);
+    const mafias = alive.filter((player) => player.role === "mafia");
+    const doctor = alive.find((player) => player.role === "doctor");
+
+    if (me.role === "mafia") {
+      mafiaTargetId = nightTargetId;
     } else {
-      addSystemMessage("밤이 지나갔습니다. 아무도 공격받지 않았습니다.");
+      const mafiaChoices = alive.filter((player) => player.role !== "mafia");
+      mafiaTargetId = pickRandom(mafiaChoices)?.id;
     }
 
-    if (inspected) {
-      addSystemMessage(
-        `경찰 조사 결과: ${inspected.name}님은 ${
-          inspected.role === "mafia" ? "마피아" : "마피아가 아닙니다"
-        }.`,
+    if (me.role === "doctor") {
+      protectedId = nightTargetId;
+    } else if (doctor) {
+      protectedId = pickRandom(alive)?.id;
+    }
+
+    if (me.role === "detective" && nightTargetId) {
+      const target = nextPlayers.find((player) => player.id === nightTargetId);
+      if (target) {
+        addMessage(
+          "사회자",
+          `${target.name}님은 ${target.role === "mafia" ? "마피아" : "마피아가 아닙니다"}.`,
+          true,
+        );
+      }
+    }
+
+    if (mafias.length === 0) {
+      addMessage("사회자", "밤이 조용히 지나갔습니다.", true);
+    } else if (mafiaTargetId && mafiaTargetId !== protectedId) {
+      nextPlayers = nextPlayers.map((player) =>
+        player.id === mafiaTargetId ? { ...player, alive: false } : player,
       );
+      const target = players.find((player) => player.id === mafiaTargetId);
+      addMessage("사회자", `밤 사이 ${target?.name ?? "누군가"}님이 탈락했습니다.`, true);
+    } else {
+      addMessage("사회자", "의사의 보호로 밤 공격이 실패했습니다.", true);
     }
 
     finishStep(nextPlayers, "day");
-    setMafiaTargetId("");
-    setDoctorTargetId("");
-    setDetectiveTargetId("");
+    setNightTargetId("");
   }
 
   function startVote() {
-    setVotes({});
+    botDiscuss();
     setPhase("vote");
-    addSystemMessage("투표를 시작합니다. 생존자는 한 명씩 의심 대상을 선택하세요.");
+    setVoteTargetId("");
+    addMessage("사회자", "투표를 시작합니다. 의심되는 참가자를 선택하세요.", true);
   }
 
   function resolveVote() {
-    const counts = Object.values(votes).reduce<Record<string, number>>((acc, id) => {
-      acc[id] = (acc[id] ?? 0) + 1;
-      return acc;
-    }, {});
-    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-    const top = sorted[0];
+    if (!me || !voteTargetId) return;
+
+    const alive = players.filter((player) => player.alive);
+    const votes: Record<string, number> = { [voteTargetId]: 1 };
+
+    alive
+      .filter((player) => !player.human)
+      .forEach((bot) => {
+        const choices = alive.filter((target) => target.id !== bot.id);
+        const target = chooseBotVoteTarget(bot, choices);
+        votes[target.id] = (votes[target.id] ?? 0) + 1;
+      });
+
+    const sorted = Object.entries(votes).sort((a, b) => b[1] - a[1]);
     const tied = sorted.length > 1 && sorted[0][1] === sorted[1][1];
     let nextPlayers = players;
 
-    if (top && !tied) {
-      const eliminated = players.find((player) => player.id === top[0]);
-      if (eliminated) {
-        nextPlayers = players.map((player) =>
-          player.id === eliminated.id ? { ...player, alive: false } : player,
-        );
-        addSystemMessage(
-          `투표 결과 ${eliminated.name}님이 탈락했습니다. 역할은 ${
-            roleLabels[eliminated.role]
-          }였습니다.`,
-        );
-      }
+    if (!tied) {
+      const eliminatedId = sorted[0][0];
+      const eliminated = players.find((player) => player.id === eliminatedId);
+      nextPlayers = players.map((player) =>
+        player.id === eliminatedId ? { ...player, alive: false } : player,
+      );
+      addMessage(
+        "사회자",
+        `투표 결과 ${eliminated?.name ?? "누군가"}님이 탈락했습니다.`,
+        true,
+      );
     } else {
-      addSystemMessage("투표가 동률로 끝나 아무도 탈락하지 않았습니다.");
+      addMessage("사회자", "투표가 동률로 끝나 아무도 탈락하지 않았습니다.", true);
     }
 
-    setVotes({});
     finishStep(nextPlayers, "night");
+    setVoteTargetId("");
+  }
+
+  function chooseBotVoteTarget(bot: Player, choices: Player[]) {
+    const nonMafia = choices.filter((player) => player.role !== "mafia");
+    const mafia = choices.filter((player) => player.role === "mafia");
+
+    if (bot.role === "mafia" && nonMafia.length > 0) return pickRandom(nonMafia);
+    if (bot.role !== "mafia" && mafia.length > 0 && Math.random() > 0.55) {
+      return pickRandom(mafia);
+    }
+
+    return pickRandom(choices);
   }
 
   function finishStep(nextPlayers: Player[], nextPhase: Phase) {
@@ -223,13 +268,13 @@ export function MafiaGame() {
     if (result) {
       setWinner(result);
       setPhase("ended");
-      addSystemMessage(`${result}로 게임이 종료되었습니다.`);
+      addMessage("사회자", `${result}로 게임이 종료되었습니다.`, true);
       return;
     }
 
     if (nextPhase === "night") {
       setRound((current) => current + 1);
-      addSystemMessage("다음 밤이 시작됩니다.");
+      addMessage("사회자", "다음 밤이 시작됩니다.", true);
     }
 
     setPhase(nextPhase);
@@ -240,23 +285,35 @@ export function MafiaGame() {
     setRound(1);
     setPlayers([]);
     setMessages([]);
-    setVotes({});
+    setNightTargetId("");
+    setVoteTargetId("");
     setWinner(null);
-    setMafiaTargetId("");
-    setDoctorTargetId("");
-    setDetectiveTargetId("");
   }
 
   return (
     <section className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8">
       <aside className="grid gap-4 self-start lg:sticky lg:top-5">
         <div className="border border-neutral-800 bg-neutral-950 p-4">
-          <p className="text-xs font-semibold text-red-300">PARTY CHAT GAME</p>
+          <p className="text-xs font-semibold text-red-300">SOLO PARTY GAME</p>
           <h1 className="mt-2 text-3xl font-bold text-white">Mafia Chat Game</h1>
           <p className="mt-3 text-sm leading-6 text-neutral-400">
-            브라우저에서 바로 진행 가능한 마피아 채팅 게임입니다. 참가자를
-            입력하고 역할 배정, 밤 행동, 낮 토론, 투표를 순서대로 진행하세요.
+            나 혼자 접속해서 가상 참가자들과 진행하는 마피아 게임입니다. 내
+            역할만 확인하고, 다른 참가자의 역할은 게임 종료 후 공개됩니다.
           </p>
+        </div>
+
+        <div className="border border-neutral-800 bg-neutral-900 p-4">
+          <h2 className="text-lg font-semibold">내 역할</h2>
+          {me ? (
+            <div className="mt-3 border border-red-900 bg-red-950/30 p-3">
+              <p className="text-2xl font-bold text-white">{roleLabels[me.role]}</p>
+              <p className="mt-2 text-sm leading-6 text-red-100">
+                {roleDescriptions[me.role]}
+              </p>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-neutral-400">게임을 시작하면 표시됩니다.</p>
+          )}
         </div>
 
         <div className="border border-neutral-800 bg-neutral-900 p-4">
@@ -267,10 +324,10 @@ export function MafiaGame() {
             </span>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-            <StatusItem label="단계" value={phaseLabels[phase]} />
+            <StatusItem label="단계" value={phaseLabel(phase)} />
             <StatusItem label="생존" value={`${alivePlayers.length}명`} />
-            <StatusItem label="마피아" value={`${mafiaPlayers.length}명`} />
             <StatusItem label="결과" value={winner ?? "진행 중"} />
+            <StatusItem label="인원" value={`${players.length || playerCount}명`} />
           </dl>
         </div>
 
@@ -289,8 +346,11 @@ export function MafiaGame() {
                     }
                   >
                     {player.name}
+                    {player.human ? " (나)" : ""}
                   </span>
-                  <span className="text-neutral-400">{roleLabels[player.role]}</span>
+                  <span className="text-neutral-400">
+                    {phase === "ended" || player.human ? roleLabels[player.role] : "비공개"}
+                  </span>
                 </div>
               ))}
             </div>
@@ -300,141 +360,118 @@ export function MafiaGame() {
 
       <main className="grid gap-4">
         {phase === "setup" && (
-          <Panel title="게임방 만들기">
-            <p className="text-sm text-neutral-400">
-              참가자 이름을 줄마다 입력하세요. 4명부터 시작할 수 있고 최대 10명까지
-              반영됩니다.
-            </p>
-            <textarea
-              className="mt-4 min-h-48 w-full resize-y border border-neutral-700 bg-neutral-950 p-3 text-sm text-white outline-none focus:border-red-400"
-              onChange={(event) => setNameInput(event.target.value)}
-              value={nameInput}
-            />
+          <Panel title="새 게임">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2 text-sm">
+                <span className="font-medium text-neutral-200">내 이름</span>
+                <input
+                  className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400"
+                  onChange={(event) => setMyName(event.target.value)}
+                  value={myName}
+                />
+              </label>
+              <label className="grid gap-2 text-sm">
+                <span className="font-medium text-neutral-200">전체 인원</span>
+                <select
+                  className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400"
+                  onChange={(event) => setPlayerCount(Number(event.target.value))}
+                  value={playerCount}
+                >
+                  {[4, 5, 6, 7, 8].map((count) => (
+                    <option key={count} value={count}>
+                      {count}명
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <button
-              className="mt-4 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400"
+              className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400"
               onClick={startGame}
               type="button"
             >
-              역할 배정하고 시작
+              역할 받고 시작
             </button>
           </Panel>
         )}
 
-        {phase === "night" && (
+        {phase === "night" && me && (
           <Panel title="밤 행동">
-            <div className="grid gap-4 md:grid-cols-3">
+            {me.role === "citizen" ? (
+              <p className="text-sm text-neutral-400">
+                시민은 밤 행동이 없습니다. 밤 결과를 진행하세요.
+              </p>
+            ) : (
               <ActionSelect
-                label="마피아 제거 대상"
-                onChange={setMafiaTargetId}
-                players={alivePlayers.filter((player) => player.role !== "mafia")}
-                value={mafiaTargetId}
+                label={nightActionLabel(me.role)}
+                onChange={setNightTargetId}
+                players={nightTargets(me, visibleTargets)}
+                value={nightTargetId}
               />
-              <ActionSelect
-                disabled={!doctor}
-                label={doctor ? `의사 보호 대상 (${doctor.name})` : "의사 없음"}
-                onChange={setDoctorTargetId}
-                players={alivePlayers}
-                value={doctorTargetId}
-              />
-              <ActionSelect
-                disabled={!detective}
-                label={detective ? `경찰 조사 대상 (${detective.name})` : "경찰 없음"}
-                onChange={setDetectiveTargetId}
-                players={alivePlayers.filter((player) => player.id !== detective?.id)}
-                value={detectiveTargetId}
-              />
-            </div>
+            )}
             <button
               className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700"
-              disabled={!mafiaTargetId}
+              disabled={me.role !== "citizen" && !nightTargetId}
               onClick={resolveNight}
               type="button"
             >
-              밤 결과 처리
+              밤 결과 보기
             </button>
           </Panel>
         )}
 
         {(phase === "day" || phase === "vote") && (
-          <Panel title="낮 토론 채팅">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-neutral-400">생존자만 발언할 수 있습니다.</p>
-              {phase === "day" && (
-                <button
-                  className="bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-400"
-                  onClick={startVote}
-                  type="button"
-                >
-                  투표 시작
-                </button>
-              )}
-            </div>
+          <Panel title="낮 토론">
             <form
-              className="mt-4 grid gap-3 sm:grid-cols-[180px_1fr_auto]"
+              className="grid gap-3 sm:grid-cols-[1fr_auto]"
               onSubmit={submitChat}
             >
-              <select
-                className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-sm text-white outline-none focus:border-red-400"
-                onChange={(event) => setSpeakerId(event.target.value)}
-                value={speakerId}
-              >
-                {alivePlayers.map((player) => (
-                  <option key={player.id} value={player.id}>
-                    {player.name}
-                  </option>
-                ))}
-              </select>
               <input
                 className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-sm text-white outline-none focus:border-red-400"
+                disabled={!me?.alive}
                 onChange={(event) => setChatText(event.target.value)}
-                placeholder="채팅을 입력하세요"
+                placeholder={me?.alive ? "채팅을 입력하세요" : "탈락자는 발언할 수 없습니다"}
                 value={chatText}
               />
               <button
-                className="bg-neutral-100 px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-white"
+                className="bg-neutral-100 px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-white disabled:bg-neutral-700 disabled:text-neutral-400"
+                disabled={!me?.alive}
                 type="submit"
               >
                 전송
               </button>
             </form>
+            {phase === "day" && (
+              <button
+                className="mt-4 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400"
+                onClick={startVote}
+                type="button"
+              >
+                투표로 넘어가기
+              </button>
+            )}
           </Panel>
         )}
 
         {phase === "vote" && (
           <Panel title="투표">
-            <div className="grid gap-3 md:grid-cols-2">
-              {alivePlayers.map((voter) => (
-                <label className="grid gap-2 text-sm" key={voter.id}>
-                  <span className="font-medium text-neutral-200">{voter.name}</span>
-                  <select
-                    className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400"
-                    onChange={(event) =>
-                      setVotes((current) => ({
-                        ...current,
-                        [voter.id]: event.target.value,
-                      }))
-                    }
-                    value={votes[voter.id] ?? ""}
-                  >
-                    <option value="">대상 선택</option>
-                    {alivePlayers
-                      .filter((target) => target.id !== voter.id)
-                      .map((target) => (
-                        <option key={target.id} value={target.id}>
-                          {target.name}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-              ))}
-            </div>
+            {me?.alive ? (
+              <ActionSelect
+                label="의심 대상"
+                onChange={setVoteTargetId}
+                players={visibleTargets}
+                value={voteTargetId}
+              />
+            ) : (
+              <p className="text-sm text-neutral-400">탈락자는 투표할 수 없습니다.</p>
+            )}
             <button
               className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700"
-              disabled={!voteComplete}
+              disabled={!!me?.alive && !voteTargetId}
               onClick={resolveVote}
               type="button"
             >
-              투표 결과 처리
+              투표 결과 보기
             </button>
           </Panel>
         )}
@@ -443,8 +480,7 @@ export function MafiaGame() {
           <div className="border border-red-500 bg-red-950/40 p-5">
             <h2 className="text-2xl font-bold text-white">{winner}</h2>
             <p className="mt-2 text-sm text-red-100">
-              게임이 종료되었습니다. 역할표와 진행 로그를 확인한 뒤 새 게임을 시작할 수
-              있습니다.
+              게임이 종료되었습니다. 참가자 역할을 확인한 뒤 새 게임을 시작할 수 있습니다.
             </p>
             <button
               className="mt-4 bg-white px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-red-100"
@@ -487,6 +523,25 @@ export function MafiaGame() {
   );
 }
 
+function phaseLabel(phase: Phase) {
+  return { setup: "대기", night: "밤", day: "낮", vote: "투표", ended: "종료" }[
+    phase
+  ];
+}
+
+function nightActionLabel(role: Role) {
+  if (role === "mafia") return "제거 대상";
+  if (role === "doctor") return "보호 대상";
+  if (role === "detective") return "조사 대상";
+  return "대상";
+}
+
+function nightTargets(me: Player, targets: Player[]) {
+  if (me.role === "mafia") return targets.filter((player) => player.role !== "mafia");
+  if (me.role === "detective") return targets;
+  return [me, ...targets].filter((player) => player.alive);
+}
+
 function Panel({
   children,
   title,
@@ -512,13 +567,11 @@ function StatusItem({ label, value }: { label: string; value: string }) {
 }
 
 function ActionSelect({
-  disabled,
   label,
   onChange,
   players,
   value,
 }: {
-  disabled?: boolean;
   label: string;
   onChange: (value: string) => void;
   players: Player[];
@@ -528,8 +581,7 @@ function ActionSelect({
     <label className="grid gap-2 text-sm">
       <span className="font-medium text-neutral-200">{label}</span>
       <select
-        className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400 disabled:text-neutral-600"
-        disabled={disabled}
+        className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400"
         onChange={(event) => onChange(event.target.value)}
         value={value}
       >
