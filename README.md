@@ -1,12 +1,13 @@
 # Mafia Chat Game
 
-Next.js 기반 마피아 채팅 게임입니다. 브라우저에서 참가자를 입력하고, 역할 배정부터 밤 행동, 낮 토론, 투표, 승패 판정까지 한 화면에서 진행할 수 있습니다.
+Next.js 기반의 채팅형 마피아 게임입니다. 브라우저에서 혼자 접속해도 가상 참가자들과 역할 배정, 밤 행동, 낮 심문, 투표, 승패 판정까지 진행할 수 있습니다.
 
 ## 목표
 
-- 별도 설치 없이 브라우저에서 바로 진행되는 파티형 마피아 게임 제공
-- 사회자 진행을 보조하는 역할 배정, 밤 행동, 투표, 승패 판정 구현
-- 추후 온라인 방, 초대 링크, 실시간 동기화 구조로 확장하기 쉬운 코드 구성
+- 별도 설치 없이 브라우저에서 바로 진행하는 솔로형 마피아 게임 제공
+- 내 역할만 공개하고 다른 참가자의 역할은 게임 종료 후 공개
+- 심문, NPC 응답, 투표, 결과 카드, XP/레벨/칭호 보상 구현
+- 이후 채팅형 인터페이스에서도 같은 게임 규칙과 결과 표현을 재사용할 수 있는 구조 유지
 
 ## Stack
 
@@ -15,23 +16,27 @@ Next.js 기반 마피아 채팅 게임입니다. 브라우저에서 참가자를
 - TypeScript
 - Tailwind CSS 4
 - ESLint
+- Docusaurus 3 문서 사이트
 
 ## Scripts
 
 ```bash
 npm run dev
+npm run docs:dev
 npm run lint
 npm run typecheck
 npm run build
 npm run verify
+npm run docs:build
+npm run verify:all
 npm run commit
 ```
 
-`npm run commit`은 자동 커밋 명령입니다. 변경 파일을 AI가 논리 단위로 나눠 한국어 커밋 메시지로 커밋합니다.
+`npm run commit`은 자동 커밋 명령입니다. 변경 파일을 AI가 기능 단위로 나누고 한국어 커밋 메시지로 커밋합니다.
 
 ## Getting Started
 
-개발 서버를 실행합니다.
+게임 개발 서버:
 
 ```bash
 npm run dev
@@ -39,12 +44,22 @@ npm run dev
 
 브라우저에서 [http://localhost:3000](http://localhost:3000)을 엽니다.
 
+문서 개발 서버:
+
+```bash
+npm run docs:dev
+```
+
+브라우저에서 [http://localhost:3001](http://localhost:3001)을 엽니다.
+
 ## Project Docs
 
-- `AGENTS.md`: Codex/AI 작업 규칙
-- `docs/GIT_UPLOAD.md`: GitHub 업로드 절차
+- `AGENTS.md`: Codex/AI 작업 규칙과 세션 이어하기 프로토콜
+- `docs/SESSION_NOTES.md`: 세션 재개용 현재 상태 노트
+- `docs/GIT_UPLOAD.md`: GitHub 업로드 절차 문서
+- `docs-site/`: Docusaurus 문서 사이트
 - `shared/commit-script.ts`: 자동 커밋 스크립트
 
 ## Deploy
 
-Vercel의 Next.js 자동 감지를 기본으로 사용합니다. Node 버전은 `package.json`의 `engines.node`와 맞춰 `22.x`로 관리합니다.
+Vercel의 Next.js 자동 감지를 기본으로 사용합니다. Node 버전은 `package.json`의 `engines.node`에 맞춰 `22.x`로 관리합니다.
