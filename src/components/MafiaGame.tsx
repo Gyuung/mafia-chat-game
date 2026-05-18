@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Role = "mafia" | "doctor" | "detective" | "citizen";
 type Phase = "setup" | "night" | "day" | "vote" | "ended";
@@ -33,6 +35,13 @@ const roleDescriptions: Record<Role, string> = {
   doctor: "밤마다 한 명을 보호해 마피아의 공격을 막으세요.",
   detective: "밤마다 한 명을 조사해 마피아인지 확인하세요.",
   citizen: "심문과 투표로 마피아를 찾아내세요.",
+};
+
+const roleImages: Record<Role, string> = {
+  mafia: "/roles/mafia.png",
+  doctor: "/roles/doctor.png",
+  detective: "/roles/detective.png",
+  citizen: "/roles/citizen.png",
 };
 
 const botNames = ["민서", "지아", "현우", "서윤", "도윤", "하준", "유나"];
@@ -152,6 +161,8 @@ export function MafiaGame() {
   const [nightTargetId, setNightTargetId] = useState("");
   const [voteTargetId, setVoteTargetId] = useState("");
   const [winner, setWinner] = useState<string | null>(null);
+  const [xp, setXp] = useState(0);
+  const logEndRef = useRef<HTMLDivElement>(null);
 
   const me = players.find((player) => player.human) ?? null;
   const alivePlayers = useMemo(
@@ -159,6 +170,12 @@ export function MafiaGame() {
     [players],
   );
   const visibleTargets = alivePlayers.filter((player) => player.id !== me?.id);
+  const level = Math.floor(xp / 100) + 1;
+  const currentLevelXp = xp % 100;
+
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages.length]);
 
   function addMessage(sender: string, text: string, system = false) {
     setMessages((current) => [
@@ -175,6 +192,7 @@ export function MafiaGame() {
     setRound(1);
     setPhase("night");
     setWinner(null);
+    setXp(0);
     setQuestionTargetId("");
     setNightTargetId("");
     setVoteTargetId("");
@@ -341,9 +359,15 @@ export function MafiaGame() {
     setPlayers(nextPlayers);
 
     if (result) {
+      const gainedXp = calculateXp(result, nextPlayers);
       setWinner(result);
+      setXp((current) => current + gainedXp);
       setPhase("ended");
-      addMessage("사회자", `${result}로 게임이 종료되었습니다.`, true);
+      addMessage(
+        "사회자",
+        `🏁 ${result}로 게임이 종료되었습니다. +${gainedXp} XP를 획득했습니다.`,
+        true,
+      );
       return;
     }
 
@@ -364,13 +388,19 @@ export function MafiaGame() {
     setNightTargetId("");
     setVoteTargetId("");
     setWinner(null);
+    setXp(0);
   }
 
   return (
     <section className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8">
       <aside className="grid gap-4 self-start lg:sticky lg:top-5">
         <div className="border border-neutral-800 bg-neutral-950 p-4">
-          <p className="text-xs font-semibold text-red-300">SOLO PARTY GAME</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold text-red-300">SOLO PARTY GAME</p>
+            <Link className="text-xs text-neutral-400 hover:text-white" href="/docs">
+              Docs
+            </Link>
+          </div>
           <h1 className="mt-2 text-3xl font-bold text-white">Mafia Chat Game</h1>
           <p className="mt-3 text-sm leading-6 text-neutral-400">
             나 혼자 접속해서 가상 참가자들과 진행하는 마피아 게임입니다. 내
@@ -382,6 +412,16 @@ export function MafiaGame() {
           <h2 className="text-lg font-semibold">내 역할</h2>
           {me ? (
             <div className="mt-3 border border-red-900 bg-red-950/30 p-3">
+              <div className="relative aspect-square overflow-hidden border border-neutral-800 bg-neutral-950">
+                <Image
+                  alt={`${roleLabels[me.role]} 역할 이미지`}
+                  className="object-cover"
+                  fill
+                  priority
+                  sizes="288px"
+                  src={roleImages[me.role]}
+                />
+              </div>
               <p className="text-2xl font-bold text-white">{roleLabels[me.role]}</p>
               <p className="mt-2 text-sm leading-6 text-red-100">
                 {roleDescriptions[me.role]}
@@ -405,6 +445,18 @@ export function MafiaGame() {
             <StatusItem label="결과" value={winner ?? "진행 중"} />
             <StatusItem label="인원" value={`${players.length || playerCount}명`} />
           </dl>
+          <div className="mt-4 border border-neutral-800 bg-neutral-950 p-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-semibold text-white">Lv. {level}</span>
+              <span className="text-neutral-400">{currentLevelXp}/100 XP</span>
+            </div>
+            <div className="mt-2 h-2 bg-neutral-800">
+              <div
+                className="h-full bg-red-500"
+                style={{ width: `${currentLevelXp}%` }}
+              />
+            </div>
+          </div>
         </div>
 
         {players.length > 0 && (
@@ -571,10 +623,18 @@ export function MafiaGame() {
 
         {phase === "ended" && (
           <div className="border border-red-500 bg-red-950/40 p-5">
-            <h2 className="text-2xl font-bold text-white">{winner}</h2>
+            <p className="text-sm font-semibold text-red-200">🎭 게임 결과</p>
+            <h2 className="mt-2 text-2xl font-bold text-white">{winner}</h2>
             <p className="mt-2 text-sm text-red-100">
               게임이 종료되었습니다. 참가자 역할을 확인한 뒤 새 게임을 시작할 수 있습니다.
             </p>
+            {me && (
+              <div className="mt-4 grid gap-2 border border-red-900 bg-neutral-950/70 p-4 text-sm text-neutral-200">
+                <p>🃏 내 역할: {roleLabels[me.role]}</p>
+                <p>⭐ 현재 레벨: Lv. {level}</p>
+                <p>🏷️ 칭호: {getTitle(level)}</p>
+              </div>
+            )}
             <button
               className="mt-4 bg-white px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-red-100"
               onClick={resetGame}
@@ -587,7 +647,7 @@ export function MafiaGame() {
 
         <div className="min-h-80 border border-neutral-800 bg-neutral-950 p-5">
           <h2 className="text-xl font-semibold">진행 로그</h2>
-          <div className="mt-4 grid max-h-[520px] gap-3 overflow-y-auto">
+          <div className="mt-4 grid max-h-[520px] gap-3 overflow-y-auto scroll-smooth">
             {messages.length === 0 ? (
               <p className="text-sm text-neutral-500">아직 메시지가 없습니다.</p>
             ) : (
@@ -609,6 +669,7 @@ export function MafiaGame() {
                 </article>
               ))
             )}
+            <div ref={logEndRef} />
           </div>
         </div>
       </main>
@@ -620,6 +681,24 @@ function nightTargets(me: Player, targets: Player[]) {
   if (me.role === "mafia") return targets.filter((player) => player.role !== "mafia");
   if (me.role === "detective") return targets;
   return [me, ...targets].filter((player) => player.alive);
+}
+
+function calculateXp(result: string, players: Player[]) {
+  const me = players.find((player) => player.human);
+  if (!me) return 20;
+
+  const myTeam = me.role === "mafia" ? "마피아" : "시민";
+  const winBonus = result.startsWith(myTeam) ? 50 : 20;
+  const survivalBonus = me.alive ? 15 : 0;
+  const roundBonus = Math.min(players.length * 2, 20);
+  return winBonus + survivalBonus + roundBonus;
+}
+
+function getTitle(level: number) {
+  if (level >= 10) return "마피아 헌터";
+  if (level >= 7) return "심문 전문가";
+  if (level >= 4) return "동네 추리왕";
+  return "신입 탐정";
 }
 
 function Panel({
