@@ -2,8 +2,8 @@
 
 ## Project
 
-- Next.js App Router application for a KakaoTalk chatbot beta listing submission.
-- The product concept is a Mafia social deduction chat game optimized for mobile chat entry points.
+- Next.js App Router application for a browser-based Mafia social deduction chat game.
+- The first screen should be the playable game, not a landing page.
 - React 19 and Next.js 16 are the baseline runtime assumptions.
 - Korean user-facing copy is intentional. Preserve wording and encoding unless the task is explicitly about text cleanup.
 
@@ -32,14 +32,8 @@
 
 - Rely on Vercel framework auto-detection for this Next.js app unless a task specifically needs `vercel.json`.
 - Node runtime is pinned with `package.json` `engines.node` to `22.x`; keep local and Vercel Node versions aligned.
-- Required Vercel environment variables should be mirrored in `.env.example` without secrets.
+- Required environment variables should be mirrored in `.env.example` without secrets.
 - `NEXT_PUBLIC_*` variables are public browser inputs. Never put private keys in them.
-
-## Kakao Chatbot Submission
-
-- Keep the first screen clear enough for Kakao review: service name, game objective, user flow, and safety/moderation intent should be visible or easy to document.
-- Do not hard-code private Kakao keys, channel tokens, or webhook secrets in client code.
-- Server-owned chatbot integration should live in route handlers under `src/app/api`.
 
 ## Validation
 
