@@ -11,6 +11,7 @@ type Player = {
   role: Role;
   alive: boolean;
   human: boolean;
+  suspicion: number;
 };
 
 type Message = {
@@ -28,17 +29,38 @@ const roleLabels: Record<Role, string> = {
 };
 
 const roleDescriptions: Record<Role, string> = {
-  mafia: "밤마다 한 명을 제거하고 낮에는 정체를 숨기세요.",
+  mafia: "밤마다 한 명을 제거하고 낮에는 시민인 척 의심을 피하세요.",
   doctor: "밤마다 한 명을 보호해 마피아의 공격을 막으세요.",
   detective: "밤마다 한 명을 조사해 마피아인지 확인하세요.",
-  citizen: "토론과 투표로 마피아를 찾아내세요.",
+  citizen: "심문과 투표로 마피아를 찾아내세요.",
 };
 
 const botNames = ["민서", "지아", "현우", "서윤", "도윤", "하준", "유나"];
+
+const citizenAnswers = [
+  "저는 어젯밤에 특별히 한 행동은 없어요. 발언 흐름으로 봐야 할 것 같아요.",
+  "저를 몰아가는 이유가 약해요. 오히려 조용히 있던 쪽을 봐야 합니다.",
+  "마피아라면 이렇게 먼저 해명하지 않았을 거예요.",
+  "저는 시민 팀이에요. 투표를 서두르면 마피아가 좋아할 것 같습니다.",
+];
+
+const mafiaAnswers = [
+  "저는 시민입니다. 지금 저를 의심하는 게 너무 갑작스러워요.",
+  "마피아라면 이렇게 눈에 띄게 말하지 않죠. 다른 사람을 봐야 합니다.",
+  "밤에 탈락한 사람과 저는 거의 대화가 없었어요. 연결점이 없습니다.",
+  "이 분위기 자체가 누군가 의심을 돌리려고 만든 것 같아요.",
+];
+
+const powerRoleAnswers = [
+  "제 역할은 공개하기 어렵지만 시민 팀에 도움이 되는 쪽으로 움직이고 있어요.",
+  "지금 당장 제 정보를 다 말하면 마피아가 이용할 수 있습니다.",
+  "저는 시민 팀입니다. 확실한 단서가 생기면 말하겠습니다.",
+];
+
 const botLines = [
   "어젯밤 흐름을 보면 조용했던 사람이 수상해요.",
   "너무 빨리 몰아가는 것도 마피아 같아요.",
-  "저는 일단 투표 전까지 더 들어보고 싶어요.",
+  "투표 전까지 한 명씩 더 심문해보죠.",
   "마피아라면 지금 시민인 척 방향을 틀 것 같아요.",
   "발언이 적은 사람을 그냥 넘기면 안 될 것 같아요.",
 ];
@@ -49,6 +71,10 @@ function shuffle<T>(items: T[]) {
 
 function createId(prefix: string) {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+function pickRandom<T>(items: T[]) {
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 function createPlayers(myName: string, count: number): Player[] {
@@ -64,13 +90,21 @@ function createPlayers(myName: string, count: number): Player[] {
 
   const assignedRoles = shuffle(roles);
   return [
-    { id: "me", name: myName, role: assignedRoles[0], alive: true, human: true },
+    {
+      id: "me",
+      name: myName,
+      role: assignedRoles[0],
+      alive: true,
+      human: true,
+      suspicion: 0,
+    },
     ...names.map((name, index) => ({
       id: createId("bot"),
       name,
       role: assignedRoles[index + 1],
       alive: true,
       human: false,
+      suspicion: 0,
     })),
   ];
 }
@@ -85,8 +119,25 @@ function getWinner(players: Player[]) {
   return null;
 }
 
-function pickRandom<T>(items: T[]) {
-  return items[Math.floor(Math.random() * items.length)];
+function phaseLabel(phase: Phase) {
+  return { setup: "대기", night: "밤", day: "낮", vote: "투표", ended: "종료" }[
+    phase
+  ];
+}
+
+function nightActionLabel(role: Role) {
+  if (role === "mafia") return "제거 대상";
+  if (role === "doctor") return "보호 대상";
+  if (role === "detective") return "조사 대상";
+  return "대상";
+}
+
+function getBotAnswer(player: Player) {
+  if (player.role === "mafia") return pickRandom(mafiaAnswers);
+  if (player.role === "doctor" || player.role === "detective") {
+    return pickRandom(powerRoleAnswers);
+  }
+  return pickRandom(citizenAnswers);
 }
 
 export function MafiaGame() {
@@ -97,6 +148,7 @@ export function MafiaGame() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatText, setChatText] = useState("");
+  const [questionTargetId, setQuestionTargetId] = useState("");
   const [nightTargetId, setNightTargetId] = useState("");
   const [voteTargetId, setVoteTargetId] = useState("");
   const [winner, setWinner] = useState<string | null>(null);
@@ -123,6 +175,7 @@ export function MafiaGame() {
     setRound(1);
     setPhase("night");
     setWinner(null);
+    setQuestionTargetId("");
     setNightTargetId("");
     setVoteTargetId("");
     setMessages([
@@ -140,18 +193,42 @@ export function MafiaGame() {
     if (!me?.alive || !chatText.trim()) return;
 
     addMessage(me.name, chatText.trim());
-    botDiscuss();
+    botDiscuss(1);
     setChatText("");
   }
 
-  function botDiscuss() {
-    const speakers = alivePlayers.filter((player) => !player.human);
-    const count = Math.min(2, speakers.length);
-    shuffle(speakers)
-      .slice(0, count)
-      .forEach((speaker) => {
-        addMessage(speaker.name, pickRandom(botLines));
-      });
+  function interrogateTarget() {
+    const target = players.find((player) => player.id === questionTargetId);
+    if (!target || !target.alive) return;
+
+    addMessage(me?.name ?? "나", `${target.name}님, 어젯밤 뭐 했는지 설명해주세요.`);
+    addMessage(target.name, getBotAnswer(target));
+
+    setPlayers((current) =>
+      current.map((player) =>
+        player.id === target.id
+          ? { ...player, suspicion: player.suspicion + (target.role === "mafia" ? 2 : 1) }
+          : player,
+      ),
+    );
+    botDiscuss(1);
+    setQuestionTargetId("");
+  }
+
+  function botDiscuss(count = 2) {
+    const speakers = shuffle(alivePlayers.filter((player) => !player.human)).slice(
+      0,
+      count,
+    );
+
+    speakers.forEach((speaker) => {
+      const suspects = visibleTargets.filter((player) => player.id !== speaker.id);
+      const suspect = suspects.length > 0 ? pickRandom(suspects) : null;
+      const line = suspect
+        ? `${pickRandom(botLines)} 저는 ${suspect.name}님 발언을 더 보고 싶어요.`
+        : pickRandom(botLines);
+      addMessage(speaker.name, line);
+    });
   }
 
   function resolveNight() {
@@ -160,7 +237,6 @@ export function MafiaGame() {
     let nextPlayers = [...players];
     let protectedId: string | undefined;
     let mafiaTargetId: string | undefined;
-
     const alive = nextPlayers.filter((player) => player.alive);
     const mafias = alive.filter((player) => player.role === "mafia");
     const doctor = alive.find((player) => player.role === "doctor");
@@ -172,11 +248,8 @@ export function MafiaGame() {
       mafiaTargetId = pickRandom(mafiaChoices)?.id;
     }
 
-    if (me.role === "doctor") {
-      protectedId = nightTargetId;
-    } else if (doctor) {
-      protectedId = pickRandom(alive)?.id;
-    }
+    if (me.role === "doctor") protectedId = nightTargetId;
+    else if (doctor) protectedId = pickRandom(alive)?.id;
 
     if (me.role === "detective" && nightTargetId) {
       const target = nextPlayers.find((player) => player.id === nightTargetId);
@@ -252,7 +325,9 @@ export function MafiaGame() {
   function chooseBotVoteTarget(bot: Player, choices: Player[]) {
     const nonMafia = choices.filter((player) => player.role !== "mafia");
     const mafia = choices.filter((player) => player.role === "mafia");
+    const mostSuspicious = [...choices].sort((a, b) => b.suspicion - a.suspicion)[0];
 
+    if (mostSuspicious?.suspicion > 1 && Math.random() > 0.35) return mostSuspicious;
     if (bot.role === "mafia" && nonMafia.length > 0) return pickRandom(nonMafia);
     if (bot.role !== "mafia" && mafia.length > 0 && Math.random() > 0.55) {
       return pickRandom(mafia);
@@ -285,6 +360,7 @@ export function MafiaGame() {
     setRound(1);
     setPlayers([]);
     setMessages([]);
+    setQuestionTargetId("");
     setNightTargetId("");
     setVoteTargetId("");
     setWinner(null);
@@ -422,8 +498,25 @@ export function MafiaGame() {
 
         {(phase === "day" || phase === "vote") && (
           <Panel title="낮 토론">
+            <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
+              <ActionSelect
+                label="심문할 참가자"
+                onChange={setQuestionTargetId}
+                players={visibleTargets}
+                value={questionTargetId}
+              />
+              <button
+                className="self-end bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700"
+                disabled={!me?.alive || !questionTargetId}
+                onClick={interrogateTarget}
+                type="button"
+              >
+                심문하기
+              </button>
+            </div>
+
             <form
-              className="grid gap-3 sm:grid-cols-[1fr_auto]"
+              className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"
               onSubmit={submitChat}
             >
               <input
@@ -521,19 +614,6 @@ export function MafiaGame() {
       </main>
     </section>
   );
-}
-
-function phaseLabel(phase: Phase) {
-  return { setup: "대기", night: "밤", day: "낮", vote: "투표", ended: "종료" }[
-    phase
-  ];
-}
-
-function nightActionLabel(role: Role) {
-  if (role === "mafia") return "제거 대상";
-  if (role === "doctor") return "보호 대상";
-  if (role === "detective") return "조사 대상";
-  return "대상";
 }
 
 function nightTargets(me: Player, targets: Player[]) {
