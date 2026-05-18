@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Role = "mafia" | "doctor" | "detective" | "citizen";
@@ -172,6 +171,7 @@ export function MafiaGame() {
   const visibleTargets = alivePlayers.filter((player) => player.id !== me?.id);
   const level = Math.floor(xp / 100) + 1;
   const currentLevelXp = xp % 100;
+  const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL ?? "http://localhost:3001";
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -397,9 +397,14 @@ export function MafiaGame() {
         <div className="border border-neutral-800 bg-neutral-950 p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-semibold text-red-300">SOLO PARTY GAME</p>
-            <Link className="text-xs text-neutral-400 hover:text-white" href="/docs">
+            <a
+              className="text-xs text-neutral-400 hover:text-white"
+              href={docsUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
               Docs
-            </Link>
+            </a>
           </div>
           <h1 className="mt-2 text-3xl font-bold text-white">Mafia Chat Game</h1>
           <p className="mt-3 text-sm leading-6 text-neutral-400">
