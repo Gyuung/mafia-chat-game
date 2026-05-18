@@ -1,41 +1,28 @@
-# Website
+# Mafia Chat Game Docs
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
-
-## Installation
-
-```bash
-yarn
-```
+Docusaurus로 만든 프로젝트 문서 사이트입니다. 게임 룰, 변경 이력, 로드맵, 세션 이어하기 프로토콜을 이곳에서 관리합니다.
 
 ## Local Development
 
+루트 프로젝트에서 실행합니다.
+
 ```bash
-yarn start
+npm run docs:dev
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+문서 사이트는 기본적으로 [http://localhost:3001](http://localhost:3001)에서 확인합니다.
 
 ## Build
 
 ```bash
-yarn build
+npm run docs:build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+정적 결과물은 `docs-site/build`에 생성됩니다.
 
-## Deployment
+## Editing
 
-Using SSH:
-
-```bash
-USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```bash
-GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+- 게임 규칙 변경: `docs/game-rules.md`
+- 변경 이력 추가: `docs/changelog.md`
+- 다음 작업 정리: `docs/roadmap.md`
+- 세션 이어하기 절차: `docs/session-continuation.md`
