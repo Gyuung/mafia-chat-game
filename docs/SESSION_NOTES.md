@@ -54,6 +54,8 @@ Last updated: 2026-05-18
 
 ## Start Checklist For Codex
 
+If starting a new Codex session, send the prompt saved in `CONTINUE.md` first.
+
 Run these at the beginning of a resumed session:
 
 ```bash

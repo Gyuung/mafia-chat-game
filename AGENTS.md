@@ -46,13 +46,14 @@
 
 When starting a new Codex session in this repository:
 
-1. Read `AGENTS.md`, `README.md`, and `docs/SESSION_NOTES.md`.
-2. Check current git state with `git status --short`.
-3. Check recent work with `git log --oneline -8`.
-4. Inspect the docs front at `docs-site/docs/` when changing rules, roadmap, or changelog.
-5. Prefer continuing from the `Next Session TODO` section in `docs/SESSION_NOTES.md`.
-6. Before finishing a work session, update `docs/SESSION_NOTES.md` if the project direction, next TODO, or known issues changed.
-7. Run `npm run verify` for app code changes and `npm run docs:build` for docs changes, then use `npm run commit` and push to `origin/main` when the user wants the work saved remotely.
+1. If the user asks how to continue, point them to `CONTINUE.md`.
+2. Read `AGENTS.md`, `README.md`, and `docs/SESSION_NOTES.md`.
+3. Check current git state with `git status --short`.
+4. Check recent work with `git log --oneline -8`.
+5. Inspect the docs front at `docs-site/docs/` when changing rules, roadmap, or changelog.
+6. Prefer continuing from the `Next Session TODO` section in `docs/SESSION_NOTES.md`.
+7. Before finishing a work session, update `docs/SESSION_NOTES.md` if the project direction, next TODO, or known issues changed.
+8. Run `npm run verify` for app code changes and `npm run docs:build` for docs changes, then use `npm run commit` and push to `origin/main` when the user wants the work saved remotely.
 
 ## Git Workflow
 
