@@ -6,6 +6,8 @@ import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
 
+const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
+
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
 
@@ -20,7 +22,7 @@ function HomepageHeader() {
           <Link className="button button--primary button--lg" to="/docs/intro">
             문서 보기
           </Link>
-          <Link className="button button--secondary button--lg" href="http://localhost:3000">
+          <Link className="button button--secondary button--lg" href={appUrl}>
             게임으로 이동
           </Link>
         </div>

@@ -63,3 +63,6 @@ npm run docs:dev
 ## Deploy
 
 Vercel의 Next.js 자동 감지를 기본으로 사용합니다. Node 버전은 `package.json`의 `engines.node`에 맞춰 `22.x`로 관리합니다.
+
+앱 프로젝트에는 `NEXT_PUBLIC_DOCS_URL`을 문서 프로젝트 URL로 설정합니다.
+문서 프로젝트에는 `APP_URL`과 `DOCS_SITE_URL`을 설정합니다.

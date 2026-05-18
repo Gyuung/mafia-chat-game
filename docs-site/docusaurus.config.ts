@@ -2,6 +2,9 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
+const docsSiteUrl = process.env.DOCS_SITE_URL ?? 'http://localhost:3001';
+const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
+
 const config: Config = {
   title: 'Mafia Chat Game Docs',
   tagline: '게임 룰, 변경 이력, 다음 작업을 관리하는 문서 사이트',
@@ -11,7 +14,7 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://gyuung.github.io',
+  url: docsSiteUrl,
   baseUrl: '/',
   organizationName: 'Gyuung',
   projectName: 'mafia-chat-game',
@@ -54,7 +57,7 @@ const config: Config = {
           label: '문서',
         },
         {
-          href: 'http://localhost:3000',
+          href: appUrl,
           label: '게임',
           position: 'right',
         },
@@ -90,7 +93,7 @@ const config: Config = {
           items: [
             {
               label: '게임 실행',
-              href: 'http://localhost:3000',
+              href: appUrl,
             },
             {
               label: 'GitHub',
