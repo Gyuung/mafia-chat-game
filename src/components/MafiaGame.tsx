@@ -19,6 +19,14 @@ type ChatMessage = {
   system?: boolean;
 };
 
+const phaseLabels: Record<Phase, string> = {
+  setup: "대기",
+  night: "밤",
+  day: "낮",
+  vote: "투표",
+  ended: "종료",
+};
+
 const roleLabels: Record<Role, string> = {
   mafia: "마피아",
   doctor: "의사",
@@ -58,14 +66,8 @@ function getWinner(players: Player[]) {
   const mafiaCount = alive.filter((player) => player.role === "mafia").length;
   const citizenCount = alive.length - mafiaCount;
 
-  if (mafiaCount === 0) {
-    return "시민 팀 승리";
-  }
-
-  if (mafiaCount >= citizenCount) {
-    return "마피아 팀 승리";
-  }
-
+  if (mafiaCount === 0) return "시민 팀 승리";
+  if (mafiaCount >= citizenCount) return "마피아 팀 승리";
   return null;
 }
 
@@ -136,19 +138,13 @@ export function MafiaGame() {
 
   function submitChat(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     const speaker = players.find((player) => player.id === speakerId);
-    if (!speaker || !speaker.alive || !chatText.trim()) {
-      return;
-    }
+
+    if (!speaker || !speaker.alive || !chatText.trim()) return;
 
     setMessages((current) => [
       ...current,
-      {
-        id: crypto.randomUUID(),
-        sender: speaker.name,
-        text: chatText.trim(),
-      },
+      { id: crypto.randomUUID(), sender: speaker.name, text: chatText.trim() },
     ]);
     setChatText("");
   }
@@ -157,25 +153,18 @@ export function MafiaGame() {
     const target = players.find((player) => player.id === mafiaTargetId);
     const saved = doctorTargetId && doctorTargetId === mafiaTargetId;
     const inspected = players.find((player) => player.id === detectiveTargetId);
-
     let nextPlayers = players;
-    let summary = "밤이 지나갔습니다. 아무도 공격받지 않았습니다.";
 
     if (target && !saved) {
       nextPlayers = players.map((player) =>
         player.id === target.id ? { ...player, alive: false } : player,
       );
-      summary = `밤 사이 ${target.name}님이 탈락했습니다.`;
+      addSystemMessage(`밤 사이 ${target.name}님이 탈락했습니다.`);
     } else if (target && saved) {
-      summary = "의사의 보호로 밤 공격이 실패했습니다.";
+      addSystemMessage("의사의 보호로 밤 공격이 실패했습니다.");
+    } else {
+      addSystemMessage("밤이 지나갔습니다. 아무도 공격받지 않았습니다.");
     }
-
-    const result = getWinner(nextPlayers);
-    setPlayers(nextPlayers);
-    setMafiaTargetId("");
-    setDoctorTargetId("");
-    setDetectiveTargetId("");
-    addSystemMessage(summary);
 
     if (inspected) {
       addSystemMessage(
@@ -185,14 +174,10 @@ export function MafiaGame() {
       );
     }
 
-    if (result) {
-      setWinner(result);
-      setPhase("ended");
-      addSystemMessage(`${result}로 게임이 종료되었습니다.`);
-      return;
-    }
-
-    setPhase("day");
+    finishStep(nextPlayers, "day");
+    setMafiaTargetId("");
+    setDoctorTargetId("");
+    setDetectiveTargetId("");
   }
 
   function startVote() {
@@ -209,8 +194,8 @@ export function MafiaGame() {
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
     const top = sorted[0];
     const tied = sorted.length > 1 && sorted[0][1] === sorted[1][1];
-
     let nextPlayers = players;
+
     if (top && !tied) {
       const eliminated = players.find((player) => player.id === top[0]);
       if (eliminated) {
@@ -227,9 +212,13 @@ export function MafiaGame() {
       addSystemMessage("투표가 동률로 끝나 아무도 탈락하지 않았습니다.");
     }
 
+    setVotes({});
+    finishStep(nextPlayers, "night");
+  }
+
+  function finishStep(nextPlayers: Player[], nextPhase: Phase) {
     const result = getWinner(nextPlayers);
     setPlayers(nextPlayers);
-    setVotes({});
 
     if (result) {
       setWinner(result);
@@ -238,9 +227,12 @@ export function MafiaGame() {
       return;
     }
 
-    setRound((current) => current + 1);
-    setPhase("night");
-    addSystemMessage("다음 밤이 시작됩니다.");
+    if (nextPhase === "night") {
+      setRound((current) => current + 1);
+      addSystemMessage("다음 밤이 시작됩니다.");
+    }
+
+    setPhase(nextPhase);
   }
 
   function resetGame() {
@@ -259,12 +251,11 @@ export function MafiaGame() {
     <section className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8">
       <aside className="grid gap-4 self-start lg:sticky lg:top-5">
         <div className="border border-neutral-800 bg-neutral-950 p-4">
-          <p className="text-xs font-semibold text-red-300">KAKAO CHATBOT BETA</p>
+          <p className="text-xs font-semibold text-red-300">PARTY CHAT GAME</p>
           <h1 className="mt-2 text-3xl font-bold text-white">Mafia Chat Game</h1>
           <p className="mt-3 text-sm leading-6 text-neutral-400">
-            브라우저에서 바로 진행 가능한 마피아 채팅 게임 프로토타입입니다.
-            이후 카카오톡 챗봇 webhook과 연결할 수 있도록 라운드 흐름을
-            분리해 둡니다.
+            브라우저에서 바로 진행 가능한 마피아 채팅 게임입니다. 참가자를
+            입력하고 역할 배정, 밤 행동, 낮 토론, 투표를 순서대로 진행하세요.
           </p>
         </div>
 
@@ -276,7 +267,7 @@ export function MafiaGame() {
             </span>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-            <StatusItem label="단계" value={phase} />
+            <StatusItem label="단계" value={phaseLabels[phase]} />
             <StatusItem label="생존" value={`${alivePlayers.length}명`} />
             <StatusItem label="마피아" value={`${mafiaPlayers.length}명`} />
             <StatusItem label="결과" value={winner ?? "진행 중"} />
@@ -309,9 +300,8 @@ export function MafiaGame() {
 
       <main className="grid gap-4">
         {phase === "setup" && (
-          <div className="border border-neutral-800 bg-neutral-900 p-5">
-            <h2 className="text-xl font-semibold">게임방 만들기</h2>
-            <p className="mt-2 text-sm text-neutral-400">
+          <Panel title="게임방 만들기">
+            <p className="text-sm text-neutral-400">
               참가자 이름을 줄마다 입력하세요. 4명부터 시작할 수 있고 최대 10명까지
               반영됩니다.
             </p>
@@ -327,13 +317,12 @@ export function MafiaGame() {
             >
               역할 배정하고 시작
             </button>
-          </div>
+          </Panel>
         )}
 
         {phase === "night" && (
-          <div className="border border-neutral-800 bg-neutral-900 p-5">
-            <h2 className="text-xl font-semibold">밤 행동</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <Panel title="밤 행동">
+            <div className="grid gap-4 md:grid-cols-3">
               <ActionSelect
                 label="마피아 제거 대상"
                 onChange={setMafiaTargetId}
@@ -363,18 +352,13 @@ export function MafiaGame() {
             >
               밤 결과 처리
             </button>
-          </div>
+          </Panel>
         )}
 
         {(phase === "day" || phase === "vote") && (
-          <div className="border border-neutral-800 bg-neutral-900 p-5">
+          <Panel title="낮 토론 채팅">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold">낮 토론 채팅</h2>
-                <p className="mt-1 text-sm text-neutral-400">
-                  생존자만 발언할 수 있습니다.
-                </p>
-              </div>
+              <p className="text-sm text-neutral-400">생존자만 발언할 수 있습니다.</p>
               {phase === "day" && (
                 <button
                   className="bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-400"
@@ -385,7 +369,6 @@ export function MafiaGame() {
                 </button>
               )}
             </div>
-
             <form
               className="mt-4 grid gap-3 sm:grid-cols-[180px_1fr_auto]"
               onSubmit={submitChat}
@@ -414,13 +397,12 @@ export function MafiaGame() {
                 전송
               </button>
             </form>
-          </div>
+          </Panel>
         )}
 
         {phase === "vote" && (
-          <div className="border border-neutral-800 bg-neutral-900 p-5">
-            <h2 className="text-xl font-semibold">투표</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <Panel title="투표">
+            <div className="grid gap-3 md:grid-cols-2">
               {alivePlayers.map((voter) => (
                 <label className="grid gap-2 text-sm" key={voter.id}>
                   <span className="font-medium text-neutral-200">{voter.name}</span>
@@ -454,7 +436,7 @@ export function MafiaGame() {
             >
               투표 결과 처리
             </button>
-          </div>
+          </Panel>
         )}
 
         {phase === "ended" && (
@@ -502,6 +484,21 @@ export function MafiaGame() {
         </div>
       </main>
     </section>
+  );
+}
+
+function Panel({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <div className="border border-neutral-800 bg-neutral-900 p-5">
+      <h2 className="mb-4 text-xl font-semibold">{title}</h2>
+      {children}
+    </div>
   );
 }
 

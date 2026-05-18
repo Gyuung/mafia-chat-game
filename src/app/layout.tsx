@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Mafia Chat Game",
-  description: "카카오톡 챗봇 beta 입점 신청용 마피아 채팅 게임",
+  description: "브라우저에서 진행하는 마피아 채팅 게임",
 };
 
 export default function RootLayout({
