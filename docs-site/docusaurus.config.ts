@@ -101,15 +101,6 @@ const config: Config = {
             },
           ],
         },
-        {
-          title: 'Workflow',
-          items: [
-            {
-              label: '세션 이어하기',
-              to: '/docs/session-continuation',
-            },
-          ],
-        },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Mafia Chat Game.`,
     },

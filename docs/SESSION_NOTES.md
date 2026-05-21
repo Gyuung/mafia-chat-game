@@ -25,7 +25,7 @@ Last updated: 2026-05-21
 - XP, level, title, and recent play history persist in `localStorage`
 - Role images under `public/roles`
 - Log auto-scroll on new messages
-- Docusaurus docs site with rules, changelog, roadmap, session continuation, and response design notes
+- Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
 - Automatic commit script at `shared/commit-script.ts`
 
 ## Known Constraints

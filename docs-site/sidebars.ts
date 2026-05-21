@@ -6,7 +6,6 @@ const sidebars: SidebarsConfig = {
     'game-rules',
     'changelog',
     'roadmap',
-    'session-continuation',
     'platform-response-plan',
   ],
 };
