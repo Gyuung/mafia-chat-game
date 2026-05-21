@@ -22,6 +22,26 @@ type Message = {
   system?: boolean;
 };
 
+type PlayHistoryEntry = {
+  id: string;
+  endedAt: string;
+  result: string;
+  role: Role;
+  round: number;
+  survived: boolean;
+  xpGained: number;
+  levelAfter: number;
+  titleAfter: string;
+};
+
+type SavedProfile = {
+  xp: number;
+  history: PlayHistoryEntry[];
+};
+
+const PROFILE_STORAGE_KEY = "mafia-chat-game:profile:v1";
+const MAX_HISTORY_ITEMS = 10;
+
 const roleLabels: Record<Role, string> = {
   mafia: "마피아",
   doctor: "의사",
@@ -148,6 +168,37 @@ function getBotAnswer(player: Player) {
   return pickRandom(citizenAnswers);
 }
 
+function loadSavedProfile(): SavedProfile | null {
+  try {
+    if (typeof localStorage === "undefined") return null;
+
+    const rawProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!rawProfile) return null;
+
+    const parsed = JSON.parse(rawProfile) as Partial<SavedProfile>;
+    return {
+      xp: typeof parsed.xp === "number" ? parsed.xp : 0,
+      history: Array.isArray(parsed.history) ? parsed.history.slice(0, MAX_HISTORY_ITEMS) : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveProfile(profile: SavedProfile) {
+  try {
+    if (typeof localStorage === "undefined") return;
+
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+  } catch {
+    // Storage can be unavailable in private browsing or quota-restricted contexts.
+  }
+}
+
+function getInitialProfile(): SavedProfile {
+  return loadSavedProfile() ?? { xp: 0, history: [] };
+}
+
 export function MafiaGame() {
   const [phase, setPhase] = useState<Phase>("setup");
   const [round, setRound] = useState(1);
@@ -160,7 +211,7 @@ export function MafiaGame() {
   const [nightTargetId, setNightTargetId] = useState("");
   const [voteTargetId, setVoteTargetId] = useState("");
   const [winner, setWinner] = useState<string | null>(null);
-  const [xp, setXp] = useState(0);
+  const [profile, setProfile] = useState<SavedProfile>(getInitialProfile);
   const logEndRef = useRef<HTMLDivElement>(null);
 
   const me = players.find((player) => player.human) ?? null;
@@ -169,6 +220,7 @@ export function MafiaGame() {
     [players],
   );
   const visibleTargets = alivePlayers.filter((player) => player.id !== me?.id);
+  const { history: playHistory, xp } = profile;
   const level = Math.floor(xp / 100) + 1;
   const currentLevelXp = xp % 100;
   const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL ?? "http://localhost:3001";
@@ -176,6 +228,10 @@ export function MafiaGame() {
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length]);
+
+  useEffect(() => {
+    saveProfile(profile);
+  }, [profile]);
 
   function addMessage(sender: string, text: string, system = false) {
     setMessages((current) => [
@@ -192,7 +248,6 @@ export function MafiaGame() {
     setRound(1);
     setPhase("night");
     setWinner(null);
-    setXp(0);
     setQuestionTargetId("");
     setNightTargetId("");
     setVoteTargetId("");
@@ -360,8 +415,32 @@ export function MafiaGame() {
 
     if (result) {
       const gainedXp = calculateXp(result, nextPlayers);
+      const human = nextPlayers.find((player) => player.human);
       setWinner(result);
-      setXp((current) => current + gainedXp);
+      setProfile((current) => {
+        const nextXp = current.xp + gainedXp;
+        const nextLevel = Math.floor(nextXp / 100) + 1;
+
+        return {
+          xp: nextXp,
+          history: human
+            ? [
+                {
+                  id: createId("history"),
+                  endedAt: new Date().toISOString(),
+                  result,
+                  role: human.role,
+                  round,
+                  survived: human.alive,
+                  xpGained: gainedXp,
+                  levelAfter: nextLevel,
+                  titleAfter: getTitle(nextLevel),
+                },
+                ...current.history,
+              ].slice(0, MAX_HISTORY_ITEMS)
+            : current.history,
+        };
+      });
       setPhase("ended");
       addMessage(
         "사회자",
@@ -388,7 +467,6 @@ export function MafiaGame() {
     setNightTargetId("");
     setVoteTargetId("");
     setWinner(null);
-    setXp(0);
   }
 
   return (
@@ -461,8 +539,33 @@ export function MafiaGame() {
                 style={{ width: `${currentLevelXp}%` }}
               />
             </div>
+            <p className="mt-2 text-xs text-neutral-500">
+              총 {xp} XP · {getTitle(level)}
+            </p>
           </div>
         </div>
+
+        {playHistory.length > 0 && (
+          <div className="border border-neutral-800 bg-neutral-900 p-4">
+            <h2 className="text-lg font-semibold">플레이 기록</h2>
+            <div className="mt-3 grid gap-2">
+              {playHistory.slice(0, 3).map((entry) => (
+                <div
+                  className="border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm"
+                  key={entry.id}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold text-white">{entry.result}</span>
+                    <span className="text-xs text-red-300">+{entry.xpGained} XP</span>
+                  </div>
+                  <p className="mt-1 text-xs text-neutral-400">
+                    {roleLabels[entry.role]} · {entry.round}R · Lv. {entry.levelAfter}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {players.length > 0 && (
           <div className="border border-neutral-800 bg-neutral-900 p-4">
