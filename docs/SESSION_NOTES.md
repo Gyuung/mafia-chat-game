@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-05-18
+Last updated: 2026-05-21
 
 ## Current State
 
@@ -22,6 +22,7 @@ Last updated: 2026-05-18
 - NPC voting behavior influenced by suspicion
 - Win/loss resolution
 - Emoji-style result card with XP, level, and title
+- XP, level, title, and recent play history persist in `localStorage`
 - Role images under `public/roles`
 - Log auto-scroll on new messages
 - Docusaurus docs site with rules, changelog, roadmap, session continuation, and response design notes
@@ -29,7 +30,6 @@ Last updated: 2026-05-18
 
 ## Known Constraints
 
-- XP is currently session-only and resets on new game/page reload.
 - NPC dialogue is rule-based, not LLM-generated.
 - No persistent user profile or database yet.
 - No production chat-platform adapter yet.
@@ -37,20 +37,19 @@ Last updated: 2026-05-18
 
 ## Next Session TODO
 
-1. Persist XP, level, title, and play history in `localStorage`.
-2. Improve result card with richer emoji summary:
+1. Improve result card with richer emoji summary:
    - role
    - team result
    - XP gained
    - level progress
    - title unlock
    - key round events
-3. Add a daily case mode and daily reward concept.
-4. Add a chat-platform response preview page or panel:
+2. Add a daily case mode and daily reward concept.
+3. Add a chat-platform response preview page or panel:
    - command examples
    - button choices
    - compact result card text
-5. Update `docs-site/docs/changelog.md` whenever gameplay behavior changes.
+4. Update `docs-site/docs/changelog.md` whenever gameplay behavior changes.
 
 ## Start Checklist For Codex
 
