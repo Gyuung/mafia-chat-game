@@ -47,7 +47,7 @@
 When starting a new Codex session in this repository:
 
 1. If the user asks how to continue, point them to `CONTINUE.md`.
-2. Read `AGENTS.md`, `README.md`, and `docs/SESSION_NOTES.md`.
+2. Read `AGENTS.md`, `README.md`, `docs/SESSION_NOTES.md`, and `docs-site/docs/changelog.md`.
 3. Check current git state with `git status --short`.
 4. Check recent work with `git log --oneline -8`.
 5. Inspect the docs front at `docs-site/docs/` when changing rules, roadmap, or changelog.
