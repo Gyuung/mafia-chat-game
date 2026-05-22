@@ -64,6 +64,16 @@ type DailyCase = {
   rewardXp: number;
 };
 
+type PreviewCommand = {
+  command: string;
+  response: string;
+};
+
+type PreviewActionGroup = {
+  label: string;
+  actions: string[];
+};
+
 const PROFILE_STORAGE_KEY = "mafia-chat-game:profile:v1";
 const MAX_HISTORY_ITEMS = 10;
 
@@ -147,6 +157,36 @@ const botLines = [
   "투표 전까지 한 명씩 더 심문해보죠.",
   "마피아라면 지금 시민인 척 방향을 틀 것 같아요.",
   "발언이 적은 사람을 그냥 넘기면 안 될 것 같아요.",
+];
+
+const previewCommands: PreviewCommand[] = [
+  {
+    command: "/마피아 시작 6명",
+    response: "6인 게임을 만들고 역할 카드를 비공개로 보냅니다.",
+  },
+  {
+    command: "/마피아 오늘의사건",
+    response: "오늘의 사건 브리핑과 첫 완료 보너스를 보여줍니다.",
+  },
+  {
+    command: "/마피아 투표 검은 우산",
+    response: "검은 우산에게 1표를 기록하고 남은 투표 상태를 갱신합니다.",
+  },
+];
+
+const previewActionGroups: PreviewActionGroup[] = [
+  {
+    label: "밤 행동",
+    actions: ["검은 우산", "붉은 스카프", "푸른 노트"],
+  },
+  {
+    label: "낮 심문",
+    actions: ["회색 후드 심문", "낡은 시계 심문", "무음 알림 심문"],
+  },
+  {
+    label: "투표",
+    actions: ["검은 우산 투표", "붉은 스카프 투표", "기권"],
+  },
 ];
 
 function shuffle<T>(items: T[]) {
@@ -787,6 +827,8 @@ export function MafiaGame() {
           </Panel>
         )}
 
+        {phase === "setup" && <ChatResponsePreview />}
+
         {phase === "night" && me && (
           <Panel title="밤 행동">
             {me.role === "citizen" ? (
@@ -1061,6 +1103,56 @@ function ResultStat({ label, value }: { label: string; value: string }) {
       <p className="text-neutral-400">{label}</p>
       <p className="mt-1 font-semibold text-white">{value}</p>
     </div>
+  );
+}
+
+function ChatResponsePreview() {
+  return (
+    <Panel title="채팅 응답 미리보기">
+      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <div className="border border-neutral-800 bg-neutral-950 p-4">
+          <h3 className="text-sm font-semibold text-white">명령 예시</h3>
+          <div className="mt-3 grid gap-3">
+            {previewCommands.map((item) => (
+              <div className="border border-neutral-800 bg-neutral-900 p-3" key={item.command}>
+                <p className="font-mono text-sm text-red-200">{item.command}</p>
+                <p className="mt-2 text-sm leading-6 text-neutral-400">{item.response}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border border-neutral-800 bg-neutral-950 p-4">
+          <h3 className="text-sm font-semibold text-white">버튼 선택지</h3>
+          <div className="mt-3 grid gap-3">
+            {previewActionGroups.map((group) => (
+              <div key={group.label}>
+                <p className="text-xs font-semibold text-neutral-500">{group.label}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {group.actions.map((action) => (
+                    <span
+                      className="border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs font-semibold text-neutral-200"
+                      key={action}
+                    >
+                      {action}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 border border-red-900 bg-red-950/30 p-4">
+        <h3 className="text-sm font-semibold text-red-100">결과 카드 축약 예시</h3>
+        <div className="mt-3 grid gap-2 text-sm leading-6 text-neutral-200">
+          <p>🏁 시민 팀 승리 · 내 역할 경찰</p>
+          <p>💰 +92 XP · Lv. 3 진행도 68/100</p>
+          <p>🏷️ 신입 탐정 · 주요 사건: 투표 결과 검은 우산 탈락</p>
+        </div>
+      </div>
+    </Panel>
   );
 }
 
