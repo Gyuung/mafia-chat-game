@@ -23,6 +23,7 @@ Last updated: 2026-05-22
 - Win/loss resolution
 - Emoji-style result card with XP, level, and title
 - XP, level, title, and recent play history persist in `localStorage`
+- Daily case mode offers a date-based briefing and once-per-day bonus XP
 - Result card summarizes role, team outcome, XP gained, level progress, title changes, and key events
 - Role images under `public/roles`
 - Log auto-scroll on new messages
@@ -38,11 +39,11 @@ Last updated: 2026-05-22
 
 ## Next Session TODO
 
-1. Add a daily case mode and daily reward concept.
-2. Add a chat-platform response preview page or panel:
+1. Add a chat-platform response preview page or panel:
    - command examples
    - button choices
    - compact result card text
+2. Expand daily case variety and tune reward balance after playtesting.
 3. Update `docs-site/docs/changelog.md` whenever gameplay behavior changes.
 
 ## Start Checklist For Codex
