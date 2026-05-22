@@ -50,8 +50,8 @@ export default function Home(): ReactNode {
               <p>게임 기능과 문서 구조 변경을 버전별로 기록합니다.</p>
             </article>
             <article>
-              <h3>작업 이어가기</h3>
-              <p>Codex 세션이 끊겨도 다음 작업자가 같은 맥락에서 재개할 수 있게 합니다.</p>
+              <h3>응답 설계</h3>
+              <p>채팅 플랫폼에서 보여줄 명령, 버튼, 결과 카드 표현을 정리합니다.</p>
             </article>
           </div>
         </section>
