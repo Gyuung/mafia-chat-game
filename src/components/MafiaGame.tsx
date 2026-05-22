@@ -63,7 +63,15 @@ const roleImages: Record<Role, string> = {
   citizen: "/roles/citizen.png",
 };
 
-const botNames = ["민서", "지아", "현우", "서윤", "도윤", "하준", "유나"];
+const botNames = [
+  "회색 후드",
+  "낡은 시계",
+  "검은 우산",
+  "붉은 스카프",
+  "푸른 노트",
+  "하얀 장갑",
+  "무음 알림",
+];
 
 const citizenAnswers = [
   "저는 어젯밤에 특별히 한 행동은 없어요. 발언 흐름으로 봐야 할 것 같아요.",
