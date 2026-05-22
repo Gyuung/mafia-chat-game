@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-05-21
+Last updated: 2026-05-22
 
 ## Current State
 
@@ -23,6 +23,7 @@ Last updated: 2026-05-21
 - Win/loss resolution
 - Emoji-style result card with XP, level, and title
 - XP, level, title, and recent play history persist in `localStorage`
+- Result card summarizes role, team outcome, XP gained, level progress, title changes, and key events
 - Role images under `public/roles`
 - Log auto-scroll on new messages
 - Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
@@ -37,19 +38,12 @@ Last updated: 2026-05-21
 
 ## Next Session TODO
 
-1. Improve result card with richer emoji summary:
-   - role
-   - team result
-   - XP gained
-   - level progress
-   - title unlock
-   - key round events
-2. Add a daily case mode and daily reward concept.
-3. Add a chat-platform response preview page or panel:
+1. Add a daily case mode and daily reward concept.
+2. Add a chat-platform response preview page or panel:
    - command examples
    - button choices
    - compact result card text
-4. Update `docs-site/docs/changelog.md` whenever gameplay behavior changes.
+3. Update `docs-site/docs/changelog.md` whenever gameplay behavior changes.
 
 ## Start Checklist For Codex
 
