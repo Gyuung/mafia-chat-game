@@ -25,6 +25,7 @@ Last updated: 2026-05-22
 - XP, level, title, and recent play history persist in `localStorage`
 - Daily case mode offers a date-based briefing and once-per-day bonus XP
 - Result card summarizes role, team outcome, XP gained, level progress, title changes, and key events
+- Setup screen includes a chat response preview for commands, button choices, and compact result text
 - Role images under `public/roles`
 - Log auto-scroll on new messages
 - Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
@@ -39,11 +40,8 @@ Last updated: 2026-05-22
 
 ## Next Session TODO
 
-1. Add a chat-platform response preview page or panel:
-   - command examples
-   - button choices
-   - compact result card text
-2. Expand daily case variety and tune reward balance after playtesting.
+1. Expand daily case variety and tune reward balance after playtesting.
+2. Add voting reason logs so NPC choices are easier to inspect.
 3. Update `docs-site/docs/changelog.md` whenever gameplay behavior changes.
 
 ## Start Checklist For Codex
