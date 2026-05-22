@@ -39,6 +39,20 @@ type SavedProfile = {
   history: PlayHistoryEntry[];
 };
 
+type GameResultSummary = {
+  result: string;
+  role: Role;
+  team: "시민 팀" | "마피아 팀";
+  xpGained: number;
+  levelBefore: number;
+  levelAfter: number;
+  levelProgress: number;
+  titleBefore: string;
+  titleAfter: string;
+  survived: boolean;
+  keyEvents: string[];
+};
+
 const PROFILE_STORAGE_KEY = "mafia-chat-game:profile:v1";
 const MAX_HISTORY_ITEMS = 10;
 
@@ -168,6 +182,10 @@ function nightActionLabel(role: Role) {
   return "대상";
 }
 
+function teamLabel(role: Role): GameResultSummary["team"] {
+  return role === "mafia" ? "마피아 팀" : "시민 팀";
+}
+
 function getBotAnswer(player: Player) {
   if (player.role === "mafia") return pickRandom(mafiaAnswers);
   if (player.role === "doctor" || player.role === "detective") {
@@ -219,6 +237,8 @@ export function MafiaGame() {
   const [nightTargetId, setNightTargetId] = useState("");
   const [voteTargetId, setVoteTargetId] = useState("");
   const [winner, setWinner] = useState<string | null>(null);
+  const [gameResultSummary, setGameResultSummary] =
+    useState<GameResultSummary | null>(null);
   const [profile, setProfile] = useState<SavedProfile>(getInitialProfile);
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -256,6 +276,7 @@ export function MafiaGame() {
     setRound(1);
     setPhase("night");
     setWinner(null);
+    setGameResultSummary(null);
     setQuestionTargetId("");
     setNightTargetId("");
     setVoteTargetId("");
@@ -321,6 +342,7 @@ export function MafiaGame() {
     const alive = nextPlayers.filter((player) => player.alive);
     const mafias = alive.filter((player) => player.role === "mafia");
     const doctor = alive.find((player) => player.role === "doctor");
+    let nightEvent = "밤이 조용히 지나갔습니다.";
 
     if (me.role === "mafia") {
       mafiaTargetId = nightTargetId;
@@ -344,18 +366,20 @@ export function MafiaGame() {
     }
 
     if (mafias.length === 0) {
-      addMessage("사회자", "밤이 조용히 지나갔습니다.", true);
+      addMessage("사회자", nightEvent, true);
     } else if (mafiaTargetId && mafiaTargetId !== protectedId) {
       nextPlayers = nextPlayers.map((player) =>
         player.id === mafiaTargetId ? { ...player, alive: false } : player,
       );
       const target = players.find((player) => player.id === mafiaTargetId);
-      addMessage("사회자", `밤 사이 ${target?.name ?? "누군가"}님이 탈락했습니다.`, true);
+      nightEvent = `밤 사이 ${target?.name ?? "누군가"}님이 탈락했습니다.`;
+      addMessage("사회자", nightEvent, true);
     } else {
-      addMessage("사회자", "의사의 보호로 밤 공격이 실패했습니다.", true);
+      nightEvent = "의사의 보호로 밤 공격이 실패했습니다.";
+      addMessage("사회자", nightEvent, true);
     }
 
-    finishStep(nextPlayers, "day");
+    finishStep(nextPlayers, "day", nightEvent);
     setNightTargetId("");
   }
 
@@ -383,6 +407,7 @@ export function MafiaGame() {
     const sorted = Object.entries(votes).sort((a, b) => b[1] - a[1]);
     const tied = sorted.length > 1 && sorted[0][1] === sorted[1][1];
     let nextPlayers = players;
+    let voteEvent = "투표가 동률로 끝나 아무도 탈락하지 않았습니다.";
 
     if (!tied) {
       const eliminatedId = sorted[0][0];
@@ -390,16 +415,13 @@ export function MafiaGame() {
       nextPlayers = players.map((player) =>
         player.id === eliminatedId ? { ...player, alive: false } : player,
       );
-      addMessage(
-        "사회자",
-        `투표 결과 ${eliminated?.name ?? "누군가"}님이 탈락했습니다.`,
-        true,
-      );
+      voteEvent = `투표 결과 ${eliminated?.name ?? "누군가"}님이 탈락했습니다.`;
+      addMessage("사회자", voteEvent, true);
     } else {
-      addMessage("사회자", "투표가 동률로 끝나 아무도 탈락하지 않았습니다.", true);
+      addMessage("사회자", voteEvent, true);
     }
 
-    finishStep(nextPlayers, "night");
+    finishStep(nextPlayers, "night", voteEvent);
     setVoteTargetId("");
   }
 
@@ -417,14 +439,40 @@ export function MafiaGame() {
     return pickRandom(choices);
   }
 
-  function finishStep(nextPlayers: Player[], nextPhase: Phase) {
+  function finishStep(nextPlayers: Player[], nextPhase: Phase, latestEvent: string) {
     const result = getWinner(nextPlayers);
     setPlayers(nextPlayers);
 
     if (result) {
       const gainedXp = calculateXp(result, nextPlayers);
       const human = nextPlayers.find((player) => player.human);
+      const nextXp = profile.xp + gainedXp;
+      const levelBefore = Math.floor(profile.xp / 100) + 1;
+      const levelAfter = Math.floor(nextXp / 100) + 1;
+      const recentSystemEvents = messages
+        .filter((message) => message.system)
+        .map((message) => message.text)
+        .slice(-3);
+      const keyEvents = [...recentSystemEvents, latestEvent]
+        .filter((event, index, events) => events.indexOf(event) === index)
+        .slice(-4);
+
       setWinner(result);
+      if (human) {
+        setGameResultSummary({
+          result,
+          role: human.role,
+          team: teamLabel(human.role),
+          xpGained: gainedXp,
+          levelBefore,
+          levelAfter,
+          levelProgress: nextXp % 100,
+          titleBefore: getTitle(levelBefore),
+          titleAfter: getTitle(levelAfter),
+          survived: human.alive,
+          keyEvents,
+        });
+      }
       setProfile((current) => {
         const nextXp = current.xp + gainedXp;
         const nextLevel = Math.floor(nextXp / 100) + 1;
@@ -475,6 +523,7 @@ export function MafiaGame() {
     setNightTargetId("");
     setVoteTargetId("");
     setWinner(null);
+    setGameResultSummary(null);
   }
 
   return (
@@ -738,27 +787,13 @@ export function MafiaGame() {
         )}
 
         {phase === "ended" && (
-          <div className="border border-red-500 bg-red-950/40 p-5">
-            <p className="text-sm font-semibold text-red-200">🎭 게임 결과</p>
-            <h2 className="mt-2 text-2xl font-bold text-white">{winner}</h2>
-            <p className="mt-2 text-sm text-red-100">
-              게임이 종료되었습니다. 참가자 역할을 확인한 뒤 새 게임을 시작할 수 있습니다.
-            </p>
-            {me && (
-              <div className="mt-4 grid gap-2 border border-red-900 bg-neutral-950/70 p-4 text-sm text-neutral-200">
-                <p>🃏 내 역할: {roleLabels[me.role]}</p>
-                <p>⭐ 현재 레벨: Lv. {level}</p>
-                <p>🏷️ 칭호: {getTitle(level)}</p>
-              </div>
-            )}
-            <button
-              className="mt-4 bg-white px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-red-100"
-              onClick={resetGame}
-              type="button"
-            >
-              새 게임
-            </button>
-          </div>
+          <ResultCard
+            fallbackLevel={level}
+            fallbackTitle={getTitle(level)}
+            onReset={resetGame}
+            summary={gameResultSummary}
+            winner={winner}
+          />
         )}
 
         <div className="min-h-80 border border-neutral-800 bg-neutral-950 p-5">
@@ -815,6 +850,106 @@ function getTitle(level: number) {
   if (level >= 7) return "심문 전문가";
   if (level >= 4) return "동네 추리왕";
   return "신입 탐정";
+}
+
+function ResultCard({
+  fallbackLevel,
+  fallbackTitle,
+  onReset,
+  summary,
+  winner,
+}: {
+  fallbackLevel: number;
+  fallbackTitle: string;
+  onReset: () => void;
+  summary: GameResultSummary | null;
+  winner: string | null;
+}) {
+  const titleUnlocked =
+    summary && summary.titleBefore !== summary.titleAfter
+      ? `${summary.titleBefore} → ${summary.titleAfter}`
+      : summary?.titleAfter ?? fallbackTitle;
+
+  return (
+    <div className="border border-red-500 bg-red-950/40 p-5">
+      <p className="text-sm font-semibold text-red-200">🎭 게임 결과</p>
+      <h2 className="mt-2 text-2xl font-bold text-white">
+        {summary?.result ?? winner}
+      </h2>
+      <p className="mt-2 text-sm text-red-100">
+        게임이 종료되었습니다. 참가자 역할을 확인한 뒤 새 게임을 시작할 수 있습니다.
+      </p>
+
+      {summary ? (
+        <>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <ResultStat label="🃏 내 역할" value={roleLabels[summary.role]} />
+            <ResultStat
+              label="🏁 팀 결과"
+              value={`${summary.team} · ${
+                summary.result.startsWith(summary.team) ? "승리" : "패배"
+              }`}
+            />
+            <ResultStat label="💰 획득 XP" value={`+${summary.xpGained} XP`} />
+            <ResultStat
+              label="⭐ 레벨"
+              value={`Lv. ${summary.levelBefore} → Lv. ${summary.levelAfter}`}
+            />
+            <ResultStat label="🏷️ 칭호" value={titleUnlocked} />
+            <ResultStat label="🫀 생존" value={summary.survived ? "생존" : "탈락"} />
+          </div>
+
+          <div className="mt-4 border border-red-900 bg-neutral-950/70 p-4">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="font-semibold text-white">
+                Lv. {summary.levelAfter} 진행도
+              </span>
+              <span className="text-neutral-400">{summary.levelProgress}/100 XP</span>
+            </div>
+            <div className="mt-2 h-2 bg-neutral-800">
+              <div
+                className="h-full bg-red-500"
+                style={{ width: `${summary.levelProgress}%` }}
+              />
+            </div>
+          </div>
+
+          {summary.keyEvents.length > 0 && (
+            <div className="mt-4 border border-neutral-800 bg-neutral-950/70 p-4">
+              <h3 className="text-sm font-semibold text-white">📌 주요 사건</h3>
+              <ul className="mt-3 grid gap-2 text-sm leading-6 text-neutral-300">
+                {summary.keyEvents.map((event) => (
+                  <li key={event}>• {event}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="mt-4 grid gap-2 border border-red-900 bg-neutral-950/70 p-4 text-sm text-neutral-200">
+          <p>⭐ 현재 레벨: Lv. {fallbackLevel}</p>
+          <p>🏷️ 칭호: {fallbackTitle}</p>
+        </div>
+      )}
+
+      <button
+        className="mt-4 bg-white px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-red-100"
+        onClick={onReset}
+        type="button"
+      >
+        새 게임
+      </button>
+    </div>
+  );
+}
+
+function ResultStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border border-red-900 bg-neutral-950/70 p-3 text-sm">
+      <p className="text-neutral-400">{label}</p>
+      <p className="mt-1 font-semibold text-white">{value}</p>
+    </div>
+  );
 }
 
 function Panel({
