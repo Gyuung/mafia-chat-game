@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Role = "mafia" | "doctor" | "detective" | "citizen";
 type Phase = "setup" | "night" | "day" | "vote" | "ended";
+type GameMode = "normal" | "daily";
 
 type Player = {
   id: string;
@@ -37,6 +38,7 @@ type PlayHistoryEntry = {
 type SavedProfile = {
   xp: number;
   history: PlayHistoryEntry[];
+  lastDailyRewardDate?: string;
 };
 
 type GameResultSummary = {
@@ -51,10 +53,42 @@ type GameResultSummary = {
   titleAfter: string;
   survived: boolean;
   keyEvents: string[];
+  dailyCaseTitle?: string;
+  dailyRewardXp: number;
+  dailyRewardClaimed: boolean;
+};
+
+type DailyCase = {
+  title: string;
+  briefing: string;
+  rewardXp: number;
 };
 
 const PROFILE_STORAGE_KEY = "mafia-chat-game:profile:v1";
 const MAX_HISTORY_ITEMS = 10;
+
+const dailyCases: DailyCase[] = [
+  {
+    title: "정전된 역 대합실",
+    briefing: "불이 꺼진 사이 한 명이 사라졌습니다. 조용했던 참가자의 발언을 유심히 보세요.",
+    rewardXp: 25,
+  },
+  {
+    title: "비 내리는 골목 회의",
+    briefing: "발자국이 겹쳐 단서가 흐려졌습니다. 투표 전 심문을 한 번 더 아끼지 마세요.",
+    rewardXp: 25,
+  },
+  {
+    title: "잠긴 라운지의 속삭임",
+    briefing: "모두가 같은 방에 있었지만 진술이 어긋납니다. 방어적인 답변을 기록하세요.",
+    rewardXp: 30,
+  },
+  {
+    title: "새벽 항구의 호출",
+    briefing: "마지막 무전 이후 항구가 조용해졌습니다. 밤 행동 결과와 낮 발언을 함께 보세요.",
+    rewardXp: 30,
+  },
+];
 
 const roleLabels: Record<Role, string> = {
   mafia: "마피아",
@@ -125,6 +159,19 @@ function createId(prefix: string) {
 
 function pickRandom<T>(items: T[]) {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+function getTodayKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDailyCase(todayKey: string) {
+  const seed = [...todayKey].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+  return dailyCases[seed % dailyCases.length];
 }
 
 function createPlayers(myName: string, count: number): Player[] {
@@ -205,6 +252,10 @@ function loadSavedProfile(): SavedProfile | null {
     return {
       xp: typeof parsed.xp === "number" ? parsed.xp : 0,
       history: Array.isArray(parsed.history) ? parsed.history.slice(0, MAX_HISTORY_ITEMS) : [],
+      lastDailyRewardDate:
+        typeof parsed.lastDailyRewardDate === "string"
+          ? parsed.lastDailyRewardDate
+          : undefined,
     };
   } catch {
     return null;
@@ -237,11 +288,15 @@ export function MafiaGame() {
   const [nightTargetId, setNightTargetId] = useState("");
   const [voteTargetId, setVoteTargetId] = useState("");
   const [winner, setWinner] = useState<string | null>(null);
+  const [gameMode, setGameMode] = useState<GameMode>("normal");
   const [gameResultSummary, setGameResultSummary] =
     useState<GameResultSummary | null>(null);
   const [profile, setProfile] = useState<SavedProfile>(getInitialProfile);
   const logEndRef = useRef<HTMLDivElement>(null);
 
+  const todayKey = getTodayKey();
+  const dailyCase = getDailyCase(todayKey);
+  const dailyRewardAvailable = profile.lastDailyRewardDate !== todayKey;
   const me = players.find((player) => player.human) ?? null;
   const alivePlayers = useMemo(
     () => players.filter((player) => player.alive),
@@ -268,13 +323,18 @@ export function MafiaGame() {
     ]);
   }
 
-  function startGame() {
+  function startGame(mode: GameMode = "normal") {
     const createdPlayers = createPlayers(myName.trim() || "나", playerCount);
     const human = createdPlayers.find((player) => player.human);
+    const intro =
+      mode === "daily"
+        ? `오늘의 사건 '${dailyCase.title}'이 시작되었습니다. ${dailyCase.briefing} 당신의 역할은 ${roleLabels[human?.role ?? "citizen"]}입니다.`
+        : `게임이 시작되었습니다. 당신의 역할은 ${roleLabels[human?.role ?? "citizen"]}입니다.`;
 
     setPlayers(createdPlayers);
     setRound(1);
     setPhase("night");
+    setGameMode(mode);
     setWinner(null);
     setGameResultSummary(null);
     setQuestionTargetId("");
@@ -284,7 +344,7 @@ export function MafiaGame() {
       {
         id: createId("msg"),
         sender: "사회자",
-        text: `게임이 시작되었습니다. 당신의 역할은 ${roleLabels[human?.role ?? "citizen"]}입니다.`,
+        text: intro,
         system: true,
       },
     ]);
@@ -444,8 +504,12 @@ export function MafiaGame() {
     setPlayers(nextPlayers);
 
     if (result) {
-      const gainedXp = calculateXp(result, nextPlayers);
+      const baseXp = calculateXp(result, nextPlayers);
       const human = nextPlayers.find((player) => player.human);
+      const dailyRewardClaimed =
+        gameMode === "daily" && profile.lastDailyRewardDate !== todayKey;
+      const dailyRewardXp = dailyRewardClaimed ? dailyCase.rewardXp : 0;
+      const gainedXp = baseXp + dailyRewardXp;
       const nextXp = profile.xp + gainedXp;
       const levelBefore = Math.floor(profile.xp / 100) + 1;
       const levelAfter = Math.floor(nextXp / 100) + 1;
@@ -471,14 +535,22 @@ export function MafiaGame() {
           titleAfter: getTitle(levelAfter),
           survived: human.alive,
           keyEvents,
+          dailyCaseTitle: gameMode === "daily" ? dailyCase.title : undefined,
+          dailyRewardXp,
+          dailyRewardClaimed,
         });
       }
       setProfile((current) => {
         const nextXp = current.xp + gainedXp;
         const nextLevel = Math.floor(nextXp / 100) + 1;
+        const shouldClaimDailyReward =
+          gameMode === "daily" && current.lastDailyRewardDate !== todayKey;
 
         return {
           xp: nextXp,
+          lastDailyRewardDate: shouldClaimDailyReward
+            ? todayKey
+            : current.lastDailyRewardDate,
           history: human
             ? [
                 {
@@ -523,6 +595,7 @@ export function MafiaGame() {
     setNightTargetId("");
     setVoteTargetId("");
     setWinner(null);
+    setGameMode("normal");
     setGameResultSummary(null);
   }
 
@@ -680,10 +753,36 @@ export function MafiaGame() {
             </div>
             <button
               className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400"
-              onClick={startGame}
+              onClick={() => startGame()}
               type="button"
             >
               역할 받고 시작
+            </button>
+          </Panel>
+        )}
+
+        {phase === "setup" && (
+          <Panel title="오늘의 사건">
+            <div className="border border-red-900 bg-red-950/30 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-red-200">{todayKey}</p>
+                <span className="bg-neutral-950 px-2 py-1 text-xs font-semibold text-red-200">
+                  {dailyRewardAvailable
+                    ? `첫 완료 +${dailyCase.rewardXp} XP`
+                    : "오늘 보상 수령 완료"}
+                </span>
+              </div>
+              <h2 className="mt-2 text-xl font-bold text-white">{dailyCase.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-red-100">
+                {dailyCase.briefing}
+              </p>
+            </div>
+            <button
+              className="mt-5 bg-white px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-red-100"
+              onClick={() => startGame("daily")}
+              type="button"
+            >
+              오늘의 사건 시작
             </button>
           </Panel>
         )}
@@ -883,6 +982,9 @@ function ResultCard({
       {summary ? (
         <>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {summary.dailyCaseTitle && (
+              <ResultStat label="🗓️ 오늘의 사건" value={summary.dailyCaseTitle} />
+            )}
             <ResultStat label="🃏 내 역할" value={roleLabels[summary.role]} />
             <ResultStat
               label="🏁 팀 결과"
@@ -891,6 +993,16 @@ function ResultCard({
               }`}
             />
             <ResultStat label="💰 획득 XP" value={`+${summary.xpGained} XP`} />
+            {summary.dailyCaseTitle && (
+              <ResultStat
+                label="🎁 데일리 보상"
+                value={
+                  summary.dailyRewardClaimed
+                    ? `+${summary.dailyRewardXp} XP`
+                    : "오늘 이미 수령"
+                }
+              />
+            )}
             <ResultStat
               label="⭐ 레벨"
               value={`Lv. ${summary.levelBefore} → Lv. ${summary.levelAfter}`}
