@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-05-22
+Last updated: 2026-05-23
 
 ## Current State
 
@@ -26,6 +26,7 @@ Last updated: 2026-05-22
 - Daily case mode offers a date-based briefing and once-per-day bonus XP
 - Result card summarizes role, team outcome, XP gained, level progress, title changes, and key events
 - Setup screen includes a chat response preview for commands, button choices, and compact result text
+- Vote decisions from NPCs are logged with reasons in the progress log
 - Role images under `public/roles`
 - Log auto-scroll on new messages
 - Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
@@ -41,8 +42,8 @@ Last updated: 2026-05-22
 ## Next Session TODO
 
 1. Expand daily case variety and tune reward balance after playtesting.
-2. Add voting reason logs so NPC choices are easier to inspect.
-3. Update `docs-site/docs/changelog.md` whenever gameplay behavior changes.
+2. Tune NPC vote bias after observing the new vote reason logs.
+3. Add a compact vote summary to the result card if the new logs feel too verbose.
 
 ## Start Checklist For Codex
 
