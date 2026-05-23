@@ -74,6 +74,11 @@ type PreviewActionGroup = {
   actions: string[];
 };
 
+type VoteDecision = {
+  target: Player;
+  reason: string;
+};
+
 const PROFILE_STORAGE_KEY = "mafia-chat-game:profile:v1";
 const MAX_HISTORY_ITEMS = 10;
 
@@ -495,13 +500,23 @@ export function MafiaGame() {
 
     const alive = players.filter((player) => player.alive);
     const votes: Record<string, number> = { [voteTargetId]: 1 };
+    const humanVoteTarget = alive.find((player) => player.id === voteTargetId);
+
+    if (humanVoteTarget) {
+      addMessage("사회자", `${me.name}님은 ${humanVoteTarget.name}님에게 투표했습니다.`, true);
+    }
 
     alive
       .filter((player) => !player.human)
       .forEach((bot) => {
         const choices = alive.filter((target) => target.id !== bot.id);
-        const target = chooseBotVoteTarget(bot, choices);
-        votes[target.id] = (votes[target.id] ?? 0) + 1;
+        const decision = chooseBotVoteTarget(bot, choices);
+        votes[decision.target.id] = (votes[decision.target.id] ?? 0) + 1;
+        addMessage(
+          "사회자",
+          `${bot.name}님은 ${decision.target.name}님에게 투표했습니다. ${decision.reason}`,
+          true,
+        );
       });
 
     const sorted = Object.entries(votes).sort((a, b) => b[1] - a[1]);
@@ -525,18 +540,37 @@ export function MafiaGame() {
     setVoteTargetId("");
   }
 
-  function chooseBotVoteTarget(bot: Player, choices: Player[]) {
+  function chooseBotVoteTarget(bot: Player, choices: Player[]): VoteDecision {
     const nonMafia = choices.filter((player) => player.role !== "mafia");
     const mafia = choices.filter((player) => player.role === "mafia");
     const mostSuspicious = [...choices].sort((a, b) => b.suspicion - a.suspicion)[0];
 
-    if (mostSuspicious?.suspicion > 1 && Math.random() > 0.35) return mostSuspicious;
-    if (bot.role === "mafia" && nonMafia.length > 0) return pickRandom(nonMafia);
+    if (mostSuspicious?.suspicion > 1 && Math.random() > 0.35) {
+      return {
+        target: mostSuspicious,
+        reason: `의심도가 ${mostSuspicious.suspicion}이라 우선 지목했습니다.`,
+      };
+    }
+    if (bot.role === "mafia" && nonMafia.length > 0) {
+      const target = pickRandom(nonMafia);
+      return {
+        target,
+        reason: "마피아라 시민 쪽으로 표를 돌렸습니다.",
+      };
+    }
     if (bot.role !== "mafia" && mafia.length > 0 && Math.random() > 0.55) {
-      return pickRandom(mafia);
+      const target = pickRandom(mafia);
+      return {
+        target,
+        reason: "마피아 후보를 우선 압박했습니다.",
+      };
     }
 
-    return pickRandom(choices);
+    const target = pickRandom(choices);
+    return {
+      target,
+      reason: "뚜렷한 단서가 없어 임의로 선택했습니다.",
+    };
   }
 
   function finishStep(nextPlayers: Player[], nextPhase: Phase, latestEvent: string) {
