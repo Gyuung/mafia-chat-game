@@ -34,7 +34,7 @@ Last updated: 2026-05-23
 - Role images under `public/roles`
 - Log auto-scroll on new messages
 - Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
-- Automatic commit script at `shared/commit-script.ts` (Refactored for Gemini & multi-engine support)
+- Automatic commit script at `shared/commit-script.ts` (Fixed default engine and Windows support)
 
 ## Known Constraints
 

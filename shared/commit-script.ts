@@ -6,7 +6,6 @@ import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
-// Windows에서 한글 깨짐 방지를 위해 터미널 인코딩을 UTF-8로 설정
 if (process.platform === "win32") {
   try {
     const system32 = process.env.SystemRoot 
@@ -25,10 +24,15 @@ type CommitPlan = {
   }>;
 };
 
-const AI_ENGINE = process.env.AI_ENGINE || "codex";
+const AI_ENGINE = process.env.AI_ENGINE;
 const AI_MODEL = process.env.AI_MODEL || process.env.CODEX_MODEL;
 const COMMIT_PLAN = process.env.COMMIT_PLAN;
 const MAX_DIFF_CHARS = 60_000;
+
+const ARGS = process.argv.slice(2);
+const IS_WATCH = ARGS.includes("--watch") || ARGS.includes("-w");
+const IS_PUSH = ARGS.includes("--push") || ARGS.includes("-p");
+
 const commitTypes = [
   "✨ feat - 새로운 기능 추가",
   "🐛 fix - 버그 수정",
@@ -39,24 +43,54 @@ const commitTypes = [
   "🧹 chore - 빌드, 패키지, 설정, 기타 작업",
 ].join("\n");
 
-async function git(args: string[]) {
-  return execFileAsync("git", args, {
-    encoding: "utf8",
+let cachedGitPath: string | null = null;
+
+async function git(args: string[]): Promise<{ stdout: string; stderr: string }> {
+  const options = {
+    encoding: "utf8" as const,
     maxBuffer: 1024 * 1024 * 20,
-  });
+    shell: process.platform === "win32",
+  };
+
+  const run = async (cmd: string, useShell: boolean) => {
+    const command = useShell && cmd.includes(" ") ? `"${cmd}"` : cmd;
+    return await execFileAsync(command, args, { ...options, shell: useShell });
+  };
+
+  if (cachedGitPath) {
+    return await run(cachedGitPath, true);
+  }
+
+  try {
+    return await run("git", true);
+  } catch (originalError) {
+    if (process.platform === "win32") {
+      const commonPaths = [
+        "C:\\Program Files\\Git\\bin\\git.exe",
+        "C:\\Program Files\\Git\\cmd\\git.exe",
+        "C:\\Program Files (x86)\\Git\\bin\\git.exe",
+      ];
+
+      for (const gitPath of commonPaths) {
+        try {
+          const result = await run(gitPath, false);
+          cachedGitPath = gitPath;
+          return result;
+        } catch {
+          continue;
+        }
+      }
+    }
+    throw originalError;
+  }
 }
 
 async function isIgnored(file: string) {
   try {
     await git(["check-ignore", "-q", "--", file]);
     return true;
-  } catch (error) {
-    const exitCode = (error as { code?: number }).code;
-    if (exitCode === 1) {
-      return false;
-    }
-
-    throw error;
+  } catch {
+    return false;
   }
 }
 
@@ -90,7 +124,9 @@ async function getChangedFiles() {
   const { stdout } = await git(["ls-files", "--others", "--exclude-standard", "-z"]);
   splitNullSeparated(stdout).forEach((file) => files.add(file));
 
-  return [...files].sort((a, b) => a.localeCompare(b));
+  return [...files]
+    .filter(file => !file.startsWith(".git/") && !file.includes("node_modules/"))
+    .sort((a, b) => a.localeCompare(b));
 }
 
 async function getUntrackedFiles(files: string[]) {
@@ -130,8 +166,36 @@ async function getDiffForAi(files: string[]) {
     : diff;
 }
 
+async function detectAiEngine(): Promise<string> {
+  if (AI_ENGINE) return AI_ENGINE;
+
+  const checkCommand = async (cmd: string) => {
+    try {
+      const fullCmd = process.platform === "win32" ? `${cmd}.cmd` : cmd;
+      await execFileAsync(fullCmd, ["--version"], { shell: process.platform === "win32" });
+      return true;
+    } catch {
+      try {
+        await execFileAsync(cmd, ["--version"], { shell: process.platform === "win32" });
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  };
+
+  const engines = ["gemini", "codex", "claude", "ollama", "gpt"];
+  for (const engine of engines) {
+    if (await checkCommand(engine)) return engine;
+  }
+
+  return "gemini";
+}
+
 async function runAi(prompt: string) {
-  if (AI_ENGINE === "codex") {
+  const engine = await detectAiEngine();
+  
+  if (engine === "codex") {
     const tempDir = await mkdtemp(join(tmpdir(), "ai-commit-"));
     const outputFile = join(tempDir, "commit-plan.json");
     const codexCommand = process.platform === "win32" ? "codex.cmd" : "codex";
@@ -151,60 +215,67 @@ async function runAi(prompt: string) {
     }
 
     try {
-      await new Promise<void>((resolve, reject) => {
-        const child = spawn(codexCommand, args, {
-          stdio: ["pipe", "inherit", "inherit"],
-          shell: process.platform === "win32",
+      const run = async (c: string) => {
+        return await new Promise<void>((resolve, reject) => {
+          const child = spawn(c, args, {
+            stdio: ["pipe", "inherit", "inherit"],
+            shell: process.platform === "win32",
+          });
+          child.on("error", reject);
+          child.on("close", (code) => code === 0 ? resolve() : reject(new Error(`${c} exited with ${code}`)));
+          child.stdin.end(prompt);
         });
+      };
 
-        child.on("error", reject);
-        child.on("close", (code) => {
-          if (code === 0) {
-            resolve();
-            return;
-          }
-
-          reject(new Error(`codex exec exited with code ${code}`));
-        });
-
-        child.stdin.end(prompt);
-      });
+      try {
+        await run(codexCommand);
+      } catch {
+        await run("codex");
+      }
 
       return await readFile(outputFile, "utf8");
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
   } else {
-    const geminiCommand = process.platform === "win32" ? "gemini.cmd" : "gemini";
-    // 프롬프트를 인자로 전달하면 Windows에서 인코딩 문제가 발생하므로 stdin으로 전달
-    const args = ["-o", "json", "-p", "Create git commits based on the provided instructions and diff:"];
+    // gemini, claude 등 통일된 방식 시도
+    const cmd = process.platform === "win32" ? `${engine}.cmd` : engine;
+    const args = ["-o", "json", "-p", "Generate git commits"];
     if (AI_MODEL) {
       args.push("-m", AI_MODEL);
     }
 
-    return await new Promise<string>((resolve, reject) => {
-      const child = spawn(geminiCommand, args, {
-        stdio: ["pipe", "pipe", "inherit"],
-        shell: process.platform === "win32",
-      });
+    const run = async (c: string) => {
+      return await new Promise<string>((resolve, reject) => {
+        const child = spawn(c, args, {
+          stdio: ["pipe", "pipe", "inherit"],
+          shell: process.platform === "win32",
+        });
 
-      let stdout = "";
-      child.stdout.on("data", (data: Buffer) => {
-        stdout += data.toString("utf8");
-      });
+        let stdout = "";
+        child.stdout.on("data", (data: Buffer) => {
+          stdout += data.toString("utf8");
+        });
 
-      child.on("error", reject);
-      child.on("close", (code) => {
-        if (code === 0) {
-          resolve(stdout);
-          return;
-        }
-        reject(new Error(`gemini exited with code ${code}`));
-      });
+        child.on("error", reject);
+        child.on("close", (code) => {
+          if (code === 0) {
+            resolve(stdout);
+            return;
+          }
+          reject(new Error(`${c} exited with code ${code}`));
+        });
 
-      child.stdin.write(prompt, "utf8");
-      child.stdin.end();
-    });
+        child.stdin.write(prompt, "utf8");
+        child.stdin.end();
+      });
+    };
+
+    try {
+      return await run(cmd);
+    } catch {
+      return await run(engine);
+    }
   }
 }
 
@@ -304,12 +375,11 @@ async function commitPlannedChange(message: string, files: string[]) {
   console.log(`Committed ${files.length} file(s): ${message}`);
 }
 
-async function runCommitScript() {
+async function runCommitOnce() {
   const files = await getChangedFiles();
 
   if (files.length === 0) {
-    console.log("No changes to commit.");
-    return;
+    return false;
   }
 
   const diff = await getDiffForAi(files);
@@ -332,10 +402,59 @@ async function runCommitScript() {
   for (const commit of plan.commits) {
     await commitPlannedChange(commit.message, commit.files);
   }
+
+  if (IS_PUSH) {
+    console.log("Pushing to origin...");
+    await git(["push"]);
+  }
+
+  return true;
+}
+
+async function runCommitScript() {
+  if (IS_WATCH) {
+    console.log("Watching for changes (ignoring .git and node_modules)...");
+    const { watch } = await import("fs");
+    let isRunning = false;
+    let timeout: NodeJS.Timeout | null = null;
+
+    const handleChange = async (filename: string | null) => {
+      if (!filename) return;
+      if (filename.startsWith(".git") || filename.includes("node_modules") || filename === "package-lock.json") return;
+
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(async () => {
+        if (isRunning) return;
+        isRunning = true;
+        try {
+          const committed = await runCommitOnce();
+          if (committed) {
+            console.log("Auto-committed changes.");
+          }
+        } catch (error) {
+          console.error("Auto-commit failed:", error instanceof Error ? error.message : String(error));
+        } finally {
+          isRunning = false;
+        }
+      }, 3000);
+    };
+
+    watch(process.cwd(), { recursive: true }, (event, filename) => {
+      handleChange(filename).catch(console.error);
+    });
+
+    await runCommitOnce().catch(() => {});
+    await new Promise(() => {});
+  } else {
+    const committed = await runCommitOnce();
+    if (!committed) {
+      console.log("No changes to commit.");
+    }
+  }
 }
 
 runCommitScript().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
-  console.error("Auto commit failed:", message);
+  console.error("Commit script failed:", message);
   process.exitCode = 1;
 });

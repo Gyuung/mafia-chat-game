@@ -63,8 +63,10 @@ When starting a new Codex session in this repository:
 ## Git Workflow
 
 - When the user asks to commit changes in this repository, use `npm run commit`.
-- The `shared/commit-script.ts` requires the `gemini` command to be in the system PATH.
-- Do not create commits with raw `git commit -m` unless the user explicitly asks to bypass `shared/commit-script.ts`.
+- To enable automatic committing on every file change, use `npm run commit:watch`.
+- To commit and push automatically, use `npm run commit:push`.
+- The `shared/commit-script.ts` attempts to detect available AI CLI tools (`gemini`, `codex`, `claude`, `ollama`, `gpt`).
+- Do not create commits with raw `git commit -m` unless the user explicitly asks to bypass the script.
 - After `npm run commit`, inspect the resulting commits with `git log -1 --oneline` or `git status --short` before pushing.
 - When the user asks to commit changes, push the new commits to `origin/main` after the commit succeeds unless the user explicitly says not to push.
 - Treat `next-env.d.ts` as a Next.js generated file. Do not include it in commits unless the user explicitly asks to commit that file.

@@ -15,7 +15,9 @@
     "docs:dev": "npm --prefix docs-site run start -- --port 3001",
     "docs:build": "npm --prefix docs-site run build",
     "verify:all": "npm run verify && npm run docs:build",
-    "commit": "tsx shared/commit-script.ts"
+    "commit": "tsx shared/commit-script.ts",
+    "commit:watch": "tsx shared/commit-script.ts --watch",
+    "commit:push": "tsx shared/commit-script.ts --push"
   },
   "dependencies": {
     "next": "16.2.6",
