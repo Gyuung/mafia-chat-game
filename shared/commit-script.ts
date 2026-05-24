@@ -238,9 +238,9 @@ async function runAi(prompt: string) {
       await rm(tempDir, { recursive: true, force: true });
     }
   } else {
-    // gemini, claude 등 통일된 방식 시도
     const cmd = process.platform === "win32" ? `${engine}.cmd` : engine;
-    const args = ["-o", "json", "-p", "Generate git commits"];
+    // -p 플래그 대신 stdin으로만 프롬프트를 전달해보기
+    const args = ["-o", "json", "-p", "-"];
     if (AI_MODEL) {
       args.push("-m", AI_MODEL);
     }
