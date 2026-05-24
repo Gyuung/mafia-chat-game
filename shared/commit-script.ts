@@ -1,10 +1,22 @@
-import { execFile, spawn } from "child_process";
+import { execFile, spawn, execSync } from "child_process";
 import { mkdtemp, readFile, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
+
+// Windows에서 한글 깨짐 방지를 위해 터미널 인코딩을 UTF-8로 설정
+if (process.platform === "win32") {
+  try {
+    const system32 = process.env.SystemRoot 
+      ? join(process.env.SystemRoot, "System32") 
+      : "C:\\Windows\\System32";
+    execSync(`"${join(system32, "chcp.com")}" 65001`, { stdio: "ignore" });
+  } catch {
+    // 무시
+  }
+}
 
 type CommitPlan = {
   commits: Array<{
@@ -13,7 +25,9 @@ type CommitPlan = {
   }>;
 };
 
-const CODEX_MODEL = process.env.CODEX_MODEL;
+const AI_ENGINE = process.env.AI_ENGINE || "codex";
+const AI_MODEL = process.env.AI_MODEL || process.env.CODEX_MODEL;
+const COMMIT_PLAN = process.env.COMMIT_PLAN;
 const MAX_DIFF_CHARS = 60_000;
 const commitTypes = [
   "✨ feat - 새로운 기능 추가",
@@ -116,48 +130,81 @@ async function getDiffForAi(files: string[]) {
     : diff;
 }
 
-async function runCodex(prompt: string) {
-  const tempDir = await mkdtemp(join(tmpdir(), "ai-commit-"));
-  const outputFile = join(tempDir, "commit-plan.json");
-  const codexCommand = process.platform === "win32" ? "codex.cmd" : "codex";
-  const args = [
-    "exec",
-    "--cd",
-    process.cwd(),
-    "--sandbox",
-    "read-only",
-    "--output-last-message",
-    outputFile,
-    "-",
-  ];
+async function runAi(prompt: string) {
+  if (AI_ENGINE === "codex") {
+    const tempDir = await mkdtemp(join(tmpdir(), "ai-commit-"));
+    const outputFile = join(tempDir, "commit-plan.json");
+    const codexCommand = process.platform === "win32" ? "codex.cmd" : "codex";
+    const args = [
+      "exec",
+      "--cd",
+      process.cwd(),
+      "--sandbox",
+      "read-only",
+      "--output-last-message",
+      outputFile,
+      "-",
+    ];
 
-  if (CODEX_MODEL) {
-    args.splice(1, 0, "--model", CODEX_MODEL);
-  }
+    if (AI_MODEL) {
+      args.splice(1, 0, "--model", AI_MODEL);
+    }
 
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const child = spawn(codexCommand, args, {
-        stdio: ["pipe", "inherit", "inherit"],
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const child = spawn(codexCommand, args, {
+          stdio: ["pipe", "inherit", "inherit"],
+          shell: process.platform === "win32",
+        });
+
+        child.on("error", reject);
+        child.on("close", (code) => {
+          if (code === 0) {
+            resolve();
+            return;
+          }
+
+          reject(new Error(`codex exec exited with code ${code}`));
+        });
+
+        child.stdin.end(prompt);
+      });
+
+      return await readFile(outputFile, "utf8");
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  } else {
+    const geminiCommand = process.platform === "win32" ? "gemini.cmd" : "gemini";
+    // 프롬프트를 인자로 전달하면 Windows에서 인코딩 문제가 발생하므로 stdin으로 전달
+    const args = ["-o", "json", "-p", "Create git commits based on the provided instructions and diff:"];
+    if (AI_MODEL) {
+      args.push("-m", AI_MODEL);
+    }
+
+    return await new Promise<string>((resolve, reject) => {
+      const child = spawn(geminiCommand, args, {
+        stdio: ["pipe", "pipe", "inherit"],
         shell: process.platform === "win32",
+      });
+
+      let stdout = "";
+      child.stdout.on("data", (data: Buffer) => {
+        stdout += data.toString("utf8");
       });
 
       child.on("error", reject);
       child.on("close", (code) => {
         if (code === 0) {
-          resolve();
+          resolve(stdout);
           return;
         }
-
-        reject(new Error(`codex exec exited with code ${code}`));
+        reject(new Error(`gemini exited with code ${code}`));
       });
 
-      child.stdin.end(prompt);
+      child.stdin.write(prompt, "utf8");
+      child.stdin.end();
     });
-
-    return await readFile(outputFile, "utf8");
-  } finally {
-    await rm(tempDir, { recursive: true, force: true });
   }
 }
 
@@ -209,6 +256,12 @@ function assertValidPlan(plan: CommitPlan, changedFiles: string[]) {
 }
 
 async function createAiCommitPlan(files: string[], diff: string): Promise<CommitPlan> {
+  if (COMMIT_PLAN) {
+    const plan = JSON.parse(COMMIT_PLAN) as CommitPlan;
+    assertValidPlan(plan, files);
+    return plan;
+  }
+
   const prompt = [
     "You are an expert software engineer creating atomic git commits.",
     "Analyze the changed files and diff, then split the work into logical commits.",
@@ -229,7 +282,7 @@ async function createAiCommitPlan(files: string[], diff: string): Promise<Commit
     `Diff:\n${diff || "[No textual diff available]"}`,
   ].join("\n");
 
-  const content = await runCodex(prompt);
+  const content = await runAi(prompt);
   const plan = JSON.parse(extractJson(content)) as CommitPlan;
   assertValidPlan(plan, files);
   return plan;

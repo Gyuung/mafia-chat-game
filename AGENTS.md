@@ -55,9 +55,15 @@ When starting a new Codex session in this repository:
 7. Before finishing a work session, update `docs/SESSION_NOTES.md` if the project direction, next TODO, or known issues changed.
 8. Run `npm run verify` for app code changes and `npm run docs:build` for docs changes, then use `npm run commit` and push to `origin/main` when the user wants the work saved remotely.
 
+## Versioning & Docs
+
+- Only game-related changes should be recorded in `docs-site/docs/changelog.md`.
+- Non-game related changes (e.g., build scripts, CI/CD, internal tools) should NOT trigger a version bump in the changelog.
+
 ## Git Workflow
 
 - When the user asks to commit changes in this repository, use `npm run commit`.
+- The `shared/commit-script.ts` requires the `gemini` command to be in the system PATH.
 - Do not create commits with raw `git commit -m` unless the user explicitly asks to bypass `shared/commit-script.ts`.
 - After `npm run commit`, inspect the resulting commits with `git log -1 --oneline` or `git status --short` before pushing.
 - When the user asks to commit changes, push the new commits to `origin/main` after the commit succeeds unless the user explicitly says not to push.
