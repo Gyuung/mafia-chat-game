@@ -56,6 +56,7 @@ type GameResultSummary = {
   dailyCaseTitle?: string;
   dailyRewardXp: number;
   dailyRewardClaimed: boolean;
+  voteRecords?: Record<string, string[]>;
 };
 
 type DailyCase = {
@@ -101,6 +102,21 @@ const dailyCases: DailyCase[] = [
   {
     title: "새벽 항구의 호출",
     briefing: "마지막 무전 이후 항구가 조용해졌습니다. 밤 행동 결과와 낮 발언을 함께 보세요.",
+    rewardXp: 30,
+  },
+  {
+    title: "텅 빈 대저택의 복도",
+    briefing: "발소리가 메아리칩니다. 평소보다 공격적인 진술을 경계하세요.",
+    rewardXp: 35,
+  },
+  {
+    title: "안개 자욱한 공원 벤치",
+    briefing: "시야가 좁아졌습니다. 질문을 피하는 참가자를 끝까지 추적하세요.",
+    rewardXp: 25,
+  },
+  {
+    title: "자정의 도서관 열람실",
+    briefing: "페이지 넘기는 소리만 들립니다. 논리적으로 어긋난 답변을 찾아내세요.",
     rewardXp: 30,
   },
 ];
@@ -500,10 +516,12 @@ export function MafiaGame() {
 
     const alive = players.filter((player) => player.alive);
     const votes: Record<string, number> = { [voteTargetId]: 1 };
-    const humanVoteTarget = alive.find((player) => player.id === voteTargetId);
+    const voteRecords: Record<string, string[]> = {};
 
+    const humanVoteTarget = alive.find((player) => player.id === voteTargetId);
     if (humanVoteTarget) {
       addMessage("사회자", `${me.name}님은 ${humanVoteTarget.name}님에게 투표했습니다.`, true);
+      voteRecords[humanVoteTarget.name] = [me.name];
     }
 
     alive
@@ -512,6 +530,12 @@ export function MafiaGame() {
         const choices = alive.filter((target) => target.id !== bot.id);
         const decision = chooseBotVoteTarget(bot, choices);
         votes[decision.target.id] = (votes[decision.target.id] ?? 0) + 1;
+        
+        if (!voteRecords[decision.target.name]) {
+          voteRecords[decision.target.name] = [];
+        }
+        voteRecords[decision.target.name].push(bot.name);
+
         addMessage(
           "사회자",
           `${bot.name}님은 ${decision.target.name}님에게 투표했습니다. ${decision.reason}`,
@@ -536,44 +560,66 @@ export function MafiaGame() {
       addMessage("사회자", voteEvent, true);
     }
 
-    finishStep(nextPlayers, "night", voteEvent);
+    finishStep(nextPlayers, "night", voteEvent, voteRecords);
     setVoteTargetId("");
   }
 
   function chooseBotVoteTarget(bot: Player, choices: Player[]): VoteDecision {
-    const nonMafia = choices.filter((player) => player.role !== "mafia");
-    const mafia = choices.filter((player) => player.role === "mafia");
     const mostSuspicious = [...choices].sort((a, b) => b.suspicion - a.suspicion)[0];
 
-    if (mostSuspicious?.suspicion > 1 && Math.random() > 0.35) {
+    // 의심도가 높으면 매우 높은 확률로 투표
+    if (mostSuspicious && mostSuspicious.suspicion >= 3 && Math.random() > 0.1) {
       return {
         target: mostSuspicious,
-        reason: `의심도가 ${mostSuspicious.suspicion}이라 우선 지목했습니다.`,
+        reason: `의심도가 ${mostSuspicious.suspicion}으로 매우 높아 확신을 가지고 지목했습니다.`,
       };
     }
-    if (bot.role === "mafia" && nonMafia.length > 0) {
-      const target = pickRandom(nonMafia);
+
+    // 중간 정도의 의심도
+    if (mostSuspicious && mostSuspicious.suspicion >= 1 && Math.random() > 0.4) {
       return {
-        target,
-        reason: "마피아라 시민 쪽으로 표를 돌렸습니다.",
+        target: mostSuspicious,
+        reason: `다른 참가자들에 비해 ${mostSuspicious.name}님이 가장 의심스러워 보였습니다.`,
       };
     }
-    if (bot.role !== "mafia" && mafia.length > 0 && Math.random() > 0.55) {
-      const target = pickRandom(mafia);
-      return {
-        target,
-        reason: "마피아 후보를 우선 압박했습니다.",
-      };
+
+    // 마피아는 시민 팀을 공격 (자신이 의심받지 않는 경우)
+    if (bot.role === "mafia") {
+      const nonMafia = choices.filter((player) => player.role !== "mafia");
+      if (nonMafia.length > 0) {
+        const target = pickRandom(nonMafia);
+        return {
+          target,
+          reason: "시민 팀 참가자 중 한 명을 몰아가기로 했습니다.",
+        };
+      }
+    }
+
+    // 마피아가 아닌 경우, 마피아 후보를 우선 압박 (약간의 직감)
+    if (bot.role !== "mafia" && Math.random() > 0.7) {
+      const actualMafia = choices.filter((player) => player.role === "mafia");
+      if (actualMafia.length > 0) {
+        const target = pickRandom(actualMafia);
+        return {
+          target,
+          reason: "왠지 모를 위협을 느껴 지목했습니다.",
+        };
+      }
     }
 
     const target = pickRandom(choices);
     return {
       target,
-      reason: "뚜렷한 단서가 없어 임의로 선택했습니다.",
+      reason: "뚜렷한 단서가 없어 상황을 지켜보며 선택했습니다.",
     };
   }
 
-  function finishStep(nextPlayers: Player[], nextPhase: Phase, latestEvent: string) {
+  function finishStep(
+    nextPlayers: Player[],
+    nextPhase: Phase,
+    latestEvent: string,
+    voteRecords?: Record<string, string[]>,
+  ) {
     const result = getWinner(nextPlayers);
     setPlayers(nextPlayers);
 
@@ -612,6 +658,7 @@ export function MafiaGame() {
           dailyCaseTitle: gameMode === "daily" ? dailyCase.title : undefined,
           dailyRewardXp,
           dailyRewardClaimed,
+          voteRecords,
         });
       }
       setProfile((current) => {
@@ -1110,6 +1157,21 @@ function ResultCard({
                   <li key={event}>• {event}</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {summary.voteRecords && Object.keys(summary.voteRecords).length > 0 && (
+            <div className="mt-4 border border-neutral-800 bg-neutral-950/70 p-4">
+              <h3 className="text-sm font-semibold text-white">🗳️ 투표 요약</h3>
+              <div className="mt-3 grid gap-2 text-xs leading-6 text-neutral-300">
+                {Object.entries(summary.voteRecords).map(([target, voters]) => (
+                  <p key={target}>
+                    <span className="font-semibold text-red-200">{target}</span>
+                    <span className="mx-1">←</span>
+                    <span>{voters.join(", ")}</span>
+                  </p>
+                ))}
+              </div>
             </div>
           )}
         </>
