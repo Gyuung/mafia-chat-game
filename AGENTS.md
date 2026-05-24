@@ -1,78 +1,78 @@
-# Codex Project Guide
+# Codex Project Guide (프로젝트 가이드)
 
-## Project
+## Project (프로젝트 개요)
 
-- Next.js App Router application for a browser-based Mafia social deduction chat game.
-- The first screen should be the playable game, not a landing page.
-- React 19 and Next.js 16 are the baseline runtime assumptions.
-- Korean user-facing copy is intentional. Preserve wording and encoding unless the task is explicitly about text cleanup.
+- 브라우저 기반의 마피아 소셜 추론 채팅 게임을 위한 Next.js App Router 애플리케이션입니다.
+- 첫 화면은 랜딩 페이지가 아닌, 바로 플레이 가능한 게임 화면이어야 합니다.
+- React 19와 Next.js 16을 기본 런타임으로 가정합니다.
+- 사용자에게 노출되는 문구는 한국어를 원칙으로 합니다. 텍스트 정리 작업이 명시되지 않는 한 기존 문구와 인코딩을 유지하세요.
 
-## Required Skill
+## Required Skill (필수 기술)
 
-- Use the installed Codex skill `vercel-react-best-practices` when writing, reviewing, or refactoring React/Next.js code in this repository.
-- For detailed rule guidance, read the relevant files in `C:\Users\Wang\.codex\skills\react-best-practices\rules`.
-- Prioritize these Vercel rule groups in this order: eliminating waterfalls, bundle size optimization, server-side performance, client-side data fetching, re-render optimization, rendering performance, JavaScript performance, advanced patterns.
+- 이 저장소의 React/Next.js 코드를 작성, 검토 또는 리팩토링할 때는 설치된 Codex 스킬인 `vercel-react-best-practices`를 사용하세요.
+- 상세한 규칙 가이드는 `C:\Users\Wang\.codex\skills\react-best-practices\rules`의 관련 파일을 참조하세요.
+- Vercel 규칙 우선순위: 폭포수(waterfalls) 제거, 번들 크기 최적화, 서버 측 성능, 클라이언트 측 데이터 페칭, 재렌더링 최적화, 렌더링 성능, JavaScript 성능, 고급 패턴 순입니다.
 
-## React And Next.js Practices
+## React And Next.js Practices (권장 사례)
 
-- Prefer Server Components. Add `"use client"` only for components that need browser APIs, event handlers, state, effects, refs, or client-only libraries.
-- Keep client component props small and serializable. Do not pass large server data or functions into client components.
-- Start independent async work early and await it together with `Promise.all`.
-- Avoid request waterfalls in pages, layouts, route handlers, and server utilities.
-- Use route handlers for server-owned side effects and keep secrets on the server.
-- Import directly from concrete modules. Avoid broad barrel imports for UI or utility code.
-- Dynamically import heavy client-only components when they are not needed for first paint.
-- Do not define React components inside other components.
-- Derive renderable state during render when possible. Use effects for synchronization with external systems, not for basic derivation.
-- Use functional state updates for callbacks that depend on previous state.
-- Keep dependency arrays primitive and stable. Hoist constant arrays, objects, regexes, and default non-primitive props outside components.
-- Prefer `next/image`, explicit dimensions, and stable layout constraints for visual assets when practical.
+- 서버 컴포넌트(Server Components)를 선호합니다. 브라우저 API, 이벤트 핸들러, 상태(state), 이펙트(effects), refs 또는 클라이언트 전용 라이브러리가 필요한 경우에만 `"use client"`를 추가하세요.
+- 클라이언트 컴포넌트의 props는 작고 직렬화 가능하게 유지하세요. 대규모 서버 데이터나 함수를 클라이언트 컴포넌트로 전달하지 마세요.
+- 독립적인 비동기 작업은 일찍 시작하고 `Promise.all`을 사용하여 함께 기다리세요.
+- 페이지, 레이아웃, 루트 핸들러 및 서버 유틸리티에서 요청 폭포수(request waterfalls)를 피하세요.
+- 서버 측 사이드 이펙트는 루트 핸들러를 사용하고, 비밀 정보는 서버에 보관하세요.
+- 구체적인 모듈에서 직접 임포트하세요. UI나 유틸리티 코드에 광범위한 배럴 임포트(barrel imports)를 사용하지 마세요.
+- 첫 화면 렌더링에 필요하지 않은 무거운 클라이언트 전용 컴포넌트는 동적 임포트(dynamic import)를 사용하세요.
+- 다른 컴포넌트 내부에서 React 컴포넌트를 정의하지 마세요.
+- 가능한 경우 렌더링 중에 파생 상태를 계산하세요. 이펙트(effects)는 기본 파생이 아닌 외부 시스템과의 동기화에 사용하세요.
+- 이전 상태에 의존하는 콜백의 경우 함수형 상태 업데이트를 사용하세요.
+- 의존성 배열은 원시 값 위주로 안정적으로 유지하세요. 상수 배열, 객체, 정규식 및 기본 비원시 props는 컴포넌트 외부로 분리하세요.
+- 시각적 자산은 가능한 경우 `next/image`, 명시적 크기 및 안정적인 레이아웃 제약 조건을 사용하세요.
 
-## Vercel Deployment
+## Vercel Deployment (Vercel 배포)
 
-- Rely on Vercel framework auto-detection for this Next.js app unless a task specifically needs `vercel.json`.
-- Node runtime is pinned with `package.json` `engines.node` to `22.x`; keep local and Vercel Node versions aligned.
-- Required environment variables should be mirrored in `.env.example` without secrets.
-- `NEXT_PUBLIC_*` variables are public browser inputs. Never put private keys in them.
+- `vercel.json`이 특별히 필요한 경우가 아니면 Vercel 프레임워크 자동 감지를 신뢰하세요.
+- Node 런타임은 `package.json`의 `engines.node`에 따라 `22.x`로 고정됩니다. 로컬과 Vercel의 Node 버전을 일치시키세요.
+- 필요한 환경 변수는 비밀 정보를 제외하고 `.env.example`에 반영되어야 합니다.
+- `NEXT_PUBLIC_*` 변수는 공개 브라우저 입력값입니다. 절대 개인 키를 넣지 마세요.
 
-## Validation
+## Validation (검증)
 
-- Before finishing code changes, run the narrowest relevant checks.
-- For React/Next changes, prefer `npm run verify` when time allows.
-- If the change is documentation-only, no build is required.
-- Report any check that could not be run and why.
+- 코드 변경을 마치기 전, 가장 관련성 높은 체크를 실행하세요.
+- React/Next 변경 사항의 경우 시간이 허락한다면 `npm run verify`를 권장합니다.
+- 문서만 수정하는 경우 빌드가 필요하지 않습니다.
+- 실행할 수 없었던 체크 항목과 그 이유를 보고하세요.
 
-## Session Continuation Protocol
+## Session Continuation Protocol (세션 지속 프로토콜)
 
-When starting a new Codex session in this repository:
+이 저장소에서 새로운 Codex 세션을 시작할 때:
 
-1. If the user asks how to continue, point them to `CONTINUE.md`.
-2. Read `AGENTS.md`, `README.md`, `docs/SESSION_NOTES.md`, and `docs-site/docs/changelog.md`.
-3. Check current git state with `git status --short`.
-4. Check recent work with `git log --oneline -8`.
-5. Inspect the docs front at `docs-site/docs/` when changing rules, roadmap, or changelog.
-6. Prefer continuing from the `Next Session TODO` section in `docs/SESSION_NOTES.md`.
-7. Before finishing a work session, update `docs/SESSION_NOTES.md` if the project direction, next TODO, or known issues changed.
-8. Run `npm run verify` for app code changes and `npm run docs:build` for docs changes, then use `npm run commit` and push to `origin/main` when the user wants the work saved remotely.
+1. 사용자가 계속하는 방법을 물으면 `CONTINUE.md`를 안내하세요.
+2. `AGENTS.md`, `README.md`, `docs/SESSION_NOTES.md`, `docs-site/docs/changelog.md`를 읽으세요.
+3. `git status --short`로 현재 git 상태를 확인하세요.
+4. `git log --oneline -8`로 최근 작업 내역을 확인하세요.
+5. 규칙, 로드맵 또는 변경 로그를 수정할 때는 `docs-site/docs/`의 문서 프론트엔드를 검사하세요.
+6. `docs/SESSION_NOTES.md`의 `Next Session TODO` 섹션부터 시작하는 것을 선호합니다.
+7. 작업 세션을 마치기 전, 프로젝트 방향이나 다음 할 일, 알려진 이슈가 변경되었다면 `docs/SESSION_NOTES.md`를 업데이트하세요.
+8. 앱 코드 변경 시 `npm run verify`, 문서 변경 시 `npm run docs:build`를 실행한 후, 사용자가 원격 저장을 원하면 `npm run commit`을 사용하여 커밋하고 `origin/main`으로 푸시하세요.
 
-## Versioning & Docs
+## Versioning & Docs (버전 관리 및 문서)
 
-- Only game-related changes should be recorded in `docs-site/docs/changelog.md`.
-- Non-game related changes (e.g., build scripts, CI/CD, internal tools) should NOT trigger a version bump in the changelog.
+- 게임 관련 변경 사항만 `docs-site/docs/changelog.md`에 기록하세요.
+- 게임과 무관한 변경(예: 빌드 스크립트, CI/CD, 내부 도구)은 변경 로그의 버전 업데이트를 트리거하지 않습니다.
 
-## Git Workflow
+## Git Workflow (Git 작업 흐름)
 
-- When the user asks to commit changes in this repository, use `npm run commit`.
-- To enable automatic committing on every file change, use `npm run commit:watch`.
-- To commit and push automatically, use `npm run commit:push`.
-- The `shared/commit-script.ts` attempts to detect available AI CLI tools (`gemini`, `codex`, `claude`, `ollama`, `gpt`).
-- Do not create commits with raw `git commit -m` unless the user explicitly asks to bypass the script.
-- After `npm run commit`, inspect the resulting commits with `git log -1 --oneline` or `git status --short` before pushing.
-- When the user asks to commit changes, push the new commits to `origin/main` after the commit succeeds unless the user explicitly says not to push.
-- Treat `next-env.d.ts` as a Next.js generated file. Do not include it in commits unless the user explicitly asks to commit that file.
+- 이 저장소에서 변경 사항을 커밋할 때는 `npm run commit`을 사용하세요.
+- 모든 파일 수정 시 자동 커밋을 활성화하려면 `npm run commit:watch`를 사용하세요.
+- 커밋과 푸시를 자동으로 하려면 `npm run commit:push`를 사용하세요.
+- `shared/commit-script.ts`는 사용 가능한 AI CLI 도구(`gemini`, `codex`, `claude`, `ollama`, `gpt`)를 자동으로 감지합니다.
+- 사용자가 명시적으로 요청하지 않는 한 `git commit -m`을 직접 사용하지 마세요.
+- `npm run commit` 후에는 푸시 전 `git log -1 --oneline` 또는 `git status --short`로 결과를 확인하세요.
+- 사용자가 커밋을 요청하면, 명시적인 거부 의사가 없는 한 성공 후 `origin/main`으로 푸시하세요.
+- `next-env.d.ts`는 생성된 파일로 취급하며, 사용자가 요청하지 않는 한 커밋에 포함하지 마세요.
 
-## Editing Rules
+## Editing Rules (편집 규칙)
 
-- Keep changes scoped to the requested feature or fix.
-- Do not modify `.env.local`, generated `.next` output, or `tsconfig.tsbuildinfo`.
-- Do not add new dependencies without a clear reason and a matching update to the lockfile.
+- 변경 범위는 요청된 기능이나 수정 사항으로 제한하세요.
+- `.env.local`, 생성된 `.next` 출력물, `tsconfig.tsbuildinfo`를 수정하지 마세요.
+- 명확한 이유와 잠금 파일 업데이트 없이 새로운 의존성을 추가하지 마세요.
