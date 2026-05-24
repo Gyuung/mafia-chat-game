@@ -20,6 +20,7 @@ Last updated: 2026-05-23
 - Day discussion with free chat
 - Interrogation flow where NPCs answer according to role behavior
 - NPC voting behavior influenced by suspicion and trust
+- NPC personality system (Logical, Aggressive, Timid, Emotional) with unique dialogue and voting styles
 - Simple 'trust/friendship' system between participants
 - Win/loss resolution
 - Emoji-style result card with XP, level, and title
@@ -34,7 +35,8 @@ Last updated: 2026-05-23
 - Role images under `public/roles`
 - Log auto-scroll on new messages
 - Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
-- Automatic commit script at `shared/commit-script.ts` (Fixed default engine and Windows support)
+- Modular code architecture under `src/components/mafia/` (Types, Constants, Hooks, UI components separated)
+- Automatic commit script at `shared/commit-script.ts` (Improved stability and multi-agent support)
 
 ## Known Constraints
 
