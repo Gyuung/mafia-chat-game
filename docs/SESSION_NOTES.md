@@ -27,6 +27,9 @@ Last updated: 2026-05-23
 - Result card summarizes role, team outcome, XP gained, level progress, title changes, and key events
 - Setup screen includes a chat response preview for commands, button choices, and compact result text
 - Vote decisions from NPCs are logged with reasons in the progress log
+- Result card displays a compact vote summary (who voted for whom) at the end of the game
+- Daily case variety expanded (7 cases total) with tuned reward balance
+- NPC voting behavior tuned to be more suspicion-driven and less "clairvoyant"
 - Role images under `public/roles`
 - Log auto-scroll on new messages
 - Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
@@ -41,9 +44,10 @@ Last updated: 2026-05-23
 
 ## Next Session TODO
 
-1. Expand daily case variety and tune reward balance after playtesting.
-2. Tune NPC vote bias after observing the new vote reason logs.
-3. Add a compact vote summary to the result card if the new logs feel too verbose.
+1. Expand NPC dialogue variety to make discussions feel more diverse.
+2. Implement a simple "trust/friendship" system where NPCs might protect players they've interacted with positively.
+3. Enhance the vote summary UI with small role icons or better layout.
+4. Add a "hard mode" daily case with more aggressive NPCs.
 
 ## Start Checklist For Codex
 
