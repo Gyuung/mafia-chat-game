@@ -6,6 +6,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 type Role = "mafia" | "doctor" | "detective" | "citizen";
 type Phase = "setup" | "night" | "day" | "vote" | "ended";
 type GameMode = "normal" | "daily";
+type PersonalityType = "logical" | "aggressive" | "timid" | "emotional";
 
 type Player = {
   id: string;
@@ -15,6 +16,57 @@ type Player = {
   human: boolean;
   suspicion: number;
   trust: Record<string, number>;
+  personality?: PersonalityType;
+};
+
+type PersonalityTrait = {
+  label: string;
+  description: string;
+  dialogueStyles: string[];
+  voteThreshold: number;
+};
+
+const personalityTraits: Record<PersonalityType, PersonalityTrait> = {
+  logical: {
+    label: "논리파",
+    description: "증거와 일관성을 중시하며 냉철하게 분석합니다.",
+    dialogueStyles: [
+      "지금 상황에서 가장 비논리적인 발언을 한 사람은...",
+      "앞뒤가 맞지 않는 진술이 하나 있네요.",
+      "감정에 호소하기보다는 팩트만 놓고 봅시다.",
+    ],
+    voteThreshold: 3,
+  },
+  aggressive: {
+    label: "공격파",
+    description: "적극적으로 의심 대상을 지목하며 분위기를 주도합니다.",
+    dialogueStyles: [
+      "솔직히 말하세요. 당신이 마피아 맞죠?",
+      "시간 끌 필요 있나요? 딱 봐도 수상한데.",
+      "자꾸 발을 빼시는데, 그럴수록 더 의심스럽습니다.",
+    ],
+    voteThreshold: 2,
+  },
+  timid: {
+    label: "신중파",
+    description: "결정을 내리는 데 신중하며 다수의 의견을 따르는 편입니다.",
+    dialogueStyles: [
+      "아직은 누구라고 확정 짓기 무섭네요...",
+      "제 선택이 틀리면 어쩌죠? 조금 더 지켜봐요.",
+      "다들 그렇게 생각하신다면...",
+    ],
+    voteThreshold: 5,
+  },
+  emotional: {
+    label: "감정파",
+    description: "직감과 인간관계를 중시하며 호불호가 명확합니다.",
+    dialogueStyles: [
+      "왠지 저 사람은 믿음이 안 가요.",
+      "저를 의심하다니... 정말 실망이네요.",
+      "기분이 묘하네요. 직감적으로 위험이 느껴져요.",
+    ],
+    voteThreshold: 4,
+  },
 };
 
 type Message = {
@@ -158,60 +210,92 @@ const roleImages: Record<Role, string> = {
 };
 
 const botNames = [
-  "회색 후드",
-  "낡은 시계",
-  "검은 우산",
-  "붉은 스카프",
-  "푸른 노트",
-  "하얀 장갑",
-  "무음 알림",
+  "회색 후드", "낡은 시계", "검은 우산", "붉은 스카프", "푸른 노트", 
+  "하얀 장갑", "무음 알림", "노란 장화", "초록 숲", "보라 연기",
+  "조용한 그림자", "빠른 발걸음", "무거운 안경", "부드러운 미소", "차가운 시선"
 ];
 
-const citizenAnswers = [
-  "저는 어젯밤에 특별히 한 행동은 없어요. 발언 흐름으로 봐야 할 것 같아요.",
-  "저를 몰아가는 이유가 약해요. 오히려 조용히 있던 쪽을 봐야 합니다.",
-  "마피아라면 이렇게 먼저 해명하지 않았을 거예요.",
-  "저는 시민 팀이에요. 투표를 서두르면 마피아가 좋아할 것 같습니다.",
-  "제 행동에서 이상한 점을 찾기 어려우실 거예요. 저는 정말 결백합니다.",
-  "지금은 감정적인 대응보다 논리적인 추론이 필요한 때라고 생각해요.",
-  "제가 마피아라면 이미 누군가를 강하게 몰아세웠을 겁니다.",
-  "제 진심이 전달되길 바랍니다. 저는 오직 마피아를 잡고 싶을 뿐이에요.",
-];
+const personalityLines: Record<PersonalityType, string[]> = {
+  logical: [
+    "어젯밤 흐름을 분석해보면 조용했던 사람이 가장 확률이 높아요.",
+    "너무 감정적인 호소는 오히려 논점을 흐릴 뿐입니다.",
+    "발언 횟수가 적은 것보다, 발언의 내용이 어긋나는 게 핵심이죠.",
+    "지금 누군가를 투표하려면 명확한 근거가 필요합니다.",
+  ],
+  aggressive: [
+    "어물쩍 넘어가지 마세요. 수상한 냄새가 납니다.",
+    "마피아가 아니면 왜 그렇게 당황하시죠?",
+    "저는 이미 한 명을 점찍어 뒀습니다. 도망갈 생각 마세요.",
+    "적극적으로 나서지 않는 사람은 마피아라고 봐도 무방해요.",
+  ],
+  timid: [
+    "제 생각이 틀린 건 아닐까요? 무고한 시민을 잡을까 봐 겁나요.",
+    "다들 조용히 계시니까 저도 말을 아끼게 되네요.",
+    "혹시 제가 마피아의 타겟이 된 건 아닐지 걱정돼요.",
+    "누구 한 명을 지목하는 게 마음이 편치 않네요.",
+  ],
+  emotional: [
+    "왠지 모르게 저 사람의 눈빛이 흔들리는 것 같아요.",
+    "서로 믿지 못하는 이 상황이 너무 슬프네요.",
+    "직감이 말해주고 있어요. 우리 사이에 배신자가 있다고요.",
+    "저를 끝까지 믿어줄 수 있는 분이 있을까요?",
+  ],
+};
 
-const mafiaAnswers = [
-  "저는 시민입니다. 지금 저를 의심하는 게 너무 갑작스러워요.",
-  "마피아라면 이렇게 눈에 띄게 말하지 않죠. 다른 사람을 봐야 합니다.",
-  "밤에 탈락한 사람과 저는 거의 대화가 없었어요. 연결점이 없습니다.",
-  "이 분위기 자체가 누군가 의심을 돌리려고 만든 것 같아요.",
-  "근거 없는 의심은 마피아에게 기회만 줄 뿐입니다. 신중해 주세요.",
-  "저를 의심하는 분이야말로 상황을 오도하고 있는 것 아닌가요?",
-  "제 정체는 결국 밝혀지겠지만, 지금 저를 투표하면 후회하실 겁니다.",
-  "어젯밤에는 정말 조용히 지냈어요. 의심받을 만한 일은 없었습니다.",
-];
-
-const powerRoleAnswers = [
-  "제 역할은 공개하기 어렵지만 시민 팀에 도움이 되는 쪽으로 움직이고 있어요.",
-  "지금 당장 제 정보를 다 말하면 마피아가 이용할 수 있습니다.",
-  "저는 시민 팀입니다. 확실한 단서가 생기면 말하겠습니다.",
-  "중요한 능력을 가진 사람일수록 몸을 사려야 한다는 점을 이해해 주세요.",
-  "제 행동 하나하나에 시민 팀의 승리가 달려 있습니다. 믿어주세요.",
-  "밤 사이에 유의미한 정보를 얻으려 노력 중입니다. 조금만 기다려주세요.",
-];
-
-const botLines = [
-  "어젯밤 흐름을 보면 조용했던 사람이 수상해요.",
-  "너무 빨리 몰아가는 것도 마피아 같아요.",
-  "투표 전까지 한 명씩 더 심문해보죠.",
-  "마피아라면 지금 시민인 척 방향을 틀 것 같아요.",
-  "발언이 적은 사람을 그냥 넘기면 안 될 것 같아요.",
-  "상대방의 논리가 앞뒤가 맞는지 다시 한번 확인해봅시다.",
-  "지금 누군가를 확정 짓기에는 정보가 너무 부족한 것 같아요.",
-  "마피아는 분명 우리 사이에 숨어서 웃고 있을 겁니다.",
-  "의외의 인물이 마피아일 수도 있다는 가능성을 열어둡시다.",
-  "질문에 대한 답변이 너무 매끄러운 것도 오히려 의심스러워요.",
-  "우리가 서로를 믿지 못하게 만드는 게 마피아의 전략 아닐까요?",
-  "확실한 증거가 나올 때까지는 모두를 용의선상에 두어야 합니다.",
-];
+const personalityAnswers: Record<PersonalityType, Record<"citizen" | "mafia" | "power", string[]>> = {
+  logical: {
+    citizen: [
+      "제 진술에 모순이 있는지 검토해 보세요. 저는 오직 승리를 위해 협력합니다.",
+      "의심의 근거가 논리적이지 않네요. 다른 가능성도 고려해 보시죠.",
+    ],
+    mafia: [
+      "제가 마피아라면 더 효율적인 동선으로 움직였을 겁니다. 분석이 틀렸네요.",
+      "객관적인 데이터 없이 저를 몰아가는 건 시민 팀의 손해입니다.",
+    ],
+    power: [
+      "제 역할에 대해서는 추론을 통해 결론을 내주시기 바랍니다. 보안이 중요하니까요.",
+    ],
+  },
+  aggressive: {
+    citizen: [
+      "저를 의심할 시간에 진짜 범인이나 찾으시죠! 답답해 죽겠네요.",
+      "제가 마피아였으면 당신부터 벌써 처리했을 겁니다.",
+    ],
+    mafia: [
+      "지금 절 의심하는 당신이야말로 마피아 아니에요? 적반하장이네요.",
+      "근거 없이 몰아세우지 마세요. 진짜 마피아는 당신 뒤에 있을걸요?",
+    ],
+    power: [
+      "내 역할을 여기서 다 밝히라고요? 당신 마피아지?",
+    ],
+  },
+  timid: {
+    citizen: [
+      "저... 정말 저는 아무것도 몰라요. 시민일 뿐이에요.",
+      "왜 저한테만 그러세요... 무서워요.",
+    ],
+    mafia: [
+      "제... 제가요? 전 그냥 가만히 있었는데... 오해하지 말아주세요.",
+      "아무것도 기억나지 않아요. 밤에는 계속 눈을 감고 있었거든요.",
+    ],
+    power: [
+      "아직은... 아직은 말할 때가 아니라고 생각해요. 죄송합니다.",
+    ],
+  },
+  emotional: {
+    citizen: [
+      "우리가 서로 믿어야 마피아를 잡을 수 있어요. 제 진심을 알아주세요.",
+      "저를 그렇게 보지 마세요. 마음이 너무 아프네요.",
+    ],
+    mafia: [
+      "어떻게 저를 의심할 수가 있죠? 우리 대화도 많이 했잖아요.",
+      "이런 분위기 정말 싫어요. 다들 너무 차갑네요.",
+    ],
+    power: [
+      "제 느낌으로는... 제가 시민 팀의 중요한 열쇠가 될 것 같아요.",
+    ],
+  },
+};
 
 const previewCommands: PreviewCommand[] = [
   {
@@ -280,6 +364,8 @@ function createPlayers(myName: string, count: number): Player[] {
   while (roles.length < count) roles.push("citizen");
 
   const assignedRoles = shuffle(roles);
+  const personalities: PersonalityType[] = ["logical", "aggressive", "timid", "emotional"];
+
   return [
     {
       id: "me",
@@ -298,6 +384,7 @@ function createPlayers(myName: string, count: number): Player[] {
       human: false,
       suspicion: 0,
       trust: {},
+      personality: pickRandom(personalities),
     })),
   ];
 }
@@ -330,11 +417,14 @@ function teamLabel(role: Role): GameResultSummary["team"] {
 }
 
 function getBotAnswer(player: Player) {
-  if (player.role === "mafia") return pickRandom(mafiaAnswers);
+  const p = player.personality || "logical";
+  const answers = personalityAnswers[p];
+  
+  if (player.role === "mafia") return pickRandom(answers.mafia);
   if (player.role === "doctor" || player.role === "detective") {
-    return pickRandom(powerRoleAnswers);
+    return pickRandom(answers.power);
   }
-  return pickRandom(citizenAnswers);
+  return pickRandom(answers.citizen);
 }
 
 function loadSavedProfile(): SavedProfile | null {
@@ -493,9 +583,12 @@ export function MafiaGame() {
     speakers.forEach((speaker) => {
       const suspects = visibleTargets.filter((player) => player.id !== speaker.id);
       const suspect = suspects.length > 0 ? pickRandom(suspects) : null;
+      
+      const p = speaker.personality || "logical";
+      const lines = personalityLines[p];
       const line = suspect
-        ? `${pickRandom(botLines)} 저는 ${suspect.name}님 발언을 더 보고 싶어요.`
-        : pickRandom(botLines);
+        ? `${pickRandom(lines)} 저는 ${suspect.name}님 발언을 더 보고 싶어요.`
+        : pickRandom(lines);
       addMessage(speaker.name, line);
     });
   }
@@ -649,11 +742,15 @@ export function MafiaGame() {
   }
 
   function chooseBotVoteTarget(bot: Player, choices: Player[]): VoteDecision {
+    const pType = bot.personality || "logical";
+    const trait = personalityTraits[pType];
+
     // 신뢰도와 의심도를 결합하여 가중치 계산
     const scoredChoices = choices.map((player) => {
       const trustScore = bot.trust[player.id] || 0;
-      // 신뢰도가 높으면 의심도를 상쇄 (신뢰도 1점당 의심도 1점 상쇄)
-      const adjustedSuspicion = Math.max(0, player.suspicion - trustScore);
+      // 감정파는 신뢰도/불신에 더 민감함
+      const trustWeight = pType === "emotional" ? 2 : 1;
+      const adjustedSuspicion = Math.max(0, player.suspicion - (trustScore * trustWeight));
       return { player, adjustedSuspicion };
     });
 
@@ -662,29 +759,36 @@ export function MafiaGame() {
     );
     const mostSuspicious = sortedBySuspicion[0];
 
-    // 의심도가 높으면 매우 높은 확률로 투표 (하드 모드에서는 기준 완화)
-    const highSuspicionThreshold = gameMode === "daily" && dailyCase.isHard ? 2 : 3;
+    // 성격별 투표 기준 적용
+    const highSuspicionThreshold = gameMode === "daily" && dailyCase.isHard 
+      ? trait.voteThreshold - 1 
+      : trait.voteThreshold;
+
     if (
       mostSuspicious &&
       mostSuspicious.adjustedSuspicion >= highSuspicionThreshold &&
-      Math.random() > 0.1
+      Math.random() > 0.05
     ) {
       return {
         target: mostSuspicious.player,
-        reason: `의심도가 ${mostSuspicious.adjustedSuspicion}으로 매우 높아 확신을 가지고 지목했습니다.`,
+        reason: `${pType === "logical" ? "논리적으로 분석한 결과, " : ""}${mostSuspicious.adjustedSuspicion}만큼의 의심점이 발견되어 지목했습니다.`,
       };
     }
 
-    // 중간 정도의 의심도 (하드 모드에서는 확률 상승)
-    const midSuspicionProb = gameMode === "daily" && dailyCase.isHard ? 0.2 : 0.4;
-    if (
-      mostSuspicious &&
-      mostSuspicious.adjustedSuspicion >= 1 &&
-      Math.random() > midSuspicionProb
-    ) {
+    // 신중파(timid)는 의심도가 낮으면 기권(자신에게 투표하거나 랜덤하게 낮은 확률) 성향
+    if (pType === "timid" && mostSuspicious.adjustedSuspicion < 2 && Math.random() > 0.5) {
+      const target = pickRandom(choices);
+      return {
+        target,
+        reason: "아직 확신이 서지 않아 신중하게 결정했습니다.",
+      };
+    }
+
+    // 공격파(aggressive)는 의심도가 낮아도 누군가를 지목할 확률이 높음
+    if (pType === "aggressive" && mostSuspicious.adjustedSuspicion >= 1 && Math.random() > 0.3) {
       return {
         target: mostSuspicious.player,
-        reason: `다른 참가자들에 비해 ${mostSuspicious.player.name}님이 가장 의심스러워 보였습니다.`,
+        reason: "가장 수상해 보이는 사람을 바로 압박하기로 했습니다.",
       };
     }
 
@@ -695,21 +799,27 @@ export function MafiaGame() {
         const target = pickRandom(nonMafia);
         return {
           target,
-          reason: "시민 팀 참가자 중 한 명을 몰아가기로 했습니다.",
+          reason: pType === "aggressive" ? "시민 팀을 빠르게 제거하기 위해 선택했습니다." : "시민 팀 참가자 중 한 명을 몰아가기로 했습니다.",
         };
       }
     }
 
-    // 마피아가 아닌 경우, 마피아 후보를 우선 압박 (약간의 직감)
-    if (bot.role !== "mafia" && Math.random() > 0.7) {
+    // 마피아가 아닌 경우, 마피아 후보를 우선 압박 (성격별 직감 확률)
+    const instinctProb = {
+      logical: 0.8,
+      aggressive: 0.6,
+      timid: 0.9,
+      emotional: 0.5
+    }[pType];
+
+    if (bot.role !== "mafia" && Math.random() > instinctProb) {
       const actualMafia = choices.filter((player) => player.role === "mafia");
-      // 마피아 후보 중 신뢰도가 낮은 쪽 선택
       const targets = actualMafia.filter((p) => (bot.trust[p.id] || 0) <= 0);
       if (targets.length > 0) {
         const target = pickRandom(targets);
         return {
           target,
-          reason: "왠지 모를 위협을 느껴 지목했습니다.",
+          reason: pType === "emotional" ? "왠지 모를 위협을 느껴 지목했습니다." : "분석 결과 수상한 정황이 포착되었습니다.",
         };
       }
     }
@@ -932,20 +1042,30 @@ export function MafiaGame() {
             <div className="mt-3 grid gap-2">
               {players.map((player) => (
                 <div
-                  className="flex items-center justify-between border border-neutral-800 px-3 py-2 text-sm"
+                  className="flex flex-col border border-neutral-800 px-3 py-2 text-sm"
                   key={player.id}
                 >
-                  <span
-                    className={
-                      player.alive ? "text-white" : "text-neutral-500 line-through"
-                    }
-                  >
-                    {player.name}
-                    {player.human ? " (나)" : ""}
-                  </span>
-                  <span className="text-neutral-400">
-                    {phase === "ended" || player.human ? roleLabels[player.role] : "비공개"}
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={
+                        player.alive ? "text-white" : "text-neutral-500 line-through"
+                      }
+                    >
+                      {player.name}
+                      {player.human ? " (나)" : ""}
+                    </span>
+                    <span className="text-neutral-400">
+                      {phase === "ended" || player.human ? roleLabels[player.role] : "비공개"}
+                    </span>
+                  </div>
+                  {player.personality && (
+                    <div className="mt-1 flex items-center justify-between text-[10px]">
+                      <span className="text-neutral-500">성향</span>
+                      <span className="text-red-300/80">
+                        {personalityTraits[player.personality].label}
+                      </span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
