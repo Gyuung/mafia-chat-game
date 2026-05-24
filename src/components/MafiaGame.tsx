@@ -14,6 +14,7 @@ type Player = {
   alive: boolean;
   human: boolean;
   suspicion: number;
+  trust: Record<string, number>;
 };
 
 type Message = {
@@ -57,12 +58,14 @@ type GameResultSummary = {
   dailyRewardXp: number;
   dailyRewardClaimed: boolean;
   voteRecords?: Record<string, string[]>;
+  finalPlayers?: Player[];
 };
 
 type DailyCase = {
   title: string;
   briefing: string;
   rewardXp: number;
+  isHard?: boolean;
 };
 
 type PreviewCommand = {
@@ -119,6 +122,18 @@ const dailyCases: DailyCase[] = [
     briefing: "페이지 넘기는 소리만 들립니다. 논리적으로 어긋난 답변을 찾아내세요.",
     rewardXp: 30,
   },
+  {
+    title: "🚨 마피아 소굴 잠입 (HARD)",
+    briefing: "마피아들이 매우 공격적입니다. 작은 실수도 용납되지 않는 위험한 임무입니다.",
+    rewardXp: 60,
+    isHard: true,
+  },
+  {
+    title: "🚨 배신자의 아지트 (HARD)",
+    briefing: "서로를 믿지 못하는 상황입니다. NPC들이 평소보다 더 쉽게 의심하고 공격합니다.",
+    rewardXp: 55,
+    isHard: true,
+  },
 ];
 
 const roleLabels: Record<Role, string> = {
@@ -157,6 +172,10 @@ const citizenAnswers = [
   "저를 몰아가는 이유가 약해요. 오히려 조용히 있던 쪽을 봐야 합니다.",
   "마피아라면 이렇게 먼저 해명하지 않았을 거예요.",
   "저는 시민 팀이에요. 투표를 서두르면 마피아가 좋아할 것 같습니다.",
+  "제 행동에서 이상한 점을 찾기 어려우실 거예요. 저는 정말 결백합니다.",
+  "지금은 감정적인 대응보다 논리적인 추론이 필요한 때라고 생각해요.",
+  "제가 마피아라면 이미 누군가를 강하게 몰아세웠을 겁니다.",
+  "제 진심이 전달되길 바랍니다. 저는 오직 마피아를 잡고 싶을 뿐이에요.",
 ];
 
 const mafiaAnswers = [
@@ -164,12 +183,19 @@ const mafiaAnswers = [
   "마피아라면 이렇게 눈에 띄게 말하지 않죠. 다른 사람을 봐야 합니다.",
   "밤에 탈락한 사람과 저는 거의 대화가 없었어요. 연결점이 없습니다.",
   "이 분위기 자체가 누군가 의심을 돌리려고 만든 것 같아요.",
+  "근거 없는 의심은 마피아에게 기회만 줄 뿐입니다. 신중해 주세요.",
+  "저를 의심하는 분이야말로 상황을 오도하고 있는 것 아닌가요?",
+  "제 정체는 결국 밝혀지겠지만, 지금 저를 투표하면 후회하실 겁니다.",
+  "어젯밤에는 정말 조용히 지냈어요. 의심받을 만한 일은 없었습니다.",
 ];
 
 const powerRoleAnswers = [
   "제 역할은 공개하기 어렵지만 시민 팀에 도움이 되는 쪽으로 움직이고 있어요.",
   "지금 당장 제 정보를 다 말하면 마피아가 이용할 수 있습니다.",
   "저는 시민 팀입니다. 확실한 단서가 생기면 말하겠습니다.",
+  "중요한 능력을 가진 사람일수록 몸을 사려야 한다는 점을 이해해 주세요.",
+  "제 행동 하나하나에 시민 팀의 승리가 달려 있습니다. 믿어주세요.",
+  "밤 사이에 유의미한 정보를 얻으려 노력 중입니다. 조금만 기다려주세요.",
 ];
 
 const botLines = [
@@ -178,6 +204,13 @@ const botLines = [
   "투표 전까지 한 명씩 더 심문해보죠.",
   "마피아라면 지금 시민인 척 방향을 틀 것 같아요.",
   "발언이 적은 사람을 그냥 넘기면 안 될 것 같아요.",
+  "상대방의 논리가 앞뒤가 맞는지 다시 한번 확인해봅시다.",
+  "지금 누군가를 확정 짓기에는 정보가 너무 부족한 것 같아요.",
+  "마피아는 분명 우리 사이에 숨어서 웃고 있을 겁니다.",
+  "의외의 인물이 마피아일 수도 있다는 가능성을 열어둡시다.",
+  "질문에 대한 답변이 너무 매끄러운 것도 오히려 의심스러워요.",
+  "우리가 서로를 믿지 못하게 만드는 게 마피아의 전략 아닐까요?",
+  "확실한 증거가 나올 때까지는 모두를 용의선상에 두어야 합니다.",
 ];
 
 const previewCommands: PreviewCommand[] = [
@@ -255,6 +288,7 @@ function createPlayers(myName: string, count: number): Player[] {
       alive: true,
       human: true,
       suspicion: 0,
+      trust: {},
     },
     ...names.map((name, index) => ({
       id: createId("bot"),
@@ -263,6 +297,7 @@ function createPlayers(myName: string, count: number): Player[] {
       alive: true,
       human: false,
       suspicion: 0,
+      trust: {},
     })),
   ];
 }
@@ -428,11 +463,22 @@ export function MafiaGame() {
     addMessage(target.name, getBotAnswer(target));
 
     setPlayers((current) =>
-      current.map((player) =>
-        player.id === target.id
-          ? { ...player, suspicion: player.suspicion + (target.role === "mafia" ? 2 : 1) }
-          : player,
-      ),
+      current.map((player) => {
+        if (player.id === target.id) {
+          // 심문받은 대상은 심문한 사람(나)에 대한 신뢰도가 소폭 하락
+          const nextTrust = { ...player.trust };
+          if (me) {
+            nextTrust[me.id] = (nextTrust[me.id] || 0) - 1;
+          }
+          const suspicionBonus = gameMode === "daily" && dailyCase.isHard ? 3 : 2;
+          return {
+            ...player,
+            suspicion: player.suspicion + (target.role === "mafia" ? suspicionBonus : 1),
+            trust: nextTrust,
+          };
+        }
+        return player;
+      }),
     );
     botDiscuss(1);
     setQuestionTargetId("");
@@ -524,62 +570,121 @@ export function MafiaGame() {
       voteRecords[humanVoteTarget.name] = [me.name];
     }
 
-    alive
+    const botDecisions = alive
       .filter((player) => !player.human)
-      .forEach((bot) => {
+      .map((bot) => {
         const choices = alive.filter((target) => target.id !== bot.id);
         const decision = chooseBotVoteTarget(bot, choices);
-        votes[decision.target.id] = (votes[decision.target.id] ?? 0) + 1;
-        
-        if (!voteRecords[decision.target.name]) {
-          voteRecords[decision.target.name] = [];
-        }
-        voteRecords[decision.target.name].push(bot.name);
-
-        addMessage(
-          "사회자",
-          `${bot.name}님은 ${decision.target.name}님에게 투표했습니다. ${decision.reason}`,
-          true,
-        );
+        return { bot, decision };
       });
+
+    botDecisions.forEach(({ bot, decision }) => {
+      votes[decision.target.id] = (votes[decision.target.id] ?? 0) + 1;
+
+      if (!voteRecords[decision.target.name]) {
+        voteRecords[decision.target.name] = [];
+      }
+      voteRecords[decision.target.name].push(bot.name);
+
+      addMessage(
+        "사회자",
+        `${bot.name}님은 ${decision.target.name}님에게 투표했습니다. ${decision.reason}`,
+        true,
+      );
+    });
 
     const sorted = Object.entries(votes).sort((a, b) => b[1] - a[1]);
     const tied = sorted.length > 1 && sorted[0][1] === sorted[1][1];
-    let nextPlayers = players;
-    let voteEvent = "투표가 동률로 끝나 아무도 탈락하지 않았습니다.";
+    const eliminatedId = !tied ? sorted[0][0] : null;
 
+    const nextPlayers = players.map((player) => {
+      const isEliminated = player.id === eliminatedId;
+      const nextTrust = { ...player.trust };
+
+      // 나를 투표한 사람들에 대한 신뢰도 하락
+      Object.entries(voteRecords).forEach(([targetName, voters]) => {
+        if (targetName === player.name) {
+          voters.forEach((voterName) => {
+            const voter = players.find((p) => p.name === voterName);
+            if (voter) {
+              nextTrust[voter.id] = (nextTrust[voter.id] || 0) - 2;
+            }
+          });
+        }
+      });
+
+      // 같은 대상을 투표한 사람들끼리는 신뢰도 상승
+      const myVoteTargetName = player.human
+        ? humanVoteTarget?.name
+        : botDecisions.find((d) => d.bot.id === player.id)?.decision.target.name;
+
+      if (myVoteTargetName) {
+        const fellowVoters = voteRecords[myVoteTargetName] || [];
+        fellowVoters.forEach((voterName) => {
+          if (voterName !== player.name) {
+            const voter = players.find((p) => p.name === voterName);
+            if (voter) {
+              nextTrust[voter.id] = (nextTrust[voter.id] || 0) + 1;
+            }
+          }
+        });
+      }
+
+      return {
+        ...player,
+        alive: isEliminated ? false : player.alive,
+        trust: nextTrust,
+      };
+    });
+
+    let voteEvent = "투표가 동률로 끝나 아무도 탈락하지 않았습니다.";
     if (!tied) {
-      const eliminatedId = sorted[0][0];
       const eliminated = players.find((player) => player.id === eliminatedId);
-      nextPlayers = players.map((player) =>
-        player.id === eliminatedId ? { ...player, alive: false } : player,
-      );
       voteEvent = `투표 결과 ${eliminated?.name ?? "누군가"}님이 탈락했습니다.`;
-      addMessage("사회자", voteEvent, true);
-    } else {
-      addMessage("사회자", voteEvent, true);
     }
+    addMessage("사회자", voteEvent, true);
 
     finishStep(nextPlayers, "night", voteEvent, voteRecords);
     setVoteTargetId("");
   }
 
   function chooseBotVoteTarget(bot: Player, choices: Player[]): VoteDecision {
-    const mostSuspicious = [...choices].sort((a, b) => b.suspicion - a.suspicion)[0];
+    // 신뢰도와 의심도를 결합하여 가중치 계산
+    const scoredChoices = choices.map((player) => {
+      const trustScore = bot.trust[player.id] || 0;
+      // 신뢰도가 높으면 의심도를 상쇄 (신뢰도 1점당 의심도 1점 상쇄)
+      const adjustedSuspicion = Math.max(0, player.suspicion - trustScore);
+      return { player, adjustedSuspicion };
+    });
 
-    // 의심도가 높으면 매우 높은 확률로 투표
-    if (mostSuspicious && mostSuspicious.suspicion >= 3 && Math.random() > 0.1) {
+    const sortedBySuspicion = [...scoredChoices].sort(
+      (a, b) => b.adjustedSuspicion - a.adjustedSuspicion,
+    );
+    const mostSuspicious = sortedBySuspicion[0];
+
+    // 의심도가 높으면 매우 높은 확률로 투표 (하드 모드에서는 기준 완화)
+    const highSuspicionThreshold = gameMode === "daily" && dailyCase.isHard ? 2 : 3;
+    if (
+      mostSuspicious &&
+      mostSuspicious.adjustedSuspicion >= highSuspicionThreshold &&
+      Math.random() > 0.1
+    ) {
       return {
-        target: mostSuspicious,
-        reason: `의심도가 ${mostSuspicious.suspicion}으로 매우 높아 확신을 가지고 지목했습니다.`,
+        target: mostSuspicious.player,
+        reason: `의심도가 ${mostSuspicious.adjustedSuspicion}으로 매우 높아 확신을 가지고 지목했습니다.`,
       };
     }
 
-    // 중간 정도의 의심도
-    if (mostSuspicious && mostSuspicious.suspicion >= 1 && Math.random() > 0.4) {
+    // 중간 정도의 의심도 (하드 모드에서는 확률 상승)
+    const midSuspicionProb = gameMode === "daily" && dailyCase.isHard ? 0.2 : 0.4;
+    if (
+      mostSuspicious &&
+      mostSuspicious.adjustedSuspicion >= 1 &&
+      Math.random() > midSuspicionProb
+    ) {
       return {
-        target: mostSuspicious,
-        reason: `다른 참가자들에 비해 ${mostSuspicious.name}님이 가장 의심스러워 보였습니다.`,
+        target: mostSuspicious.player,
+        reason: `다른 참가자들에 비해 ${mostSuspicious.player.name}님이 가장 의심스러워 보였습니다.`,
       };
     }
 
@@ -598,8 +703,10 @@ export function MafiaGame() {
     // 마피아가 아닌 경우, 마피아 후보를 우선 압박 (약간의 직감)
     if (bot.role !== "mafia" && Math.random() > 0.7) {
       const actualMafia = choices.filter((player) => player.role === "mafia");
-      if (actualMafia.length > 0) {
-        const target = pickRandom(actualMafia);
+      // 마피아 후보 중 신뢰도가 낮은 쪽 선택
+      const targets = actualMafia.filter((p) => (bot.trust[p.id] || 0) <= 0);
+      if (targets.length > 0) {
+        const target = pickRandom(targets);
         return {
           target,
           reason: "왠지 모를 위협을 느껴 지목했습니다.",
@@ -659,6 +766,7 @@ export function MafiaGame() {
           dailyRewardXp,
           dailyRewardClaimed,
           voteRecords,
+          finalPlayers: nextPlayers,
         });
       }
       setProfile((current) => {
@@ -1163,14 +1271,60 @@ function ResultCard({
           {summary.voteRecords && Object.keys(summary.voteRecords).length > 0 && (
             <div className="mt-4 border border-neutral-800 bg-neutral-950/70 p-4">
               <h3 className="text-sm font-semibold text-white">🗳️ 투표 요약</h3>
-              <div className="mt-3 grid gap-2 text-xs leading-6 text-neutral-300">
-                {Object.entries(summary.voteRecords).map(([target, voters]) => (
-                  <p key={target}>
-                    <span className="font-semibold text-red-200">{target}</span>
-                    <span className="mx-1">←</span>
-                    <span>{voters.join(", ")}</span>
-                  </p>
-                ))}
+              <div className="mt-4 space-y-4">
+                {Object.entries(summary.voteRecords).map(([targetName, voters]) => {
+                  const target = summary.finalPlayers?.find((p) => p.name === targetName);
+                  return (
+                    <div key={targetName} className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="relative h-8 w-8 overflow-hidden rounded-full border border-red-500/50 bg-neutral-900">
+                          {target && (
+                            <Image
+                              alt={target.role}
+                              className="object-cover"
+                              fill
+                              src={roleImages[target.role]}
+                            />
+                          )}
+                        </div>
+                        <span className="text-sm font-bold text-red-200">
+                          {targetName}
+                        </span>
+                        <span className="text-[10px] text-neutral-500">
+                          ({target ? roleLabels[target.role] : "???"})
+                        </span>
+                        <span className="ml-auto text-xs font-semibold text-red-500">
+                          {voters.length}표
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 pl-10">
+                        {voters.map((voterName) => {
+                          const voter = summary.finalPlayers?.find(
+                            (p) => p.name === voterName,
+                          );
+                          return (
+                            <div
+                              key={voterName}
+                              className="flex items-center gap-1 rounded-sm bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-300"
+                            >
+                              {voter && (
+                                <div className="relative h-3 w-3 overflow-hidden rounded-full border border-neutral-600">
+                                  <Image
+                                    alt={voter.role}
+                                    className="object-cover"
+                                    fill
+                                    src={roleImages[voter.role]}
+                                  />
+                                </div>
+                              )}
+                              <span>{voterName}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

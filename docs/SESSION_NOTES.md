@@ -19,7 +19,8 @@ Last updated: 2026-05-23
 - Night actions for mafia, doctor, detective, and citizen
 - Day discussion with free chat
 - Interrogation flow where NPCs answer according to role behavior
-- NPC voting behavior influenced by suspicion
+- NPC voting behavior influenced by suspicion and trust
+- Simple 'trust/friendship' system between participants
 - Win/loss resolution
 - Emoji-style result card with XP, level, and title
 - XP, level, title, and recent play history persist in `localStorage`
@@ -27,13 +28,13 @@ Last updated: 2026-05-23
 - Result card summarizes role, team outcome, XP gained, level progress, title changes, and key events
 - Setup screen includes a chat response preview for commands, button choices, and compact result text
 - Vote decisions from NPCs are logged with reasons in the progress log
-- Result card displays a compact vote summary (who voted for whom) at the end of the game
-- Daily case variety expanded (7 cases total) with tuned reward balance
-- NPC voting behavior tuned to be more suspicion-driven and less "clairvoyant"
+- Result card displays an enhanced vote summary with role icons and revealing all roles
+- Daily case variety expanded (9 cases total, including 2 Hard Mode cases)
+- NPC dialogue variety expanded for more diverse discussions
 - Role images under `public/roles`
 - Log auto-scroll on new messages
 - Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
-- Automatic commit script at `shared/commit-script.ts`
+- Automatic commit script at `shared/commit-script.ts` (Refactored for Gemini & multi-engine support)
 
 ## Known Constraints
 
@@ -44,10 +45,11 @@ Last updated: 2026-05-23
 
 ## Next Session TODO
 
-1. Expand NPC dialogue variety to make discussions feel more diverse.
-2. Implement a simple "trust/friendship" system where NPCs might protect players they've interacted with positively.
-3. Enhance the vote summary UI with small role icons or better layout.
-4. Add a "hard mode" daily case with more aggressive NPCs.
+1. Implement a 'Log Export' feature to save game results as a text or image file.
+2. Add more variety to NPC names and personality types (e.g., timid, aggressive, logical).
+3. Improve the setup screen UI with more options (e.g., difficulty setting for normal games).
+4. Add sound effects or visual feedback for key events (e.g., night phase transition, player elimination).
+
 
 ## Start Checklist For Codex
 
