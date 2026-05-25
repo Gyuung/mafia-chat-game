@@ -357,6 +357,7 @@ export function useMafiaGame() {
       nextPlayers = nextPlayers.map(p => p.id === mafiaTargetId ? { ...p, alive: false } : p);
       const target = players.find(p => p.id === mafiaTargetId);
       nightEvent = `밤 사이 ${target?.name ?? "누군가"}님이 탈락했습니다.`;
+      if (me.role === "mafia") setRoleActionSuccessCount((c) => c + 1);
       addMessage("사회자", nightEvent, true);
     } else {
       nightEvent = "의사의 보호로 밤 공격이 실패했습니다.";

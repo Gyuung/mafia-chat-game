@@ -30,7 +30,7 @@ export function ResultCard({
     const roleActionText = {
       doctor: `🛡️ 의사 방어 성공: ${summary.roleActionSuccessCount}회`,
       detective: `🔍 경찰 조사 성공: ${summary.roleActionSuccessCount}회`,
-      mafia: `🔪 마피아 처단 성공: ${summary.roleActionSuccessCount}회`,
+      mafia: `🔪 밤 공격 성공: ${summary.roleActionSuccessCount}회`,
       citizen: "",
     }[summary.role];
 
@@ -69,7 +69,7 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
   };
 
   return (
-    <div className="border border-red-500 bg-red-950/40 p-5">
+    <div className="animate-fade-in border border-red-500 bg-red-950/40 p-5">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-red-200">🎭 게임 결과</p>
         {summary && (
@@ -129,7 +129,7 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
                   {
                     doctor: "🛡️ 방어 성공",
                     detective: "🔍 조사 성공",
-                    mafia: "🔪 처단 성공",
+                    mafia: "🔪 밤 공격 성공",
                     citizen: "",
                   }[summary.role]
                 }

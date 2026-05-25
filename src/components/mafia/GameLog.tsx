@@ -46,7 +46,7 @@ export function GameLog({ messages }: { messages: Message[] }) {
         ) : (
           messages.map((message) => (
             <article
-              className={`border p-3 ${
+              className={`animate-fade-in-up border p-3 ${
                 message.system
                   ? "border-red-900 bg-red-950/30"
                   : "border-neutral-800 bg-neutral-900"

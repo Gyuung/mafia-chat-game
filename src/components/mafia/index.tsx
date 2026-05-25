@@ -38,15 +38,24 @@ export function MafiaGame() {
   return (
     <section className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8">
       {showOverlay && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity">
-          <p className="text-sm font-bold tracking-[0.3em] text-red-500 underline underline-offset-8">PHASE TRANSITION</p>
-          <h2 className="mt-6 text-6xl font-black text-white tracking-widest sm:text-8xl">
-            {overlayText}
-          </h2>
-          <p className="mt-4 text-neutral-400">
-            {round}라운드 {overlayText === "밤" ? "비밀스러운 행동의 시간" : "진실을 밝히는 토론의 시간"}
-            {gameMode === "daily" ? ` (사건: ${dailyCase.title})` : ` (난이도: ${difficulty === "hard" ? "어려움" : (difficulty === "easy" ? "쉬움" : "보통")})`}
-          </p>
+        <div className="animate-fade-in fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md transition-all duration-500">
+          <div className={`flex flex-col items-center p-12 ${phase === "night" ? "animate-pulse-red border border-red-500/30 bg-red-950/20" : ""}`}>
+            <p className="text-sm font-bold tracking-[0.3em] text-red-500 underline underline-offset-8">PHASE TRANSITION</p>
+            <h2 className="mt-8 text-7xl font-black text-white tracking-widest sm:text-9xl uppercase">
+              {overlayText}
+            </h2>
+            <p className="mt-6 text-xl font-medium text-neutral-300">
+              {round}라운드 {overlayText === "밤" ? "비밀스러운 행동의 시간" : "진실을 밝히는 토론의 시간"}
+            </p>
+            <div className="mt-8 flex gap-4 text-xs font-semibold text-neutral-500 uppercase tracking-tighter">
+              {gameMode === "daily" ? (
+                <span className="border border-neutral-800 px-3 py-1">Case: {dailyCase.title}</span>
+              ) : (
+                <span className="border border-neutral-800 px-3 py-1">Difficulty: {difficulty}</span>
+              )}
+              <span className="border border-neutral-800 px-3 py-1">Players: {players.length}</span>
+            </div>
+          </div>
         </div>
       )}
       <aside className="grid gap-4 self-start lg:sticky lg:top-5">
