@@ -45,6 +45,7 @@ Last updated: 2026-05-23
 - Visual animations (fade-in chat, phase transitions, pulse effects)
 - Elimination visual effects (Screen shake, blood splatter)
 - NPC dialogue feedback system (Thumbs up/down on chat messages)
+- Mobile responsiveness and layout optimizations (Collapsible menu)
 
 ## Known Constraints
 
@@ -56,8 +57,8 @@ Last updated: 2026-05-23
 
 1. Add sound effects (if assets are available).
 2. Add a 'Game Replay' or 'Log Viewer' for past games.
-3. Improve mobile responsiveness for the result card and overlay.
-4. Add more ambient effects (e.g., fog for night, birds for day).
+3. Add more ambient effects (e.g., fog for night, birds for day).
+4. Implement a simple tutorial for new players.
 
 
 ## Start Checklist For Codex
