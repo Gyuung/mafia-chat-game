@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-05-23
+Last updated: 2026-05-25
 
 ## Current State
 
@@ -48,6 +48,7 @@ Last updated: 2026-05-23
 - Mobile responsiveness and layout optimizations (Collapsible menu)
 - Deduction clues (Interrogation inconsistency, nervous tells for Mafia)
 - In-game Guide section in setup phase
+- Fixed statistic bug where 'Mafia Caught' count was inaccurate in results
 
 ## Known Constraints
 
