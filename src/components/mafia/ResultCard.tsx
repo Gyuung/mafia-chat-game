@@ -20,9 +20,57 @@ export function ResultCard({
       ? `${summary.titleBefore} → ${summary.titleAfter}`
       : summary?.titleAfter ?? fallbackTitle;
 
+  const handleShare = () => {
+    if (!summary) return;
+
+    const winEmoji = summary.result.includes("승리") ? "🏆" : "💀";
+    const survivalStatus = summary.survived ? "살아남음" : "희생됨";
+    const dailyCaseText = summary.dailyCaseTitle ? `🗓️ 오늘의 사건: ${summary.dailyCaseTitle}\n` : "";
+
+    const text = `
+[마피아 채팅 게임 - 결과 리포트] ${winEmoji}
+
+${summary.result} (${summary.team} 승리)
+${dailyCaseText}🎭 내 역할: ${roleLabels[summary.role]}
+🫀 생존 여부: ${survivalStatus}
+🕵️ 마피아 검거: ${summary.mafiaCaughtCount}명
+⌛ 총 진행 라운드: ${summary.totalRounds}R
+
+💰 획득 XP: +${summary.xpGained} XP
+⭐ 레벨: Lv. ${summary.levelBefore} → Lv. ${summary.levelAfter}
+🏷️ 칭호: ${titleUnlocked}
+
+📌 주요 사건:
+${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
+
+#마피아게임 #NextJS #웹게임
+    `.trim();
+
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        alert("결과가 클립보드에 복사되었습니다! SNS에 공유해보세요.");
+      })
+      .catch((err) => {
+        console.error("클립보드 복사 실패:", err);
+        alert("복사에 실패했습니다.");
+      });
+  };
+
   return (
     <div className="border border-red-500 bg-red-950/40 p-5">
-      <p className="text-sm font-semibold text-red-200">🎭 게임 결과</p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-red-200">🎭 게임 결과</p>
+        {summary && (
+          <button
+            className="text-[10px] font-bold text-red-400 hover:text-red-200"
+            onClick={handleShare}
+            type="button"
+          >
+            🔗 공유하기
+          </button>
+        )}
+      </div>
       <h2 className="mt-2 text-2xl font-bold text-white">
         {summary?.result ?? winner}
       </h2>
@@ -158,13 +206,15 @@ export function ResultCard({
         </div>
       )}
 
-      <button
-        className="mt-4 bg-white px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-red-100"
-        onClick={onReset}
-        type="button"
-      >
-        새 게임
-      </button>
+      <div className="mt-4 flex gap-2">
+        <button
+          className="flex-1 bg-white px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-red-100"
+          onClick={onReset}
+          type="button"
+        >
+          새 게임
+        </button>
+      </div>
     </div>
   );
 }
