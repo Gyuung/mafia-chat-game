@@ -46,6 +46,8 @@ Last updated: 2026-05-23
 - Elimination visual effects (Screen shake, blood splatter)
 - NPC dialogue feedback system (Thumbs up/down on chat messages)
 - Mobile responsiveness and layout optimizations (Collapsible menu)
+- Deduction clues (Interrogation inconsistency, nervous tells for Mafia)
+- In-game Guide section in setup phase
 
 ## Known Constraints
 
@@ -59,6 +61,7 @@ Last updated: 2026-05-23
 2. Add a 'Game Replay' or 'Log Viewer' for past games.
 3. Add more ambient effects (e.g., fog for night, birds for day).
 4. Implement a simple tutorial for new players.
+5. Expand "Tells" to specific personalities (e.g., Cynic Mafia tells differently from Timid Mafia).
 
 
 ## Start Checklist For Codex
