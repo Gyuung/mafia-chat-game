@@ -41,6 +41,7 @@ Last updated: 2026-05-23
 - Visual feedback for phase transitions (Phase overlay)
 - Share Result feature (Copy to clipboard as formatted text)
 - Context-aware NPC dialogue (mentions player names, reacts to Mafia caught)
+- Detailed player performance stats (interrogations, correct votes, role success)
 
 ## Known Constraints
 
@@ -50,9 +51,9 @@ Last updated: 2026-05-23
 
 ## Next Session TODO
 
-1. Improve the result card with more detailed player performance stats.
-2. Add sound effects (if assets are available) or more subtle visual animations.
-3. Implement a 'Report NPC' or 'Feedback' system for dialogue quality.
+1. Add sound effects (if assets are available) or more subtle visual animations.
+2. Implement a 'Report NPC' or 'Feedback' system for dialogue quality.
+3. Add a 'Game Replay' or 'Log Viewer' for past games.
 
 
 ## Start Checklist For Codex
