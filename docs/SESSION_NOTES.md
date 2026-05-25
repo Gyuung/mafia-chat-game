@@ -43,6 +43,7 @@ Last updated: 2026-05-23
 - Context-aware NPC dialogue (mentions player names, reacts to Mafia caught)
 - Detailed player performance stats (interrogations, correct votes, role success)
 - Visual animations (fade-in chat, phase transitions, pulse effects)
+- Elimination visual effects (Screen shake, blood splatter)
 
 ## Known Constraints
 
@@ -55,7 +56,7 @@ Last updated: 2026-05-23
 1. Add sound effects (if assets are available).
 2. Implement a 'Report NPC' or 'Feedback' system for dialogue quality.
 3. Add a 'Game Replay' or 'Log Viewer' for past games.
-4. Add more visual effects like shaking or blood splatters on elimination.
+4. Improve mobile responsiveness for the result card and overlay.
 
 
 ## Start Checklist For Codex

@@ -24,6 +24,10 @@
   - `globals.css`에 `fade-in`, `fade-in-up`, `pulse-red` 키프레임 및 유틸리티 클래스 추가.
   - `GameLog` 메시지 등장 시 슬라이드 업 애니메이션 적용.
   - 단계 전환(Phase Transition) 오버레이에 애니메이션 및 밤 단계 한정 펄스 효과 적용.
+- **탈락 이벤트 연출 구현**:
+  - `types.ts`에 `GameEventType` 추가.
+  - `useMafiaGame.ts`에서 탈락 발생 시 (`resolveNight`, `resolveVote`) 이벤트를 트리거하도록 수정.
+  - `index.tsx`에서 이벤트를 감지하여 화면 흔들림(`animate-shake`) 및 선혈 효과 오버레이(`animate-blood-splatter`) 노출 로직 추가.
 
 ## 2026-05-18
 
