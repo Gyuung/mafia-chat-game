@@ -40,6 +40,7 @@ Last updated: 2026-05-23
 - Difficulty setting for normal games (Easy, Normal, Hard)
 - Visual feedback for phase transitions (Phase overlay)
 - Share Result feature (Copy to clipboard as formatted text)
+- Context-aware NPC dialogue (mentions player names, reacts to Mafia caught)
 
 ## Known Constraints
 
@@ -49,9 +50,9 @@ Last updated: 2026-05-23
 
 ## Next Session TODO
 
-1. Add more variety to NPC dialogue based on current game state (e.g., specific comments about remaining roles).
-2. Improve the result card with more detailed player performance stats.
-3. Add sound effects (if assets are available) or more subtle visual animations.
+1. Improve the result card with more detailed player performance stats.
+2. Add sound effects (if assets are available) or more subtle visual animations.
+3. Implement a 'Report NPC' or 'Feedback' system for dialogue quality.
 
 
 ## Start Checklist For Codex
