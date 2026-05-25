@@ -16,6 +16,15 @@
   - `src/components/mafia/` 하위에 `types.ts`, `constants.ts`, `useMafiaGame.ts`, `GameLog.tsx` 등으로 분리.
 - **커밋 워크플로우 정립**: 작업별 원자적(atomic) 커밋 수행 및 `CHANGELOG_INTERNAL.md`를 통한 내부 이력 관리 체계 구축.
 
+### 버그 수정 & 로직 최적화
+- **마피아 역할 로직 수정**: 
+  - 결과 카드 지표에서 '마피아 처단 성공'을 '밤 공격 성공'으로 용어 변경 (사용자 피드백 반영).
+  - `useMafiaGame.ts`에서 마피아의 밤 공격 성공 시 지표가 정상적으로 증가하도록 로직 누락분 보완.
+- **시각적 애니메이션 구현**:
+  - `globals.css`에 `fade-in`, `fade-in-up`, `pulse-red` 키프레임 및 유틸리티 클래스 추가.
+  - `GameLog` 메시지 등장 시 슬라이드 업 애니메이션 적용.
+  - 단계 전환(Phase Transition) 오버레이에 애니메이션 및 밤 단계 한정 펄스 효과 적용.
+
 ## 2026-05-18
 
 ### 초기 설정
