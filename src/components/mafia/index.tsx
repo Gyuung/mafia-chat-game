@@ -16,12 +16,13 @@ export function MafiaGame() {
     visibleTargets, messages, chatText, setChatText, questionTargetId, setQuestionTargetId,
     nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner, gameMode, difficulty,
     gameResultSummary, profile, todayKey, dailyCase, dailyRewardAvailable,
-    me, level, currentLevelXp,
+    me, level, currentLevelXp, lastEvent, resetEvent,
     startGame, submitChat, interrogateTarget, resolveNight, startVote, resolveVote, resetGame
   } = useMafiaGame();
 
   const [setupDifficulty, setSetupDifficulty] = useState<Difficulty>("normal");
   const [showOverlay, setShowOverlay] = useState(false);
+  const [isEliminating, setIsEliminating] = useState(false);
 
   useEffect(() => {
     if (phase !== "setup") {
@@ -31,12 +32,26 @@ export function MafiaGame() {
     }
   }, [phase]);
 
+  useEffect(() => {
+    if (lastEvent === "elimination") {
+      setIsEliminating(true);
+      const timer = setTimeout(() => {
+        setIsEliminating(false);
+        resetEvent();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastEvent, resetEvent]);
+
   const overlayText = getPhaseLabel(phase);
 
   const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL ?? "http://localhost:3001";
 
   return (
-    <section className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8">
+    <section className={`mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8 ${isEliminating ? "animate-shake" : ""}`}>
+      {isEliminating && (
+        <div className="animate-blood-splatter fixed inset-0 z-[60] pointer-events-none bg-red-900/20 mix-blend-multiply" />
+      )}
       {showOverlay && (
         <div className="animate-fade-in fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md transition-all duration-500">
           <div className={`flex flex-col items-center p-12 ${phase === "night" ? "animate-pulse-red border border-red-500/30 bg-red-950/20" : ""}`}>

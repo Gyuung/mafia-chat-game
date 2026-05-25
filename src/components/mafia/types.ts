@@ -92,3 +92,5 @@ export type PersonalityTrait = {
   dialogueStyles: string[];
   voteThreshold: number;
 };
+
+export type GameEventType = "none" | "elimination" | "victory" | "defeat";

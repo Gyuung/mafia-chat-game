@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { 
   Player, Role, Phase, Message, SavedProfile, GameResultSummary, 
-  GameMode, VoteDecision, PersonalityType, Difficulty
+  GameMode, VoteDecision, PersonalityType, Difficulty, GameEventType
 } from "./types";
 import { 
   PROFILE_STORAGE_KEY, MAX_HISTORY_ITEMS, botNames, 
@@ -102,6 +102,7 @@ export function useMafiaGame() {
   const [interrogationCount, setInterrogationCount] = useState(0);
   const [correctVoteCount, setCorrectVoteCount] = useState(0);
   const [roleActionSuccessCount, setRoleActionSuccessCount] = useState(0);
+  const [lastEvent, setLastEvent] = useState<GameEventType>("none");
   const [profile, setProfile] = useState<SavedProfile>(() => loadSavedProfile() ?? { xp: 0, history: [] });
 
   const todayKey = getTodayKey();
@@ -358,6 +359,7 @@ export function useMafiaGame() {
       const target = players.find(p => p.id === mafiaTargetId);
       nightEvent = `밤 사이 ${target?.name ?? "누군가"}님이 탈락했습니다.`;
       if (me.role === "mafia") setRoleActionSuccessCount((c) => c + 1);
+      setLastEvent("elimination");
       addMessage("사회자", nightEvent, true);
     } else {
       nightEvent = "의사의 보호로 밤 공격이 실패했습니다.";
@@ -423,6 +425,7 @@ export function useMafiaGame() {
     });
 
     const event = tied ? "투표가 동률로 끝나 아무도 탈락하지 않았습니다." : `투표 결과 ${players.find(p => p.id === eliminatedId)?.name ?? "누군가"}님이 탈락했습니다.`;
+    if (!tied) setLastEvent("elimination");
     addMessage("사회자", event, true);
     finishStep(nextPlayers, "night", event, voteRecords);
     setVoteTargetId("");
@@ -447,6 +450,7 @@ export function useMafiaGame() {
     nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner, gameMode, difficulty,
     gameResultSummary, profile, todayKey, dailyCase, dailyRewardAvailable: profile.lastDailyRewardDate !== todayKey,
     me, level: Math.floor(profile.xp / 100) + 1, currentLevelXp: profile.xp % 100, 
+    lastEvent, resetEvent: () => setLastEvent("none"),
     startGame, submitChat: (e: React.FormEvent) => { e.preventDefault(); if (me?.alive && chatText.trim()) { addMessage(me.name, chatText.trim()); botDiscuss(1); setChatText(""); } },
     interrogateTarget, resolveNight, startVote: () => { botDiscuss(); setPhase("vote"); setVoteTargetId(""); addMessage("사회자", "투표를 시작합니다. 의심되는 참가자를 선택하세요.", true); }, 
     resolveVote, resetGame,
