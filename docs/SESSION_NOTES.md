@@ -32,21 +32,19 @@ Last updated: 2026-05-23
 - Result card displays an enhanced vote summary with role icons and revealing all roles
 - Daily case variety expanded (9 cases total, including 2 Hard Mode cases)
 - NPC dialogue variety expanded for more diverse discussions
+- Contextual NPC reactions based on death and round number
+- Detailed performance metrics on the result card (Mafia caught, total rounds)
+- Automatic shell command execution policy for smoother CLI experience
 - Log export feature to save game results as a text file
 - Expanded variety of NPC names and personality types (added Cynic personality)
 - Difficulty setting for normal games (Easy, Normal, Hard)
 - Visual feedback for phase transitions (Phase overlay)
-- Log auto-scroll on new messages
-- Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
-- Modular code architecture under `src/components/mafia/` (Types, Constants, Hooks, UI components separated)
-- Automatic commit script at `shared/commit-script.ts` (Improved stability and multi-agent support)
 
 ## Known Constraints
 
 - NPC dialogue is rule-based, not LLM-generated.
 - No persistent user profile or database yet.
 - No production chat-platform adapter yet.
-- Role images are generated raster assets and should stay in `public/roles`.
 
 ## Next Session TODO
 
