@@ -251,6 +251,9 @@ export function useMafiaGame() {
       const levelAfter = Math.floor(nextXp / 100) + 1;
       const keyEvents = [...messages.filter(m => m.system).map(m => m.text).slice(-3), latestEvent].filter((e, i, arr) => arr.indexOf(e) === i).slice(-4);
 
+      // 상태 업데이트 지연을 피하기 위해 현재 값 기반으로 직접 계산
+      const finalMafiaCaught = nextPlayers.filter(p => !p.human && p.role === "mafia" && !p.alive).length;
+
       setWinner(res);
       if (human) {
         setGameResultSummary({
@@ -259,7 +262,7 @@ export function useMafiaGame() {
           titleBefore: getTitle(levelBefore), titleAfter: getTitle(levelAfter),
           survived: human.alive, keyEvents, dailyCaseTitle: gameMode === "daily" ? dailyCase.title : undefined,
           dailyRewardXp, dailyRewardClaimed, voteRecords, finalPlayers: nextPlayers,
-          mafiaCaughtCount, totalRounds: round,
+          mafiaCaughtCount: finalMafiaCaught, totalRounds: round,
           interrogationCount, correctVoteCount, roleActionSuccessCount,
         });
       }
