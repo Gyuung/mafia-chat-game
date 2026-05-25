@@ -39,6 +39,7 @@ Last updated: 2026-05-23
 - Expanded variety of NPC names and personality types (added Cynic personality)
 - Difficulty setting for normal games (Easy, Normal, Hard)
 - Visual feedback for phase transitions (Phase overlay)
+- Share Result feature (Copy to clipboard as formatted text)
 
 ## Known Constraints
 
@@ -48,10 +49,9 @@ Last updated: 2026-05-23
 
 ## Next Session TODO
 
-1. Implement a 'Share Result' feature to generate a summary image or card for social media.
-2. Add more variety to NPC dialogue based on current game state (e.g., specific comments about remaining roles).
-3. Improve the result card with more detailed player performance stats.
-4. Add sound effects (if assets are available) or more subtle visual animations.
+1. Add more variety to NPC dialogue based on current game state (e.g., specific comments about remaining roles).
+2. Improve the result card with more detailed player performance stats.
+3. Add sound effects (if assets are available) or more subtle visual animations.
 
 
 ## Start Checklist For Codex
