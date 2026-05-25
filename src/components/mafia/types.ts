@@ -59,6 +59,9 @@ export type GameResultSummary = {
   finalPlayers?: Player[];
   mafiaCaughtCount: number;
   totalRounds: number;
+  interrogationCount: number;
+  correctVoteCount: number;
+  roleActionSuccessCount: number;
 };
 
 export type DailyCase = {

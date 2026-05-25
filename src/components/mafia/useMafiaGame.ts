@@ -99,6 +99,9 @@ export function useMafiaGame() {
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [gameResultSummary, setGameResultSummary] = useState<GameResultSummary | null>(null);
   const [mafiaCaughtCount, setMafiaCaughtCount] = useState(0);
+  const [interrogationCount, setInterrogationCount] = useState(0);
+  const [correctVoteCount, setCorrectVoteCount] = useState(0);
+  const [roleActionSuccessCount, setRoleActionSuccessCount] = useState(0);
   const [profile, setProfile] = useState<SavedProfile>(() => loadSavedProfile() ?? { xp: 0, history: [] });
 
   const todayKey = getTodayKey();
@@ -242,6 +245,7 @@ export function useMafiaGame() {
           survived: human.alive, keyEvents, dailyCaseTitle: gameMode === "daily" ? dailyCase.title : undefined,
           dailyRewardXp, dailyRewardClaimed, voteRecords, finalPlayers: nextPlayers,
           mafiaCaughtCount, totalRounds: round,
+          interrogationCount, correctVoteCount, roleActionSuccessCount,
         });
       }
       setProfile((current) => {
@@ -290,6 +294,9 @@ export function useMafiaGame() {
     setNightTargetId("");
     setVoteTargetId("");
     setMafiaCaughtCount(0);
+    setInterrogationCount(0);
+    setCorrectVoteCount(0);
+    setRoleActionSuccessCount(0);
     setMessages([{ id: createId("msg"), sender: "사회자", text: intro, system: true }]);
   }, [myName, playerCount, dailyCase]);
 
@@ -302,6 +309,8 @@ export function useMafiaGame() {
     const answers = personalityAnswers[p];
     const answer = target.role === "mafia" ? pickRandom(answers.mafia) : (target.role === "citizen" ? pickRandom(answers.citizen) : pickRandom(answers.power));
     addMessage(target.name, answer);
+
+    setInterrogationCount((c) => c + 1);
 
     setPlayers((current) => current.map((p) => {
       if (p.id === target.id) {
@@ -337,7 +346,10 @@ export function useMafiaGame() {
 
     if (me.role === "detective" && nightTargetId) {
       const target = nextPlayers.find(p => p.id === nightTargetId);
-      if (target) addMessage("사회자", `${target.name}님은 ${target.role === "mafia" ? "마피아" : "마피아가 아닙니다"}.`, true);
+      if (target) {
+        addMessage("사회자", `${target.name}님은 ${target.role === "mafia" ? "마피아" : "마피아가 아닙니다"}.`, true);
+        if (target.role === "mafia") setRoleActionSuccessCount((c) => c + 1);
+      }
     }
 
     if (mafias.length === 0) addMessage("사회자", nightEvent, true);
@@ -348,6 +360,7 @@ export function useMafiaGame() {
       addMessage("사회자", nightEvent, true);
     } else {
       nightEvent = "의사의 보호로 밤 공격이 실패했습니다.";
+      if (me.role === "doctor" && protectedId === mafiaTargetId) setRoleActionSuccessCount((c) => c + 1);
       addMessage("사회자", nightEvent, true);
     }
     finishStep(nextPlayers, "day", nightEvent);
@@ -365,6 +378,7 @@ export function useMafiaGame() {
       voteRecords[humanVoteTarget.name] = [me.name];
       if (humanVoteTarget.role === "mafia") {
         setMafiaCaughtCount((c) => c + 1);
+        setCorrectVoteCount((c) => c + 1);
       }
     }
 

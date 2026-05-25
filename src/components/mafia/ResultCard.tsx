@@ -27,6 +27,13 @@ export function ResultCard({
     const survivalStatus = summary.survived ? "살아남음" : "희생됨";
     const dailyCaseText = summary.dailyCaseTitle ? `🗓️ 오늘의 사건: ${summary.dailyCaseTitle}\n` : "";
 
+    const roleActionText = {
+      doctor: `🛡️ 의사 방어 성공: ${summary.roleActionSuccessCount}회`,
+      detective: `🔍 경찰 조사 성공: ${summary.roleActionSuccessCount}회`,
+      mafia: `🔪 마피아 처단 성공: ${summary.roleActionSuccessCount}회`,
+      citizen: "",
+    }[summary.role];
+
     const text = `
 [마피아 채팅 게임 - 결과 리포트] ${winEmoji}
 
@@ -36,6 +43,10 @@ ${dailyCaseText}🎭 내 역할: ${roleLabels[summary.role]}
 🕵️ 마피아 검거: ${summary.mafiaCaughtCount}명
 ⌛ 총 진행 라운드: ${summary.totalRounds}R
 
+📊 활동 지표:
+• 심문 횟수: ${summary.interrogationCount}회
+• 정확한 투표: ${summary.correctVoteCount}회
+${roleActionText ? `• ${roleActionText}\n` : ""}
 💰 획득 XP: +${summary.xpGained} XP
 ⭐ 레벨: Lv. ${summary.levelBefore} → Lv. ${summary.levelAfter}
 🏷️ 칭호: ${titleUnlocked}
@@ -110,6 +121,21 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
             <ResultStat label="🫀 생존" value={summary.survived ? "생존" : "탈락"} />
             <ResultStat label="🕵️ 마피아 검거" value={`${summary.mafiaCaughtCount}명`} />
             <ResultStat label="⌛ 총 라운드" value={`${summary.totalRounds}R`} />
+            <ResultStat label="🗣️ 심문 횟수" value={`${summary.interrogationCount}회`} />
+            <ResultStat label="🗳️ 정확한 투표" value={`${summary.correctVoteCount}회`} />
+            {summary.role !== "citizen" && (
+              <ResultStat
+                label={
+                  {
+                    doctor: "🛡️ 방어 성공",
+                    detective: "🔍 조사 성공",
+                    mafia: "🔪 처단 성공",
+                    citizen: "",
+                  }[summary.role]
+                }
+                value={`${summary.roleActionSuccessCount}회`}
+              />
+            )}
           </div>
 
           <div className="mt-4 border border-red-900 bg-neutral-950/70 p-4">
