@@ -57,6 +57,8 @@ export type GameResultSummary = {
   dailyRewardClaimed: boolean;
   voteRecords?: Record<string, string[]>;
   finalPlayers?: Player[];
+  mafiaCaughtCount: number;
+  totalRounds: number;
 };
 
 export type DailyCase = {

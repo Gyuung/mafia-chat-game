@@ -6,7 +6,7 @@ import {
 import { 
   PROFILE_STORAGE_KEY, MAX_HISTORY_ITEMS, botNames, 
   personalityLines, personalityAnswers, personalityTraits, 
-  dailyCases 
+  personalityReactions, dailyCases 
 } from "./constants";
 
 function shuffle<T>(items: T[]) {
@@ -98,6 +98,7 @@ export function useMafiaGame() {
   const [gameMode, setGameMode] = useState<GameMode>("normal");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [gameResultSummary, setGameResultSummary] = useState<GameResultSummary | null>(null);
+  const [mafiaCaughtCount, setMafiaCaughtCount] = useState(0);
   const [profile, setProfile] = useState<SavedProfile>(() => loadSavedProfile() ?? { xp: 0, history: [] });
 
   const todayKey = getTodayKey();
@@ -120,17 +121,28 @@ export function useMafiaGame() {
 
   const botDiscuss = useCallback((count = 2) => {
     const speakers = shuffle(alivePlayers.filter((p) => !p.human)).slice(0, count);
+    const lastMessage = messages[messages.length - 1];
+    const isDeathMorning = lastMessage?.system && lastMessage.text.includes("탈락했습니다");
+    const isLateGame = round >= 4;
+
     speakers.forEach((speaker) => {
       const suspects = visibleTargets.filter((p) => p.id !== speaker.id);
       const suspect = suspects.length > 0 ? pickRandom(suspects) : null;
       const p = speaker.personality || "logical";
-      const lines = personalityLines[p];
-      const line = suspect
-        ? `${pickRandom(lines)} 저는 ${suspect.name}님 발언을 더 보고 싶어요.`
-        : pickRandom(lines);
+      
+      let pool = [...personalityLines[p]];
+      if (isDeathMorning && Math.random() > 0.5) {
+        pool = [...personalityReactions[p].death];
+      } else if (isLateGame && Math.random() > 0.6) {
+        pool = [...personalityReactions[p].lateGame];
+      }
+
+      const line = suspect && pool === personalityLines[p]
+        ? `${pickRandom(pool)} 저는 ${suspect.name}님 발언을 더 보고 싶어요.`
+        : pickRandom(pool);
       addMessage(speaker.name, line);
     });
-  }, [alivePlayers, visibleTargets, addMessage]);
+  }, [alivePlayers, visibleTargets, messages, round, addMessage]);
 
   const chooseBotVoteTarget = useCallback((bot: Player, choices: Player[]): VoteDecision => {
     const pType = bot.personality || "logical";
@@ -201,6 +213,7 @@ export function useMafiaGame() {
           titleBefore: getTitle(levelBefore), titleAfter: getTitle(levelAfter),
           survived: human.alive, keyEvents, dailyCaseTitle: gameMode === "daily" ? dailyCase.title : undefined,
           dailyRewardXp, dailyRewardClaimed, voteRecords, finalPlayers: nextPlayers,
+          mafiaCaughtCount, totalRounds: round,
         });
       }
       setProfile((current) => {
@@ -220,7 +233,7 @@ export function useMafiaGame() {
       addMessage("사회자", "다음 밤이 시작됩니다.", true);
     }
     setPhase(nextPhase);
-  }, [gameMode, profile, todayKey, dailyCase, messages, round, addMessage]);
+  }, [gameMode, profile, todayKey, dailyCase, messages, round, mafiaCaughtCount, addMessage]);
 
   const startGame = useCallback((mode: GameMode = "normal", diff: Difficulty = "normal") => {
     const names = shuffle(botNames).slice(0, playerCount - 1);
@@ -248,6 +261,7 @@ export function useMafiaGame() {
     setQuestionTargetId("");
     setNightTargetId("");
     setVoteTargetId("");
+    setMafiaCaughtCount(0);
     setMessages([{ id: createId("msg"), sender: "사회자", text: intro, system: true }]);
   }, [myName, playerCount, dailyCase]);
 
@@ -321,6 +335,9 @@ export function useMafiaGame() {
     if (humanVoteTarget) {
       addMessage("사회자", `${me.name}님은 ${humanVoteTarget.name}님에게 투표했습니다.`, true);
       voteRecords[humanVoteTarget.name] = [me.name];
+      if (humanVoteTarget.role === "mafia") {
+        setMafiaCaughtCount((c) => c + 1);
+      }
     }
 
     const botDecisions = alive.filter(p => !p.human).map((bot) => {

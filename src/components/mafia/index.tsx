@@ -25,7 +25,7 @@ export function MafiaGame() {
 
   useEffect(() => {
     if (phase !== "setup") {
-      setShowOverlay(true);
+      requestAnimationFrame(() => setShowOverlay(true));
       const timer = setTimeout(() => setShowOverlay(false), 1500);
       return () => clearTimeout(timer);
     }

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { GameResultSummary, Player } from "./types";
+import { GameResultSummary } from "./types";
 import { roleLabels, roleImages } from "./constants";
 
 export function ResultCard({
@@ -60,6 +60,8 @@ export function ResultCard({
             />
             <ResultStat label="🏷️ 칭호" value={titleUnlocked} />
             <ResultStat label="🫀 생존" value={summary.survived ? "생존" : "탈락"} />
+            <ResultStat label="🕵️ 마피아 검거" value={`${summary.mafiaCaughtCount}명`} />
+            <ResultStat label="⌛ 총 라운드" value={`${summary.totalRounds}R`} />
           </div>
 
           <div className="mt-4 border border-red-900 bg-neutral-950/70 p-4">
