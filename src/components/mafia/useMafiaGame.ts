@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { 
   Player, Role, Phase, Message, SavedProfile, GameResultSummary, 
-  GameMode, VoteDecision, PersonalityType, Difficulty, GameEventType
+  GameMode, VoteDecision, PersonalityType, Difficulty, GameEventType,
+  DialogueFeedback
 } from "./types";
 import { 
   PROFILE_STORAGE_KEY, MAX_HISTORY_ITEMS, botNames, 
@@ -72,7 +73,9 @@ function loadSavedProfile(): SavedProfile | null {
       xp: typeof parsed.xp === "number" ? parsed.xp : 0,
       history: Array.isArray(parsed.history) ? parsed.history.slice(0, MAX_HISTORY_ITEMS) : [],
       lastDailyRewardDate: typeof parsed.lastDailyRewardDate === "string" ? parsed.lastDailyRewardDate : undefined,
-    };
+      dialogueFeedback: Array.isArray(parsed.dialogueFeedback) ? parsed.dialogueFeedback : [],
+      };
+
   } catch { return null; }
 }
 
@@ -444,6 +447,16 @@ export function useMafiaGame() {
     setGameResultSummary(null);
   }, []);
 
+  const submitDialogueFeedback = useCallback((feedback: Omit<DialogueFeedback, "timestamp">) => {
+    setProfile((current) => ({
+      ...current,
+      dialogueFeedback: [
+        ...(current.dialogueFeedback || []),
+        { ...feedback, timestamp: new Date().toISOString() },
+      ].slice(-100), // 최대 100개까지만 보관
+    }));
+  }, []);
+
   return {
     phase, round, myName, setMyName, playerCount, setPlayerCount, players, alivePlayers, 
     visibleTargets, messages, chatText, setChatText, questionTargetId, setQuestionTargetId, 
@@ -451,6 +464,7 @@ export function useMafiaGame() {
     gameResultSummary, profile, todayKey, dailyCase, dailyRewardAvailable: profile.lastDailyRewardDate !== todayKey,
     me, level: Math.floor(profile.xp / 100) + 1, currentLevelXp: profile.xp % 100, 
     lastEvent, resetEvent: () => setLastEvent("none"),
+    submitDialogueFeedback,
     startGame, submitChat: (e: React.FormEvent) => { e.preventDefault(); if (me?.alive && chatText.trim()) { addMessage(me.name, chatText.trim()); botDiscuss(1); setChatText(""); } },
     interrogateTarget, resolveNight, startVote: () => { botDiscuss(); setPhase("vote"); setVoteTargetId(""); addMessage("사회자", "투표를 시작합니다. 의심되는 참가자를 선택하세요.", true); }, 
     resolveVote, resetGame,

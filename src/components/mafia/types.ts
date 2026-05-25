@@ -34,10 +34,20 @@ export type PlayHistoryEntry = {
   titleAfter: string;
 };
 
+export type DialogueFeedback = {
+  messageId: string;
+  sender: string;
+  text: string;
+  rating: "good" | "bad";
+  personality?: PersonalityType;
+  timestamp: string;
+};
+
 export type SavedProfile = {
   xp: number;
   history: PlayHistoryEntry[];
   lastDailyRewardDate?: string;
+  dialogueFeedback?: DialogueFeedback[];
 };
 
 export type GameResultSummary = {

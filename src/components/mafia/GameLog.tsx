@@ -1,12 +1,33 @@
 import { useEffect, useRef } from "react";
-import { Message } from "./types";
+import { Message, DialogueFeedback, Player } from "./types";
 
-export function GameLog({ messages }: { messages: Message[] }) {
+export function GameLog({ 
+  messages, 
+  submitDialogueFeedback,
+  players 
+}: { 
+  messages: Message[];
+  submitDialogueFeedback?: (f: Omit<DialogueFeedback, "timestamp">) => void;
+  players: Player[];
+}) {
   const logEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length]);
+
+  const handleFeedback = (message: Message, rating: "good" | "bad") => {
+    if (!submitDialogueFeedback) return;
+    const speaker = players.find(p => p.name === message.sender);
+    submitDialogueFeedback({
+      messageId: message.id,
+      sender: message.sender,
+      text: message.text,
+      rating,
+      personality: speaker?.personality,
+    });
+    alert("피드백이 저장되었습니다. 감사합니다!");
+  };
 
   const handleExport = () => {
     if (messages.length === 0) return;
@@ -46,16 +67,38 @@ export function GameLog({ messages }: { messages: Message[] }) {
         ) : (
           messages.map((message) => (
             <article
-              className={`animate-fade-in-up border p-3 ${
+              className={`animate-fade-in-up group relative border p-3 ${
                 message.system
                   ? "border-red-900 bg-red-950/30"
                   : "border-neutral-800 bg-neutral-900"
               }`}
               key={message.id}
             >
-              <p className="text-xs font-semibold text-neutral-400">
-                {message.sender}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-neutral-400">
+                  {message.sender}
+                </p>
+                {!message.system && players.find(p => p.name === message.sender && !p.human) && (
+                  <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                    <button 
+                      className="text-[10px] text-neutral-500 hover:text-green-500" 
+                      onClick={() => handleFeedback(message, "good")}
+                      title="좋은 대사"
+                      type="button"
+                    >
+                      👍
+                    </button>
+                    <button 
+                      className="text-[10px] text-neutral-500 hover:text-red-500" 
+                      onClick={() => handleFeedback(message, "bad")}
+                      title="부자연스러운 대사"
+                      type="button"
+                    >
+                      👎
+                    </button>
+                  </div>
+                )}
+              </div>
               <p className="mt-1 text-sm leading-6 text-neutral-100">
                 {message.text}
               </p>

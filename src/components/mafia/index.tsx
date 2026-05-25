@@ -17,6 +17,7 @@ export function MafiaGame() {
     nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner, gameMode, difficulty,
     gameResultSummary, profile, todayKey, dailyCase, dailyRewardAvailable,
     me, level, currentLevelXp, lastEvent, resetEvent,
+    submitDialogueFeedback,
     startGame, submitChat, interrogateTarget, resolveNight, startVote, resolveVote, resetGame
   } = useMafiaGame();
 
@@ -246,7 +247,7 @@ export function MafiaGame() {
 
         {phase === "ended" && <ResultCard fallbackLevel={level} fallbackTitle={getTitle(level)} onReset={resetGame} summary={gameResultSummary} winner={winner} />}
 
-        <GameLog messages={messages} />
+        <GameLog messages={messages} players={players} submitDialogueFeedback={submitDialogueFeedback} />
       </main>
     </section>
   );
