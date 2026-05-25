@@ -230,6 +230,28 @@ export function MafiaGame() {
           </Panel>
         )}
 
+        {phase === "setup" && (
+          <Panel title="게임 가이드">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="border border-neutral-800 bg-neutral-900/50 p-4">
+                <h3 className="font-bold text-white">🕵️ 마피아를 찾는 방법</h3>
+                <ul className="mt-2 space-y-2 text-xs leading-5 text-neutral-400">
+                  <li>• <span className="text-red-300">심문 일관성</span>: 시민은 매번 같은 알리바이를 말하지만, 마피아는 당황해서 말을 바꿀 때가 있습니다.</li>
+                  <li>• <span className="text-red-300">방어적 태도</span>: 마피아는 대화 도중 지나치게 결백을 주장하거나 불안해하는 모습을 보입니다.</li>
+                  <li>• <span className="text-red-300">투표 기록</span>: 마피아는 자기 팀을 보호하기 위해 투표를 회피하거나 시민을 몰아갈 수 있습니다.</li>
+                </ul>
+              </div>
+              <div className="border border-neutral-800 bg-neutral-900/50 p-4">
+                <h3 className="font-bold text-white">💡 플레이 팁</h3>
+                <ul className="mt-2 space-y-2 text-xs leading-5 text-neutral-400">
+                  <li>• <span className="text-blue-300">심문하기</span>: 낮 토론 시간에 특정 대상을 반복해서 심문해 진술이 꼬이는지 확인하세요.</li>
+                  <li>• <span className="text-blue-300">특수 역할 활용</span>: 경찰은 마피아를 직접 찾아낼 수 있고, 의사는 마피아의 공격을 막아낼 수 있습니다.</li>
+                </ul>
+              </div>
+            </div>
+          </Panel>
+        )}
+
         {phase === "setup" && <ChatResponsePreview />}
 
         {phase === "night" && me && (

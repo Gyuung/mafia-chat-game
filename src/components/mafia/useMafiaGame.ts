@@ -160,6 +160,17 @@ export function useMafiaGame() {
 
       let line = pickRandom(pool);
 
+      // 마피아 전용 '심리적 단서' 삽입 (15% 확률)
+      if (speaker.role === "mafia" && Math.random() > 0.85) {
+        const tells = [
+          "저는 정말 결백합니다. 제발 믿어주세요.",
+          "왜 다들 저를 쳐다보시는 것 같죠? 기분 탓인가요...",
+          "조금 혼란스럽네요. 누가 마피아인지 전혀 모르겠어요.",
+          "말수가 적다고 의심받는 건 억울합니다.",
+        ];
+        line = pickRandom(tells);
+      }
+
       // 템플릿 치환 로직 (NPC 이름이나 의심 대상 삽입)
       if (suspect && Math.random() > 0.4 && !line.includes("님")) {
         const connectors = {
@@ -311,7 +322,29 @@ export function useMafiaGame() {
     addMessage(me.name, `${target.name}님, 어젯밤 뭐 했는지 설명해주세요.`);
     const p = target.personality || "logical";
     const answers = personalityAnswers[p];
-    const answer = target.role === "mafia" ? pickRandom(answers.mafia) : (target.role === "citizen" ? pickRandom(answers.citizen) : pickRandom(answers.power));
+    
+    // 심문 일관성 로직: 시민은 항상 같은 대답, 마피아는 확률적으로 대답이 바뀜
+    const previousAnswer = messages.find(m => m.sender === target.name && m.text.includes("밤"))?.text;
+    let answer = "";
+    
+    if (target.role === "mafia") {
+      // 마피아는 30% 확률로 다른 대답을 하거나 '마피아 전용 힌트' 대사를 함
+      const isSlipUp = Math.random() > 0.7;
+      if (isSlipUp) {
+        answer = pickRandom([
+          ...answers.mafia,
+          "어... 그게... 그냥 별일 없었어요. 왜 자꾸 물어보시죠?",
+          "밤에 뭘 했는지 일일이 다 기억해야 하나요? 피곤하네요.",
+          "저는 제 할 일을 했을 뿐입니다. 너무 몰아세우지 마세요.",
+        ]);
+      } else {
+        answer = previousAnswer || pickRandom(answers.mafia);
+      }
+    } else {
+      // 시민 및 특수 역할은 항상 일관된 진술 유지
+      answer = previousAnswer || (target.role === "citizen" ? pickRandom(answers.citizen) : pickRandom(answers.power));
+    }
+
     addMessage(target.name, answer);
 
     setInterrogationCount((c) => c + 1);
