@@ -24,6 +24,7 @@ export function MafiaGame() {
   const [setupDifficulty, setSetupDifficulty] = useState<Difficulty>("normal");
   const [showOverlay, setShowOverlay] = useState(false);
   const [isEliminating, setIsEliminating] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (phase !== "setup") {
@@ -44,6 +45,11 @@ export function MafiaGame() {
     }
   }, [lastEvent, resetEvent]);
 
+  // 페이즈 변경 시 사이드바 닫기
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [phase]);
+
   const overlayText = getPhaseLabel(phase);
 
   const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL ?? "http://localhost:3001";
@@ -53,121 +59,134 @@ export function MafiaGame() {
       {isEliminating && (
         <div className="animate-blood-splatter fixed inset-0 z-[60] pointer-events-none bg-red-900/20 mix-blend-multiply" />
       )}
+      
+      {/* 모바일 상단 바 */}
+      <div className="flex items-center justify-between border border-neutral-800 bg-neutral-900 p-4 lg:hidden">
+        <h1 className="text-xl font-bold text-white">Mafia Game</h1>
+        <div className="flex items-center gap-3">
+          <span className="bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-tighter">
+            {phase === "setup" ? "Standby" : `${round}R ${overlayText}`}
+          </span>
+          <button 
+            className="text-neutral-400 hover:text-white"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            type="button"
+          >
+            {isSidebarOpen ? "✕ 닫기" : "☰ 메뉴"}
+          </button>
+        </div>
+      </div>
+
       {showOverlay && (
         <div className="animate-fade-in fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md transition-all duration-500">
-          <div className={`flex flex-col items-center p-12 ${phase === "night" ? "animate-pulse-red border border-red-500/30 bg-red-950/20" : ""}`}>
-            <p className="text-sm font-bold tracking-[0.3em] text-red-500 underline underline-offset-8">PHASE TRANSITION</p>
-            <h2 className="mt-8 text-7xl font-black text-white tracking-widest sm:text-9xl uppercase">
+          <div className={`flex flex-col items-center p-8 sm:p-12 ${phase === "night" ? "animate-pulse-red border border-red-500/30 bg-red-950/20" : ""}`}>
+            <p className="text-[10px] font-bold tracking-[0.3em] text-red-500 underline underline-offset-8 sm:text-sm">PHASE TRANSITION</p>
+            <h2 className="mt-8 text-5xl font-black text-white tracking-widest sm:text-9xl uppercase">
               {overlayText}
             </h2>
-            <p className="mt-6 text-xl font-medium text-neutral-300">
+            <p className="mt-6 text-sm font-medium text-neutral-300 sm:text-xl">
               {round}라운드 {overlayText === "밤" ? "비밀스러운 행동의 시간" : "진실을 밝히는 토론의 시간"}
             </p>
-            <div className="mt-8 flex gap-4 text-xs font-semibold text-neutral-500 uppercase tracking-tighter">
-              {gameMode === "daily" ? (
-                <span className="border border-neutral-800 px-3 py-1">Case: {dailyCase.title}</span>
-              ) : (
-                <span className="border border-neutral-800 px-3 py-1">Difficulty: {difficulty}</span>
-              )}
-              <span className="border border-neutral-800 px-3 py-1">Players: {players.length}</span>
-            </div>
           </div>
         </div>
       )}
-      <aside className="grid gap-4 self-start lg:sticky lg:top-5">
-        <div className="border border-neutral-800 bg-neutral-950 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold text-red-300">SOLO PARTY GAME</p>
-            <a className="text-xs text-neutral-400 hover:text-white" href={docsUrl} rel="noreferrer" target="_blank">Docs</a>
-          </div>
-          <h1 className="mt-2 text-3xl font-bold text-white">Mafia Chat Game</h1>
-          <p className="mt-3 text-sm leading-6 text-neutral-400">
-            나 혼자 접속해서 가상 참가자들과 진행하는 마피아 게임입니다. 내 역할만 확인하고, 다른 참가자의 역할은 게임 종료 후 공개됩니다.
-          </p>
-        </div>
 
-        <div className="border border-neutral-800 bg-neutral-900 p-4">
-          <h2 className="text-lg font-semibold">내 역할</h2>
-          {me ? (
-            <div className="mt-3 border border-red-900 bg-red-950/30 p-3">
-              <div className="relative aspect-square overflow-hidden border border-neutral-800 bg-neutral-950">
-                <Image alt={`${roleLabels[me.role]} 역할 이미지`} className="object-cover" fill priority sizes="288px" src={roleImages[me.role]} />
-              </div>
-              <p className="text-2xl font-bold text-white">{roleLabels[me.role]}</p>
-              <p className="mt-2 text-sm leading-6 text-red-100">{roleDescriptions[me.role]}</p>
+      <aside className={`fixed inset-y-0 left-0 z-40 w-80 transform border-r border-neutral-800 bg-neutral-950 p-4 transition-transform duration-300 lg:static lg:z-0 lg:w-auto lg:translate-x-0 lg:border-none lg:bg-transparent lg:p-0 ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}>
+        <div className="grid gap-4 self-start lg:sticky lg:top-5">
+          <div className="border border-neutral-800 bg-neutral-950 p-4 hidden lg:block">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold text-red-300">SOLO PARTY GAME</p>
+              <a className="text-xs text-neutral-400 hover:text-white" href={docsUrl} rel="noreferrer" target="_blank">Docs</a>
             </div>
-          ) : (
-            <p className="mt-3 text-sm text-neutral-400">게임을 시작하면 표시됩니다.</p>
+            <h1 className="mt-2 text-3xl font-bold text-white">Mafia Chat Game</h1>
+            <p className="mt-3 text-sm leading-6 text-neutral-400">
+              나 혼자 접속해서 가상 참가자들과 진행하는 마피아 게임입니다. 내 역할만 확인하고, 다른 참가자의 역할은 게임 종료 후 공개됩니다.
+            </p>
+          </div>
+
+          <div className="border border-neutral-800 bg-neutral-900 p-4">
+            <h2 className="text-lg font-semibold">내 역할</h2>
+            {me ? (
+              <div className="mt-3 border border-red-900 bg-red-950/30 p-3">
+                <div className="relative aspect-square overflow-hidden border border-neutral-800 bg-neutral-950">
+                  <Image alt={`${roleLabels[me.role]} 역할 이미지`} className="object-cover" fill priority sizes="288px" src={roleImages[me.role]} />
+                </div>
+                <p className="text-2xl font-bold text-white">{roleLabels[me.role]}</p>
+                <p className="mt-2 text-sm leading-6 text-red-100">{roleDescriptions[me.role]}</p>
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-neutral-400">게임을 시작하면 표시됩니다.</p>
+            )}
+          </div>
+
+          <div className="border border-neutral-800 bg-neutral-900 p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">게임 상태</h2>
+              <span className="bg-red-500 px-2 py-1 text-xs font-bold text-white">
+                {phase === "setup" ? "대기" : `${round}R`}
+              </span>
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <StatusItem label="단계" value={getPhaseLabel(phase)} />
+              <StatusItem label="생존" value={`${alivePlayers.length}명`} />
+              <StatusItem label="결과" value={winner ?? "진행 중"} />
+              <StatusItem label="인원" value={`${players.length || playerCount}명`} />
+            </dl>
+            <div className="mt-4 border border-neutral-800 bg-neutral-950 p-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-semibold text-white">Lv. {level}</span>
+                <span className="text-neutral-400">{currentLevelXp}/100 XP</span>
+              </div>
+              <div className="mt-2 h-2 bg-neutral-800">
+                <div className="h-full bg-red-500" style={{ width: `${currentLevelXp}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-neutral-500">총 {profile.xp} XP · {getTitle(level)}</p>
+            </div>
+          </div>
+
+          {profile.history.length > 0 && (
+            <div className="border border-neutral-800 bg-neutral-900 p-4">
+              <h2 className="text-lg font-semibold">플레이 기록</h2>
+              <div className="mt-3 grid gap-2">
+                {profile.history.slice(0, 3).map((entry) => (
+                  <div className="border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm" key={entry.id}>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-semibold text-white">{entry.result}</span>
+                      <span className="text-xs text-red-300">+{entry.xpGained} XP</span>
+                    </div>
+                    <p className="mt-1 text-xs text-neutral-400">{roleLabels[entry.role]} · {entry.round}R · Lv. {entry.levelAfter}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {players.length > 0 && (
+            <div className="border border-neutral-800 bg-neutral-900 p-4">
+              <h2 className="text-lg font-semibold">참가자</h2>
+              <div className="mt-3 grid gap-2">
+                {players.map((player) => (
+                  <div className="flex flex-col border border-neutral-800 px-3 py-2 text-sm" key={player.id}>
+                    <div className="flex items-center justify-between">
+                      <span className={player.alive ? "text-white" : "text-neutral-500 line-through"}>
+                        {player.name}{player.human ? " (나)" : ""}
+                      </span>
+                      <span className="text-neutral-400">
+                        {phase === "ended" || player.human ? roleLabels[player.role] : "비공개"}
+                      </span>
+                    </div>
+                    {player.personality && (
+                      <div className="mt-1 flex items-center justify-between text-[10px]">
+                        <span className="text-neutral-500">성향</span>
+                        <span className="text-red-300/80">{personalityTraits[player.personality].label}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
-
-        <div className="border border-neutral-800 bg-neutral-900 p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">게임 상태</h2>
-            <span className="bg-red-500 px-2 py-1 text-xs font-bold text-white">
-              {phase === "setup" ? "대기" : `${round}R`}
-            </span>
-          </div>
-          <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-            <StatusItem label="단계" value={getPhaseLabel(phase)} />
-            <StatusItem label="생존" value={`${alivePlayers.length}명`} />
-            <StatusItem label="결과" value={winner ?? "진행 중"} />
-            <StatusItem label="인원" value={`${players.length || playerCount}명`} />
-          </dl>
-          <div className="mt-4 border border-neutral-800 bg-neutral-950 p-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold text-white">Lv. {level}</span>
-              <span className="text-neutral-400">{currentLevelXp}/100 XP</span>
-            </div>
-            <div className="mt-2 h-2 bg-neutral-800">
-              <div className="h-full bg-red-500" style={{ width: `${currentLevelXp}%` }} />
-            </div>
-            <p className="mt-2 text-xs text-neutral-500">총 {profile.xp} XP · {getTitle(level)}</p>
-          </div>
-        </div>
-
-        {profile.history.length > 0 && (
-          <div className="border border-neutral-800 bg-neutral-900 p-4">
-            <h2 className="text-lg font-semibold">플레이 기록</h2>
-            <div className="mt-3 grid gap-2">
-              {profile.history.slice(0, 3).map((entry) => (
-                <div className="border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm" key={entry.id}>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold text-white">{entry.result}</span>
-                    <span className="text-xs text-red-300">+{entry.xpGained} XP</span>
-                  </div>
-                  <p className="mt-1 text-xs text-neutral-400">{roleLabels[entry.role]} · {entry.round}R · Lv. {entry.levelAfter}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {players.length > 0 && (
-          <div className="border border-neutral-800 bg-neutral-900 p-4">
-            <h2 className="text-lg font-semibold">참가자</h2>
-            <div className="mt-3 grid gap-2">
-              {players.map((player) => (
-                <div className="flex flex-col border border-neutral-800 px-3 py-2 text-sm" key={player.id}>
-                  <div className="flex items-center justify-between">
-                    <span className={player.alive ? "text-white" : "text-neutral-500 line-through"}>
-                      {player.name}{player.human ? " (나)" : ""}
-                    </span>
-                    <span className="text-neutral-400">
-                      {phase === "ended" || player.human ? roleLabels[player.role] : "비공개"}
-                    </span>
-                  </div>
-                  {player.personality && (
-                    <div className="mt-1 flex items-center justify-between text-[10px]">
-                      <span className="text-neutral-500">성향</span>
-                      <span className="text-red-300/80">{personalityTraits[player.personality].label}</span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </aside>
 
       <main className="grid gap-4">
@@ -226,22 +245,22 @@ export function MafiaGame() {
 
         {(phase === "day" || phase === "vote") && (
           <Panel title="낮 토론">
-            <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
               <ActionSelect label="심문할 참가자" onChange={setQuestionTargetId} players={visibleTargets} value={questionTargetId} />
-              <button className="self-end bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700" disabled={!me?.alive || !questionTargetId} onClick={interrogateTarget} type="button">심문하기</button>
+              <button className="h-12 self-end bg-red-500 px-8 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700 sm:h-auto sm:py-3" disabled={!me?.alive || !questionTargetId} onClick={interrogateTarget} type="button">심문하기</button>
             </div>
             <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={submitChat}>
-              <input className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-sm text-white outline-none focus:border-red-400" disabled={!me?.alive} onChange={(e) => setChatText(e.target.value)} placeholder={me?.alive ? "채팅을 입력하세요" : "탈락자는 발언할 수 없습니다"} value={chatText} />
-              <button className="bg-neutral-100 px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-white disabled:bg-neutral-700 disabled:text-neutral-400" disabled={!me?.alive} type="submit">전송</button>
+              <input className="h-12 border border-neutral-700 bg-neutral-950 px-4 text-sm text-white outline-none focus:border-red-400 sm:h-auto sm:py-3" disabled={!me?.alive} onChange={(e) => setChatText(e.target.value)} placeholder={me?.alive ? "채팅을 입력하세요" : "탈락자는 발언할 수 없습니다"} value={chatText} />
+              <button className="h-12 bg-neutral-100 px-8 text-sm font-bold text-neutral-950 hover:bg-white disabled:bg-neutral-700 disabled:text-neutral-400 sm:h-auto sm:py-3" disabled={!me?.alive} type="submit">전송</button>
             </form>
-            {phase === "day" && <button className="mt-4 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400" onClick={startVote} type="button">투표로 넘어가기</button>}
+            {phase === "day" && <button className="mt-4 w-full bg-red-500 py-4 text-sm font-bold text-white hover:bg-red-400 sm:w-auto sm:px-5 sm:py-3" onClick={startVote} type="button">투표로 넘어가기</button>}
           </Panel>
         )}
 
         {phase === "vote" && (
           <Panel title="투표">
             {me?.alive ? <ActionSelect label="의심 대상" onChange={setVoteTargetId} players={visibleTargets} value={voteTargetId} /> : <p className="text-sm text-neutral-400">탈락자는 투표할 수 없습니다.</p>}
-            <button className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700" disabled={!!me?.alive && !voteTargetId} onClick={resolveVote} type="button">투표 결과 보기</button>
+            <button className="mt-5 w-full bg-red-500 py-4 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700 sm:w-auto sm:px-5 sm:py-3" disabled={!!me?.alive && !voteTargetId} onClick={resolveVote} type="button">투표 결과 보기</button>
           </Panel>
         )}
 
