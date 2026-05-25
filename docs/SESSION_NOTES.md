@@ -32,7 +32,10 @@ Last updated: 2026-05-23
 - Result card displays an enhanced vote summary with role icons and revealing all roles
 - Daily case variety expanded (9 cases total, including 2 Hard Mode cases)
 - NPC dialogue variety expanded for more diverse discussions
-- Role images under `public/roles`
+- Log export feature to save game results as a text file
+- Expanded variety of NPC names and personality types (added Cynic personality)
+- Difficulty setting for normal games (Easy, Normal, Hard)
+- Visual feedback for phase transitions (Phase overlay)
 - Log auto-scroll on new messages
 - Docusaurus docs site with user-facing rules, changelog, roadmap, and response design notes
 - Modular code architecture under `src/components/mafia/` (Types, Constants, Hooks, UI components separated)
@@ -47,10 +50,10 @@ Last updated: 2026-05-23
 
 ## Next Session TODO
 
-1. Implement a 'Log Export' feature to save game results as a text or image file.
-2. Add more variety to NPC names and personality types (e.g., timid, aggressive, logical).
-3. Improve the setup screen UI with more options (e.g., difficulty setting for normal games).
-4. Add sound effects or visual feedback for key events (e.g., night phase transition, player elimination).
+1. Implement a 'Share Result' feature to generate a summary image or card for social media.
+2. Add more variety to NPC dialogue based on current game state (e.g., specific comments about remaining roles).
+3. Improve the result card with more detailed player performance stats.
+4. Add sound effects (if assets are available) or more subtle visual animations.
 
 
 ## Start Checklist For Codex

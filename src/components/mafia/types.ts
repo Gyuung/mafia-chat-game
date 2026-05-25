@@ -1,7 +1,8 @@
 export type Role = "mafia" | "doctor" | "detective" | "citizen";
 export type Phase = "setup" | "night" | "day" | "vote" | "ended";
 export type GameMode = "normal" | "daily";
-export type PersonalityType = "logical" | "aggressive" | "timid" | "emotional";
+export type Difficulty = "easy" | "normal" | "hard";
+export type PersonalityType = "logical" | "aggressive" | "timid" | "emotional" | "cynic";
 
 export type Player = {
   id: string;

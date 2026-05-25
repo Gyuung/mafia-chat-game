@@ -1,28 +1,54 @@
 "use client";
 
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import { useMafiaGame } from "./useMafiaGame";
 import { ResultCard } from "./ResultCard";
 import { ChatResponsePreview } from "./ChatResponsePreview";
 import { GameLog } from "./GameLog";
 import { Panel, StatusItem } from "./Common";
 import { roleLabels, roleDescriptions, roleImages, personalityTraits } from "./constants";
-import { Player, Role, Phase } from "./types";
+import { Player, Role, Phase, Difficulty } from "./types";
 
 export function MafiaGame() {
   const {
     phase, round, myName, setMyName, playerCount, setPlayerCount, players, alivePlayers,
     visibleTargets, messages, chatText, setChatText, questionTargetId, setQuestionTargetId,
-    nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner, gameMode,
+    nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner, gameMode, difficulty,
     gameResultSummary, profile, todayKey, dailyCase, dailyRewardAvailable,
     me, level, currentLevelXp,
     startGame, submitChat, interrogateTarget, resolveNight, startVote, resolveVote, resetGame
   } = useMafiaGame();
 
+  const [setupDifficulty, setSetupDifficulty] = useState<Difficulty>("normal");
+  const [showOverlay, setShowOverlay] = useState(false);
+
+  useEffect(() => {
+    if (phase !== "setup") {
+      setShowOverlay(true);
+      const timer = setTimeout(() => setShowOverlay(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
+
+  const overlayText = getPhaseLabel(phase);
+
   const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL ?? "http://localhost:3001";
 
   return (
     <section className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8">
+      {showOverlay && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity">
+          <p className="text-sm font-bold tracking-[0.3em] text-red-500 underline underline-offset-8">PHASE TRANSITION</p>
+          <h2 className="mt-6 text-6xl font-black text-white tracking-widest sm:text-8xl">
+            {overlayText}
+          </h2>
+          <p className="mt-4 text-neutral-400">
+            {round}라운드 {overlayText === "밤" ? "비밀스러운 행동의 시간" : "진실을 밝히는 토론의 시간"}
+            {gameMode === "daily" ? ` (사건: ${dailyCase.title})` : ` (난이도: ${difficulty === "hard" ? "어려움" : (difficulty === "easy" ? "쉬움" : "보통")})`}
+          </p>
+        </div>
+      )}
       <aside className="grid gap-4 self-start lg:sticky lg:top-5">
         <div className="border border-neutral-800 bg-neutral-950 p-4">
           <div className="flex items-center justify-between gap-3">
@@ -122,7 +148,7 @@ export function MafiaGame() {
       <main className="grid gap-4">
         {phase === "setup" && (
           <Panel title="새 게임">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <label className="grid gap-2 text-sm">
                 <span className="font-medium text-neutral-200">내 이름</span>
                 <input className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400" onChange={(e) => setMyName(e.target.value)} value={myName} />
@@ -133,8 +159,16 @@ export function MafiaGame() {
                   {[4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}명</option>)}
                 </select>
               </label>
+              <label className="grid gap-2 text-sm">
+                <span className="font-medium text-neutral-200">난이도</span>
+                <select className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400" onChange={(e) => setSetupDifficulty(e.target.value as Difficulty)} value={setupDifficulty}>
+                  <option value="easy">쉬움</option>
+                  <option value="normal">보통</option>
+                  <option value="hard">어려움</option>
+                </select>
+              </label>
             </div>
-            <button className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400" onClick={() => startGame()} type="button">역할 받고 시작</button>
+            <button className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400" onClick={() => startGame("normal", setupDifficulty)} type="button">역할 받고 시작</button>
           </Panel>
         )}
 

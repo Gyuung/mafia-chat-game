@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { 
   Player, Role, Phase, Message, SavedProfile, GameResultSummary, 
-  GameMode, DailyCase, VoteDecision, PersonalityType
+  GameMode, VoteDecision, PersonalityType, Difficulty
 } from "./types";
 import { 
   PROFILE_STORAGE_KEY, MAX_HISTORY_ITEMS, botNames, 
@@ -96,6 +96,7 @@ export function useMafiaGame() {
   const [voteTargetId, setVoteTargetId] = useState("");
   const [winner, setWinner] = useState<string | null>(null);
   const [gameMode, setGameMode] = useState<GameMode>("normal");
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [gameResultSummary, setGameResultSummary] = useState<GameResultSummary | null>(null);
   const [profile, setProfile] = useState<SavedProfile>(() => loadSavedProfile() ?? { xp: 0, history: [] });
 
@@ -142,7 +143,14 @@ export function useMafiaGame() {
     });
     const sortedBySuspicion = [...scoredChoices].sort((a, b) => b.adjustedSuspicion - a.adjustedSuspicion);
     const mostSuspicious = sortedBySuspicion[0];
-    const highSuspicionThreshold = gameMode === "daily" && dailyCase.isHard ? trait.voteThreshold - 1 : trait.voteThreshold;
+    
+    let thresholdAdjustment = 0;
+    if ((gameMode === "daily" && dailyCase.isHard) || (gameMode === "normal" && difficulty === "hard")) {
+      thresholdAdjustment = -1;
+    } else if (gameMode === "normal" && difficulty === "easy") {
+      thresholdAdjustment = 1;
+    }
+    const highSuspicionThreshold = Math.max(1, trait.voteThreshold + thresholdAdjustment);
 
     if (mostSuspicious && mostSuspicious.adjustedSuspicion >= highSuspicionThreshold && Math.random() > 0.05) {
       return { target: mostSuspicious.player, reason: `${pType === "logical" ? "논리적으로 분석한 결과, " : ""}${mostSuspicious.adjustedSuspicion}만큼의 의심점이 발견되어 지목했습니다.` };
@@ -160,7 +168,7 @@ export function useMafiaGame() {
         return { target, reason: pType === "aggressive" ? "시민 팀을 빠르게 제거하기 위해 선택했습니다." : "시민 팀 참가자 중 한 명을 몰아가기로 했습니다." };
       }
     }
-    const instinctProb = { logical: 0.8, aggressive: 0.6, timid: 0.9, emotional: 0.5 }[pType];
+    const instinctProb = { logical: 0.8, aggressive: 0.6, timid: 0.9, emotional: 0.5, cynic: 0.7 }[pType];
     if (bot.role !== "mafia" && Math.random() > instinctProb) {
       const actualMafia = choices.filter((p) => p.role === "mafia");
       const targets = actualMafia.filter((p) => (bot.trust[p.id] || 0) <= 0);
@@ -169,7 +177,7 @@ export function useMafiaGame() {
       }
     }
     return { target: pickRandom(choices), reason: "뚜렷한 단서가 없어 상황을 지켜보며 선택했습니다." };
-  }, [gameMode, dailyCase.isHard]);
+  }, [gameMode, difficulty, dailyCase.isHard]);
 
   const finishStep = useCallback((nextPlayers: Player[], nextPhase: Phase, latestEvent: string, voteRecords?: Record<string, string[]>) => {
     const res = getWinner(nextPlayers);
@@ -214,13 +222,13 @@ export function useMafiaGame() {
     setPhase(nextPhase);
   }, [gameMode, profile, todayKey, dailyCase, messages, round, addMessage]);
 
-  const startGame = useCallback((mode: GameMode = "normal") => {
+  const startGame = useCallback((mode: GameMode = "normal", diff: Difficulty = "normal") => {
     const names = shuffle(botNames).slice(0, playerCount - 1);
     const mafiaCount = Math.max(1, Math.floor(playerCount / 4));
     const roles: Role[] = [...Array<Role>(mafiaCount).fill("mafia"), ...(playerCount >= 5 ? ["doctor"] as Role[] : []), ...(playerCount >= 6 ? ["detective"] as Role[] : [])];
     while (roles.length < playerCount) roles.push("citizen");
     const assignedRoles = shuffle(roles);
-    const personalities: PersonalityType[] = ["logical", "aggressive", "timid", "emotional"];
+    const personalities: PersonalityType[] = ["logical", "aggressive", "timid", "emotional", "cynic"];
 
     const createdPlayers: Player[] = [
       { id: "me", name: myName.trim() || "나", role: assignedRoles[0], alive: true, human: true, suspicion: 0, trust: {} },
@@ -228,12 +236,13 @@ export function useMafiaGame() {
     ];
 
     const human = createdPlayers.find(p => p.human);
-    const intro = mode === "daily" ? `오늘의 사건 '${dailyCase.title}'이 시작되었습니다. ${dailyCase.briefing} 당신의 역할은 ${human?.role}입니다.` : `게임이 시작되었습니다. 당신의 역할은 ${human?.role}입니다.`;
+    const intro = mode === "daily" ? `오늘의 사건 '${dailyCase.title}'이 시작되었습니다. ${dailyCase.briefing} 당신의 역할은 ${human?.role}입니다.` : `게임이 시작되었습니다. 당신의 역할은 ${human?.role}입니다. 난이도: ${diff === "easy" ? "쉬움" : (diff === "hard" ? "어려움" : "보통")}`;
     
     setPlayers(createdPlayers);
     setRound(1);
     setPhase("night");
     setGameMode(mode);
+    setDifficulty(diff);
     setWinner(null);
     setGameResultSummary(null);
     setQuestionTargetId("");
@@ -353,7 +362,7 @@ export function useMafiaGame() {
       return { ...player, alive: player.id === eliminatedId ? false : player.alive, trust: nextTrust };
     });
 
-    let event = tied ? "투표가 동률로 끝나 아무도 탈락하지 않았습니다." : `투표 결과 ${players.find(p => p.id === eliminatedId)?.name ?? "누군가"}님이 탈락했습니다.`;
+    const event = tied ? "투표가 동률로 끝나 아무도 탈락하지 않았습니다." : `투표 결과 ${players.find(p => p.id === eliminatedId)?.name ?? "누군가"}님이 탈락했습니다.`;
     addMessage("사회자", event, true);
     finishStep(nextPlayers, "night", event, voteRecords);
     setVoteTargetId("");
@@ -375,10 +384,10 @@ export function useMafiaGame() {
   return {
     phase, round, myName, setMyName, playerCount, setPlayerCount, players, alivePlayers, 
     visibleTargets, messages, chatText, setChatText, questionTargetId, setQuestionTargetId, 
-    nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner, gameMode, 
+    nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner, gameMode, difficulty,
     gameResultSummary, profile, todayKey, dailyCase, dailyRewardAvailable: profile.lastDailyRewardDate !== todayKey,
     me, level: Math.floor(profile.xp / 100) + 1, currentLevelXp: profile.xp % 100, 
-    startGame, submitChat: (e: any) => { e.preventDefault(); if (me?.alive && chatText.trim()) { addMessage(me.name, chatText.trim()); botDiscuss(1); setChatText(""); } },
+    startGame, submitChat: (e: React.FormEvent) => { e.preventDefault(); if (me?.alive && chatText.trim()) { addMessage(me.name, chatText.trim()); botDiscuss(1); setChatText(""); } },
     interrogateTarget, resolveNight, startVote: () => { botDiscuss(); setPhase("vote"); setVoteTargetId(""); addMessage("사회자", "투표를 시작합니다. 의심되는 참가자를 선택하세요.", true); }, 
     resolveVote, resetGame,
   };
