@@ -28,6 +28,11 @@
   - `types.ts`에 `GameEventType` 추가.
   - `useMafiaGame.ts`에서 탈락 발생 시 (`resolveNight`, `resolveVote`) 이벤트를 트리거하도록 수정.
   - `index.tsx`에서 이벤트를 감지하여 화면 흔들림(`animate-shake`) 및 선혈 효과 오버레이(`animate-blood-splatter`) 노출 로직 추가.
+- **NPC 대화 피드백 시스템 구현**:
+  - `types.ts`에 `DialogueFeedback` 타입 추가 및 `SavedProfile` 확장.
+  - `useMafiaGame.ts`에 `submitDialogueFeedback` 함수 추가 (최근 100개 제한).
+  - `GameLog.tsx`에 NPC 메시지별 좋아요/싫어요 버튼 및 호버 시 노출 로직 추가.
+  - `index.tsx`에서 훅의 피드백 함수를 로그 컴포넌트로 전달하도록 연동.
 
 ## 2026-05-18
 

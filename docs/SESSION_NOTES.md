@@ -44,6 +44,7 @@ Last updated: 2026-05-23
 - Detailed player performance stats (interrogations, correct votes, role success)
 - Visual animations (fade-in chat, phase transitions, pulse effects)
 - Elimination visual effects (Screen shake, blood splatter)
+- NPC dialogue feedback system (Thumbs up/down on chat messages)
 
 ## Known Constraints
 
@@ -54,9 +55,9 @@ Last updated: 2026-05-23
 ## Next Session TODO
 
 1. Add sound effects (if assets are available).
-2. Implement a 'Report NPC' or 'Feedback' system for dialogue quality.
-3. Add a 'Game Replay' or 'Log Viewer' for past games.
-4. Improve mobile responsiveness for the result card and overlay.
+2. Add a 'Game Replay' or 'Log Viewer' for past games.
+3. Improve mobile responsiveness for the result card and overlay.
+4. Add more ambient effects (e.g., fog for night, birds for day).
 
 
 ## Start Checklist For Codex
