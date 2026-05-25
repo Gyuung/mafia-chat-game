@@ -131,18 +131,46 @@ export function useMafiaGame() {
       const p = speaker.personality || "logical";
       
       let pool = [...personalityLines[p]];
-      if (isDeathMorning && Math.random() > 0.5) {
+      
+      // 상황별 특수 대사 풀 선택
+      if (isDeathMorning && Math.random() > 0.4) {
         pool = [...personalityReactions[p].death];
-      } else if (isLateGame && Math.random() > 0.6) {
+      } else if (isLateGame && Math.random() > 0.5) {
         pool = [...personalityReactions[p].lateGame];
+      } else if (mafiaCaughtCount > 0 && Math.random() > 0.6) {
+        // 마피아 검거 후 반응 추가 (추후 constants에 추가 필요)
+        pool = [
+          ...pool,
+          ...({
+            logical: ["마피아 한 명을 잡았으니 이제 나머지 동선을 추적하면 됩니다.", "검거된 마피아와 접점이 없던 사람들을 유심히 봐야겠어요."],
+            aggressive: ["거봐요, 제가 맞다고 했죠? 남은 마피아 놈도 당장 끌어냅시다!", "이제 한 명 남았나요? 다 끝장내버립시다."],
+            timid: ["정말 마피아였군요... 다행이에요. 이제 조금은 안심이 돼요.", "한 명이라도 잡아서 정말 다행이에요..."],
+            emotional: ["정의는 승리하는 법이에요! 우리 팀의 단합이 빛을 발했네요.", "마피아가 잡히는 걸 보니 마음이 좀 놓이네요."],
+            cynic: ["운 좋게 한 명 걸렸나 보네요. 그래봤자 아직 끝난 건 아니죠.", "마피아도 참 허술하네요. 잡히다니 한심합니다."],
+          }[p] || []),
+        ];
       }
 
-      const line = suspect && pool === personalityLines[p]
-        ? `${pickRandom(pool)} 저는 ${suspect.name}님 발언을 더 보고 싶어요.`
-        : pickRandom(pool);
+      let line = pickRandom(pool);
+
+      // 템플릿 치환 로직 (NPC 이름이나 의심 대상 삽입)
+      if (suspect && Math.random() > 0.4 && !line.includes("님")) {
+        const connectors = {
+          logical: [`${suspect.name}님은 왜 그렇게 생각하시죠?`, `${suspect.name}님의 아까 발언이 좀 걸리네요.`],
+          aggressive: [`${suspect.name}님, 당신 정체가 뭐야?`, `자꾸 입 닫고 있는 ${suspect.name}님이 제일 수상해요.`],
+          timid: [`${suspect.name}님이 마피아일까 봐 너무 무서워요...`, `${suspect.name}님, 혹시 화나신 건 아니죠?`],
+          emotional: [`${suspect.name}님과는 끝까지 믿고 가고 싶었는데...`, `${suspect.name}님, 저한테 하실 말씀 없나요?`],
+          cynic: [`${suspect.name}님, 연기 좀 살살 하시지 그래요.`, `${suspect.name}님이 시민이라고? 지나가던 개가 웃겠네요.`],
+        }[p] || [];
+        
+        if (connectors.length > 0) {
+          line = `${line} ${pickRandom(connectors)}`;
+        }
+      }
+
       addMessage(speaker.name, line);
     });
-  }, [alivePlayers, visibleTargets, messages, round, addMessage]);
+  }, [alivePlayers, visibleTargets, messages, round, mafiaCaughtCount, addMessage]);
 
   const chooseBotVoteTarget = useCallback((bot: Player, choices: Player[]): VoteDecision => {
     const pType = bot.personality || "logical";
