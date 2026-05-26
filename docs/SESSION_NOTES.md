@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-05-25
+Last updated: 2026-05-26
 
 ## Current State
 
@@ -10,6 +10,7 @@ Last updated: 2026-05-25
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
+- Version: `0.8.2`
 
 ## Implemented
 
@@ -49,6 +50,7 @@ Last updated: 2026-05-25
 - Deduction clues (Interrogation inconsistency, nervous tells for Mafia)
 - In-game Guide section in setup phase
 - Fixed statistic bug where 'Mafia Caught' count was inaccurate in results
+- **Implemented Game Log Viewer**: Full logs and roles of past games are now stored and viewable.
 
 ## Known Constraints
 
@@ -58,12 +60,11 @@ Last updated: 2026-05-25
 
 ## Next Session TODO
 
-1. Add sound effects (if assets are available).
-2. Add a 'Game Replay' or 'Log Viewer' for past games.
-3. Add more ambient effects (e.g., fog for night, birds for day).
-4. Implement a simple tutorial for new players.
-5. Expand "Tells" to specific personalities (e.g., Cynic Mafia tells differently from Timid Mafia).
-
+1. Add sound effects (assets needed).
+2. Add more ambient effects (e.g., fog for night, birds for day).
+3. Implement a simple tutorial for new players.
+4. Expand "Tells" to specific personalities.
+5. Consider a 'Share Results' feature improvement or social integration.
 
 ## Start Checklist For Codex
 
