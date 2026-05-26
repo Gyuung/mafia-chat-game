@@ -2,12 +2,12 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { 
   Player, Role, Phase, Message, SavedProfile, GameResultSummary, 
   GameMode, VoteDecision, PersonalityType, Difficulty, GameEventType,
-  DialogueFeedback
+  DialogueFeedback, PlayHistoryEntry
 } from "./types";
 import { 
   PROFILE_STORAGE_KEY, MAX_HISTORY_ITEMS, botNames, 
   personalityLines, personalityAnswers, personalityTraits, 
-  personalityReactions, dailyCases 
+  personalityReactions, dailyCases, getTitle 
 } from "./constants";
 
 function shuffle<T>(items: T[]) {
@@ -54,13 +54,6 @@ function calculateXp(result: string, players: Player[]) {
   const survivalBonus = me.alive ? 15 : 0;
   const roundBonus = Math.min(players.length * 2, 20);
   return winBonus + survivalBonus + roundBonus;
-}
-
-function getTitle(level: number) {
-  if (level >= 10) return "마피아 헌터";
-  if (level >= 7) return "심문 전문가";
-  if (level >= 4) return "동네 추리왕";
-  return "신입 탐정";
 }
 
 function loadSavedProfile(): SavedProfile | null {
@@ -265,15 +258,29 @@ export function useMafiaGame() {
           mafiaCaughtCount: finalMafiaCaught, totalRounds: round,
           interrogationCount, correctVoteCount, roleActionSuccessCount,
         });
+
+        setProfile((current) => {
+          const nXp = current.xp + gainedXp;
+          const nLevel = Math.floor(nXp / 100) + 1;
+          const historyEntry: PlayHistoryEntry = { 
+            id: createId("history"), 
+            endedAt: new Date().toISOString(), 
+            result: res, 
+            role: human.role, 
+            round, 
+            survived: human.alive, 
+            xpGained: gainedXp, 
+            levelAfter: nLevel, 
+            titleAfter: getTitle(nLevel),
+            messages: [...messages, { id: createId("msg"), sender: "사회자", text: `🏁 ${res}로 게임이 종료되었습니다. +${gainedXp} XP를 획득했습니다.`, system: true }],
+            players: nextPlayers,
+          };
+          return {
+            xp: nXp, lastDailyRewardDate: (gameMode === "daily" && current.lastDailyRewardDate !== todayKey) ? todayKey : current.lastDailyRewardDate,
+            history: [historyEntry, ...current.history].slice(0, MAX_HISTORY_ITEMS),
+          };
+        });
       }
-      setProfile((current) => {
-        const nXp = current.xp + gainedXp;
-        const nLevel = Math.floor(nXp / 100) + 1;
-        return {
-          xp: nXp, lastDailyRewardDate: (gameMode === "daily" && current.lastDailyRewardDate !== todayKey) ? todayKey : current.lastDailyRewardDate,
-          history: human ? [{ id: createId("history"), endedAt: new Date().toISOString(), result: res, role: human.role, round, survived: human.alive, xpGained: gainedXp, levelAfter: nLevel, titleAfter: getTitle(nLevel) }, ...current.history].slice(0, MAX_HISTORY_ITEMS) : current.history,
-        };
-      });
       setPhase("ended");
       addMessage("사회자", `🏁 ${res}로 게임이 종료되었습니다. +${gainedXp} XP를 획득했습니다.`, true);
       return;

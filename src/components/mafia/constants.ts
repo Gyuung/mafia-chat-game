@@ -344,3 +344,10 @@ export const previewActionGroups = [
     actions: ["검은 우산 투표", "붉은 스카프 투표", "기권"],
   },
 ];
+
+export function getTitle(level: number) {
+  if (level >= 10) return "마피아 헌터";
+  if (level >= 7) return "심문 전문가";
+  if (level >= 4) return "동네 추리왕";
+  return "신입 탐정";
+}

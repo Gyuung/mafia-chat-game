@@ -7,14 +7,15 @@ import { ResultCard } from "./ResultCard";
 import { ChatResponsePreview } from "./ChatResponsePreview";
 import { GameLog } from "./GameLog";
 import { Panel, StatusItem } from "./Common";
-import { roleLabels, roleDescriptions, roleImages, personalityTraits } from "./constants";
-import { Player, Role, Phase, Difficulty } from "./types";
+import { roleLabels, roleDescriptions, roleImages, personalityTraits, getTitle } from "./constants";
+import { Player, Role, Phase, Difficulty, PlayHistoryEntry } from "./types";
+import { LogViewer } from "./LogViewer";
 
 export function MafiaGame() {
   const {
     phase, round, myName, setMyName, playerCount, setPlayerCount, players, alivePlayers,
     visibleTargets, messages, chatText, setChatText, questionTargetId, setQuestionTargetId,
-    nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner, gameMode, difficulty,
+    nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner,
     gameResultSummary, profile, todayKey, dailyCase, dailyRewardAvailable,
     me, level, currentLevelXp, lastEvent, resetEvent,
     submitDialogueFeedback,
@@ -25,6 +26,7 @@ export function MafiaGame() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [isEliminating, setIsEliminating] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [viewingHistory, setViewingHistory] = useState<PlayHistoryEntry | null>(null);
 
   useEffect(() => {
     if (phase !== "setup") {
@@ -36,7 +38,7 @@ export function MafiaGame() {
 
   useEffect(() => {
     if (lastEvent === "elimination") {
-      setIsEliminating(true);
+      requestAnimationFrame(() => setIsEliminating(true));
       const timer = setTimeout(() => {
         setIsEliminating(false);
         resetEvent();
@@ -47,7 +49,7 @@ export function MafiaGame() {
 
   // 페이즈 변경 시 사이드바 닫기
   useEffect(() => {
-    setIsSidebarOpen(false);
+    requestAnimationFrame(() => setIsSidebarOpen(false));
   }, [phase]);
 
   const overlayText = getPhaseLabel(phase);
@@ -149,12 +151,23 @@ export function MafiaGame() {
               <h2 className="text-lg font-semibold">플레이 기록</h2>
               <div className="mt-3 grid gap-2">
                 {profile.history.slice(0, 3).map((entry) => (
-                  <div className="border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm" key={entry.id}>
+                  <div className="group border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm" key={entry.id}>
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-semibold text-white">{entry.result}</span>
                       <span className="text-xs text-red-300">+{entry.xpGained} XP</span>
                     </div>
-                    <p className="mt-1 text-xs text-neutral-400">{roleLabels[entry.role]} · {entry.round}R · Lv. {entry.levelAfter}</p>
+                    <div className="mt-1 flex items-center justify-between">
+                      <p className="text-xs text-neutral-400">{roleLabels[entry.role]} · {entry.round}R</p>
+                      {entry.messages && (
+                        <button 
+                          className="text-[10px] text-red-400 opacity-0 transition-opacity hover:text-red-300 group-hover:opacity-100"
+                          onClick={() => setViewingHistory(entry)}
+                          type="button"
+                        >
+                          로그 보기
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -286,10 +299,31 @@ export function MafiaGame() {
           </Panel>
         )}
 
-        {phase === "ended" && <ResultCard fallbackLevel={level} fallbackTitle={getTitle(level)} onReset={resetGame} summary={gameResultSummary} winner={winner} />}
+        {phase === "ended" && (
+          <ResultCard 
+            fallbackLevel={level} 
+            fallbackTitle={getTitle(level)} 
+            onReset={resetGame} 
+            onViewLog={() => setViewingHistory({ 
+              id: "current", endedAt: new Date().toISOString(), result: winner || "", role: me?.role || "citizen", 
+              round, survived: me?.alive || false, xpGained: 0, levelAfter: level, titleAfter: getTitle(level),
+              messages, players
+            })}
+            summary={gameResultSummary} 
+            winner={winner} 
+          />
+        )}
 
         <GameLog messages={messages} players={players} submitDialogueFeedback={submitDialogueFeedback} />
       </main>
+
+      {viewingHistory && (
+        <LogViewer 
+          messages={viewingHistory.messages || []} 
+          onClose={() => setViewingHistory(null)} 
+          players={viewingHistory.players || []} 
+        />
+      )}
     </section>
   );
 }
@@ -321,11 +355,4 @@ function getNightTargets(me: Player, targets: Player[]) {
   if (me.role === "mafia") return targets.filter(p => p.role !== "mafia");
   if (me.role === "detective") return targets;
   return [me, ...targets].filter(p => p.alive);
-}
-
-function getTitle(level: number) {
-  if (level >= 10) return "마피아 헌터";
-  if (level >= 7) return "심문 전문가";
-  if (level >= 4) return "동네 추리왕";
-  return "신입 탐정";
 }
