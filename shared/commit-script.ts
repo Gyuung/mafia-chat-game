@@ -54,7 +54,11 @@ async function git(args: string[]): Promise<{ stdout: string; stderr: string }> 
 
   const run = async (cmd: string, useShell: boolean) => {
     const command = useShell && cmd.includes(" ") ? `"${cmd}"` : cmd;
-    return await execFileAsync(command, args, { ...options, shell: useShell });
+    // Windows에서 shell: true 사용 시 인자에 공백이 있으면 제대로 쿼팅되지 않는 경우가 있음
+    const processedArgs = process.platform === "win32" && useShell
+      ? args.map(arg => arg.includes(" ") || arg.includes(":") ? `"${arg}"` : arg)
+      : args;
+    return await execFileAsync(command, processedArgs, { ...options, shell: useShell });
   };
 
   if (cachedGitPath) {
