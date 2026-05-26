@@ -6,12 +6,14 @@ export function ResultCard({
   fallbackLevel,
   fallbackTitle,
   onReset,
+  onViewLog,
   summary,
   winner,
 }: {
   fallbackLevel: number;
   fallbackTitle: string;
   onReset: () => void;
+  onViewLog?: () => void;
   summary: GameResultSummary | null;
   winner: string | null;
 }) {
@@ -233,6 +235,13 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
       )}
 
       <div className="mt-4 flex gap-2">
+        <button
+          className="flex-1 bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-500"
+          onClick={onViewLog}
+          type="button"
+        >
+          전체 로그 보기
+        </button>
         <button
           className="flex-1 bg-white px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-red-100"
           onClick={onReset}

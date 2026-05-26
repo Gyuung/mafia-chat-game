@@ -32,6 +32,8 @@ export type PlayHistoryEntry = {
   xpGained: number;
   levelAfter: number;
   titleAfter: string;
+  messages?: Message[];
+  players?: Player[];
 };
 
 export type DialogueFeedback = {
