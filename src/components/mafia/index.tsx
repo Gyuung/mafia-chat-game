@@ -27,6 +27,17 @@ export function MafiaGame() {
   const [isEliminating, setIsEliminating] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [viewingHistory, setViewingHistory] = useState<PlayHistoryEntry | null>(null);
+  const [tutorialStep, setTutorialStep] = useState<number | null>(null);
+
+  const startTutorial = () => setTutorialStep(0);
+
+  const tutorialSteps = [
+    { title: "새 게임 설정", content: "이름과 인원, 난이도를 설정하고 게임을 시작하세요. 난이도가 높을수록 NPC들이 더 날카롭게 추리합니다.", target: "setup" },
+    { title: "오늘의 사건", content: "매일 새로운 시나리오와 함께 추가 XP 보상을 받을 수 있는 특별 모드입니다.", target: "daily" },
+    { title: "밤 행동", content: "각자의 역할에 맞는 비밀 행동을 수행합니다. 마피아는 시민을 제거하고, 경찰은 정체를 조사합니다.", target: "night" },
+    { title: "낮 토론 및 심문", content: "생존자들과 대화하며 마피아를 추적하세요. '심문하기'를 통해 특정 참가자의 알리바이를 확인할 수 있습니다.", target: "day" },
+    { title: "투표 및 결과", content: "가장 의심스러운 사람에게 투표하세요. 투표 결과에 따라 한 명의 탈락자가 결정됩니다.", target: "vote" },
+  ];
 
   useEffect(() => {
     if (phase !== "setup") {
@@ -53,18 +64,28 @@ export function MafiaGame() {
   }, [phase]);
 
   const overlayText = getPhaseLabel(phase);
-
   const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL ?? "http://localhost:3001";
 
   return (
-    <section className={`mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8 ${isEliminating ? "animate-shake" : ""}`}>
+    <section className={`mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8 ${isEliminating ? "animate-shake" : ""} relative overflow-hidden`}>
       {isEliminating && (
         <div className="animate-blood-splatter fixed inset-0 z-[60] pointer-events-none bg-red-900/20 mix-blend-multiply" />
       )}
+
+      {/* 환경 효과 (Ambient Effects) */}
+      {phase === "night" && (
+        <div className="pointer-events-none fixed inset-0 z-[5] bg-[url('https://www.transparenttextures.com/patterns/fog.png')] opacity-20 animate-fog" />
+      )}
+      {phase === "day" && (
+        <div className="pointer-events-none fixed inset-0 z-[5] bg-blue-500/5 transition-colors duration-1000" />
+      )}
       
       {/* 모바일 상단 바 */}
-      <div className="flex items-center justify-between border border-neutral-800 bg-neutral-900 p-4 lg:hidden">
-        <h1 className="text-xl font-bold text-white">Mafia Game</h1>
+      <div className="flex items-center justify-between border border-neutral-800 bg-neutral-900 p-4 lg:hidden relative z-20">
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-white">Mafia Game</h1>
+          <a className="text-[10px] text-neutral-400 hover:text-white underline underline-offset-4" href={docsUrl} rel="noreferrer" target="_blank">Docs</a>
+        </div>
         <div className="flex items-center gap-3">
           <span className="bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-tighter">
             {phase === "setup" ? "Standby" : `${round}R ${overlayText}`}
@@ -78,6 +99,48 @@ export function MafiaGame() {
           </button>
         </div>
       </div>
+
+      {/* 튜토리얼 버튼 */}
+      {phase === "setup" && (
+        <button 
+          className="fixed bottom-6 right-6 z-[80] flex h-14 w-14 items-center justify-center rounded-full bg-red-600 text-white shadow-2xl hover:scale-110 transition-transform active:scale-95"
+          onClick={startTutorial}
+          title="도움말 보기"
+          type="button"
+        >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
+
+      {/* 튜토리얼 모달 */}
+      {tutorialStep !== null && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md border border-neutral-800 bg-neutral-950 p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Tutorial {tutorialStep + 1}/{tutorialSteps.length}</span>
+              <button className="text-neutral-500 hover:text-white" onClick={() => setTutorialStep(null)}>✕</button>
+            </div>
+            <h2 className="mt-4 text-2xl font-bold text-white">{tutorialSteps[tutorialStep].title}</h2>
+            <p className="mt-4 text-sm leading-7 text-neutral-400">{tutorialSteps[tutorialStep].content}</p>
+            <div className="mt-8 flex gap-3">
+              <button 
+                className="flex-1 border border-neutral-800 py-3 text-sm font-bold text-neutral-400 hover:bg-neutral-900"
+                onClick={() => setTutorialStep(tutorialStep > 0 ? tutorialStep - 1 : null)}
+              >
+                {tutorialStep === 0 ? "닫기" : "이전"}
+              </button>
+              <button 
+                className="flex-[2] bg-red-600 py-3 text-sm font-bold text-white hover:bg-red-500"
+                onClick={() => tutorialStep < tutorialSteps.length - 1 ? setTutorialStep(tutorialStep + 1) : setTutorialStep(null)}
+              >
+                {tutorialStep < tutorialSteps.length - 1 ? "다음" : "시작하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showOverlay && (
         <div className="animate-fade-in fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md transition-all duration-500">
@@ -205,27 +268,45 @@ export function MafiaGame() {
       <main className="grid gap-4">
         {phase === "setup" && (
           <Panel title="새 게임">
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-3">
               <label className="grid gap-2 text-sm">
-                <span className="font-medium text-neutral-200">내 이름</span>
-                <input className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400" onChange={(e) => setMyName(e.target.value)} value={myName} />
+                <span className="font-semibold text-neutral-300">내 이름</span>
+                <input 
+                  className="border border-neutral-800 bg-neutral-950 px-4 py-4 text-white outline-none focus:border-red-500 transition-colors" 
+                  onChange={(e) => setMyName(e.target.value)} 
+                  placeholder="당신의 닉네임"
+                  value={myName} 
+                />
               </label>
               <label className="grid gap-2 text-sm">
-                <span className="font-medium text-neutral-200">전체 인원</span>
-                <select className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400" onChange={(e) => setPlayerCount(Number(e.target.value))} value={playerCount}>
-                  {[4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}명</option>)}
-                </select>
+                <span className="font-semibold text-neutral-300">전체 인원</span>
+                <div className="grid grid-cols-5 gap-1">
+                  {[4, 5, 6, 7, 8].map((count) => (
+                    <button
+                      className={`h-12 border text-xs font-bold transition-all ${
+                        playerCount === count 
+                          ? "border-red-500 bg-red-950/30 text-white shadow-[0_0_10px_rgba(239,68,68,0.2)]" 
+                          : "border-neutral-800 bg-neutral-950 text-neutral-500 hover:border-neutral-700"
+                      }`}
+                      key={count}
+                      onClick={() => setPlayerCount(count)}
+                      type="button"
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
               </label>
               <label className="grid gap-2 text-sm">
-                <span className="font-medium text-neutral-200">난이도</span>
-                <select className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400" onChange={(e) => setSetupDifficulty(e.target.value as Difficulty)} value={setupDifficulty}>
-                  <option value="easy">쉬움</option>
-                  <option value="normal">보통</option>
-                  <option value="hard">어려움</option>
+                <span className="font-semibold text-neutral-300">난이도</span>
+                <select className="border border-neutral-800 bg-neutral-950 px-4 py-4 text-white outline-none focus:border-red-500 transition-colors appearance-none cursor-pointer" onChange={(e) => setSetupDifficulty(e.target.value as Difficulty)} value={setupDifficulty}>
+                  <option value="easy">쉬움 (추리 난이도 낮음)</option>
+                  <option value="normal">보통 (표준 밸런스)</option>
+                  <option value="hard">어려움 (베테랑용)</option>
                 </select>
               </label>
             </div>
-            <button className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400" onClick={() => startGame("normal", setupDifficulty)} type="button">역할 받고 시작</button>
+            <button className="mt-8 w-full bg-red-600 px-5 py-4 text-base font-black text-white hover:bg-red-500 shadow-xl shadow-red-950/20 active:translate-y-0.5 transition-all" onClick={() => startGame("normal", setupDifficulty)} type="button">역할 배정 및 게임 시작</button>
           </Panel>
         )}
 

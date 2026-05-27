@@ -80,6 +80,15 @@ body {
   animation: bloodSplatter 1s ease-out forwards;
 }
 
+@keyframes fog {
+  from { background-position: 0 0; }
+  to { background-position: 1000px 500px; }
+}
+
+.animate-fog {
+  animation: fog 60s linear infinite;
+}
+
 /* 스크롤바 커스텀 */
 ::-webkit-scrollbar {
   width: 6px;
