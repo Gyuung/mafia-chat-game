@@ -126,7 +126,7 @@ export const personalityTraits: Record<PersonalityType, PersonalityTrait> = {
       "여기서 정직한 척하는 사람이 제일 수상한 거 아시죠?",
       "다들 연기 참 잘하시네요. 아카데미 상이라도 줘야겠어요.",
       "어차피 누굴 믿든 배신당할 텐데, 무슨 상관인가요.",
-      "시민인 척하는 꼴이 참 가소롭네요.",
+      "시민인 척하는 꼴이 참 가솔롭네요.",
     ],
     voteThreshold: 3,
   },
@@ -202,7 +202,7 @@ export const personalityReactions: Record<PersonalityType, Record<"death" | "lat
   timid: {
     death: [
       "세상에... 정말로 탈락자가 나왔어요... 다음은 제가 되면 어쩌죠?",
-      "점점 무서워져요. 우리 정말 이길 수 있는 걸까요?",
+      "점점 무서워져요. 우리 정말 이길 수 있는 볼까요?",
     ],
     lateGame: [
       "사람이 너무 적어서 이제는 누가 마피아여도 이상하지 않아요... 무서워서 말을 못 하겠어요.",
@@ -232,7 +232,6 @@ export const personalityReactions: Record<PersonalityType, Record<"death" | "lat
 };
 
 export const personalityAnswers: Record<PersonalityType, Record<"citizen" | "mafia" | "power", string[]>> = {
-
   logical: {
     citizen: [
       "제 진술에 모순이 있는지 검토해 보세요. 저는 오직 승리를 위해 협력합니다.",
@@ -257,7 +256,7 @@ export const personalityAnswers: Record<PersonalityType, Record<"citizen" | "maf
     ],
     mafia: [
       "지금 절 의심하는 당신이야말로 마피아 아니에요? 적반하장이네요.",
-      "근거 없이 몰아세우세우지 마세요. 진짜 마피아는 당신 뒤에 있을걸요?",
+      "근거 없이 몰아세우지 마세요. 진짜 마피아는 당신 뒤에 있을걸요?",
       "내가 마피아면 넌 벌써 죽었어. 고맙게 생각하라고.",
     ],
     power: [
@@ -313,6 +312,34 @@ export const personalityAnswers: Record<PersonalityType, Record<"citizen" | "maf
       "말해줘도 안 믿을 거 뻔한데, 입만 아프게 왜 물어봐요?",
     ],
   },
+};
+
+export const personalityMafiaTells: Record<PersonalityType, string[]> = {
+  logical: [
+    "어... 그게... 논리적으로 설명하자면 그냥 제 방에 있었어요.",
+    "제 동선요? 그건... 효율적인 경로를 생각하다 보니 좀 늦게 들어갔네요.",
+    "분석 결과에 따르면... 아니, 제 말은 저는 그냥 잤다는 겁니다.",
+  ],
+  aggressive: [
+    "왜 나만 가지고 그래요? 진짜 짜증 나게!",
+    "내가 마피아면 벌써 당신부터 처리했어. 자꾸 건드리지 마!",
+    "말도 안 되는 소리 하지 마세요. 증거 있어?",
+  ],
+  timid: [
+    "저... 저는 정말 아무것도 몰라요... 제발 믿어주세요...",
+    "밤에요? 그냥... 무서워서 이불 속에만 있었어요...",
+    "왜 저를 그렇게 쳐다보시죠? 전 정말 아니에요...",
+  ],
+  emotional: [
+    "어떻게 저를 의심할 수가 있죠? 우리 대화도 많이 했잖아요...",
+    "진짜 너무하시네요. 저는 당신을 믿었는데...",
+    "마음이 너무 아파요. 제가 마피아처럼 보이나요?",
+  ],
+  cynic: [
+    "맘대로 생각하세요. 어차피 믿지도 않을 거면서.",
+    "참나, 여기서 제일 착한 척하는 사람이 범인인 거 몰라요?",
+    "제가 마피아면 뭐 어쩔 건데요? 투표라도 하게요?",
+  ],
 };
 
 export const previewCommands = [

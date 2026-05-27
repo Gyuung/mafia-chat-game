@@ -7,7 +7,7 @@ import {
 import { 
   PROFILE_STORAGE_KEY, MAX_HISTORY_ITEMS, botNames, 
   personalityLines, personalityAnswers, personalityTraits, 
-  personalityReactions, dailyCases, getTitle 
+  personalityReactions, dailyCases, getTitle, personalityMafiaTells 
 } from "./constants";
 
 function shuffle<T>(items: T[]) {
@@ -343,6 +343,7 @@ export function useMafiaGame() {
       if (isSlipUp) {
         answer = pickRandom([
           ...answers.mafia,
+          ...personalityMafiaTells[p],
           "어... 그게... 그냥 별일 없었어요. 왜 자꾸 물어보시죠?",
           "밤에 뭘 했는지 일일이 다 기억해야 하나요? 피곤하네요.",
           "저는 제 할 일을 했을 뿐입니다. 너무 몰아세우지 마세요.",
