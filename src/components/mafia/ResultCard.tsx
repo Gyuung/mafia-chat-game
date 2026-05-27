@@ -37,26 +37,28 @@ export function ResultCard({
     }[summary.role];
 
     const text = `
-[마피아 채팅 게임 - 결과 리포트] ${winEmoji}
+[마피아 채팅 게임 - 사건 종결 리포트] ${winEmoji}
 
-${summary.result} (${summary.team} 승리)
-${dailyCaseText}🎭 내 역할: ${roleLabels[summary.role]}
-🫀 생존 여부: ${survivalStatus}
+결과: ${summary.result} (${summary.team} 승리)
+${dailyCaseText}
+🎭 나의 역할: ${roleLabels[summary.role]}
+🫀 생존 상태: ${survivalStatus}
 🕵️ 마피아 검거: ${summary.mafiaCaughtCount}명
-⌛ 총 진행 라운드: ${summary.totalRounds}R
+⌛ 총 소요 라운드: ${summary.totalRounds}R
 
-📊 활동 지표:
-• 심문 횟수: ${summary.interrogationCount}회
-• 정확한 투표: ${summary.correctVoteCount}회
+[활동 지표]
+• 심문: ${summary.interrogationCount}회
+• 투표 정확도: ${summary.correctVoteCount}회
 ${roleActionText ? `• ${roleActionText}\n` : ""}
-💰 획득 XP: +${summary.xpGained} XP
-⭐ 레벨: Lv. ${summary.levelBefore} → Lv. ${summary.levelAfter}
-🏷️ 칭호: ${titleUnlocked}
+[성장 기록]
+💰 획득 경험치: +${summary.xpGained} XP
+⭐ 현재 레벨: Lv. ${summary.levelAfter}
+🏷️ 획득 칭호: ${titleUnlocked}
 
-📌 주요 사건:
+[수사 일지]
 ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
 
-#마피아게임 #NextJS #웹게임
+#마피아게임 #SoloMafia #수사리포트
     `.trim();
 
     navigator.clipboard

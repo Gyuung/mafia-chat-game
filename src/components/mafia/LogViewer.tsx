@@ -14,7 +14,36 @@ export function LogViewer({
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
       <div className="flex h-full max-h-[800px] w-full max-w-2xl flex-col border border-neutral-800 bg-neutral-950 shadow-2xl">
         <div className="flex items-center justify-between border-b border-neutral-800 p-4">
-          <h2 className="text-xl font-bold text-white">게임 로그 기록</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-white">게임 로그 기록</h2>
+            <button 
+              className="text-[10px] bg-neutral-800 px-2 py-1 text-neutral-400 hover:text-white border border-neutral-700 font-bold uppercase tracking-tighter"
+              onClick={() => {
+                const text = `
+[마피아 채팅 게임 - 사건 수사 기록]
+종료 시각: ${new Date().toLocaleString()}
+
+■ 참가자 역할 정보:
+${players.map(p => `- ${p.name}: ${roleLabels[p.role]} ${p.human ? "(나)" : ""} (${p.alive ? "생존" : "탈락"})`).join("\n")}
+
+■ 진행 메시지:
+${messages.map(m => `[${m.sender}] ${m.text}`).join("\n")}
+
+#마피아게임 #수사기록
+                `.trim();
+                const blob = new Blob([text], { type: "text/plain" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `mafia-log-${new Date().getTime()}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              type="button"
+            >
+              📥 로그 다운로드
+            </button>
+          </div>
           <button 
             className="text-neutral-500 hover:text-white" 
             onClick={onClose}
