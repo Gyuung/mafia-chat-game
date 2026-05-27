@@ -10,60 +10,42 @@ Last updated: 2026-05-26
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
-- Version: `0.9.0`
+- Version: `1.0.0` (Milestone Reached!)
 
-## Recent Changes (v0.9.0)
+## Recent Changes (v1.0.0)
 
-- **Comprehensive Gameplay & UI Enhancements**:
-  - **Personality-specific Tells**: Expanded Mafia interrogation responses based on NPC personality types.
-  - **Ambient Effects**: Added animated fog for night phase and subtle lighting for day phase.
-  - **Interactive Tutorial**: Implemented a step-by-step onboarding guide for new players.
-  - **Setup UI Revamp**: Improved the game configuration panel with better layout and intuitive controls.
-  - **Mobile Fix**: Added a "Docs" button to the mobile header for better navigation.
+- **Official Release Milestone Enhancements**:
+  - **Career Stats**: Implemented a comprehensive statistics modal showing total games, win rate, role distribution, and average survival.
+  - **Enhanced Voting Tells**: NPCs now exhibit personality-based behaviors during the voting phase (e.g., hesitation, mob mentality).
+  - **Ambient Visuals High-fidelity**: Added fireflies for night and light rays for day, complementing the fog effect.
+  - **Log Export & Improved Sharing**: Added `.txt` log download in LogViewer and refined the clipboard result report.
 - **Maintenance**:
-  - Fixed various build and lint issues.
-  - Improved `commit-script.ts` for Windows environment stability.
+  - Fixed PostCSS syntax errors in `globals.css`.
+  - Resolved build/lint issues related to hook dependencies.
 
 ## Implemented
 
 - Solo Mafia game against virtual participants
-- Player role is visible only to the user
-- NPC roles stay hidden until the game ends
-- Night actions for mafia, doctor, detective, and citizen
-- Day discussion with free chat
-- Interrogation flow where NPCs answer according to role behavior
-- NPC voting behavior influenced by suspicion and trust
-- NPC personality system (Logical, Aggressive, Timid, Emotional, Cynic) with unique dialogue and voting styles
-- Simple 'trust/friendship' system between participants
-- Win/loss resolution
-- Emoji-style result card with XP, level, and title
-- XP, level, title, and recent play history persist in `localStorage`
-- Daily case mode offers a date-based briefing and once-per-day bonus XP
-- Result card summarizes role, team outcome, XP gained, level progress, title changes, and key events
-- Setup screen includes a chat response preview for commands, button choices, and compact result text
-- Vote decisions from NPCs are logged with reasons in the progress log
-- Result card displays an enhanced vote summary with role icons and revealing all roles
-- Daily case variety expanded
-- contextual NPC reactions
-- Automatic shell command execution policy
-- Log export feature
-- Difficulty settings (Easy, Normal, Hard)
-- Phase transitions and elimination effects
-- Game Log Viewer for past games
-- **Implemented Ambient Effects, Personality Tells, and In-game Tutorial.**
+- Personality system (Logical, Aggressive, Timid, Emotional, Cynic)
+- Career Stats and persistent level/XP system
+- Daily Case mode with unique briefings
+- Enhanced Game Log Viewer with download capability
+- Ambient Effects (Fog, Fireflies, Light Rays, Screen Shake, Blood Splatter)
+- Step-by-step Interactive Tutorial
+- Mobile-optimized UI with Docs access
 
 ## Known Constraints
 
 - NPC dialogue is rule-based, not LLM-generated.
-- No persistent user profile or database yet.
+- No production chat-platform adapter yet.
 
 ## Next Session TODO
 
-1. Add sound effects (assets needed).
-2. Add more ambient effects (e.g., rain, fireflies).
-3. Expand "Tells" to cover more game situations (e.g., voting patterns).
-4. Implement a "Leaderboard" or "Career Stats" page.
-5. Consider a 'Share Results' feature improvement or social integration.
+1. Add sound effects (requires external assets).
+2. Add more ambient effects (e.g., rain, fireflies refinement).
+3. Expand Daily Case variety (more scenarios).
+4. Implement "Achievements" system for hidden milestones.
+5. Consider a 'Replay' feature (visual step-by-step of past games).
 
 ## Start Checklist For Codex
 
