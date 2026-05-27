@@ -47,6 +47,15 @@ Last updated: 2026-05-26
 4. Implement "Achievements" system for hidden milestones.
 5. Consider a 'Replay' feature (visual step-by-step of past games).
 
+## Future Vision (v2.0.0 Planning)
+
+- **Hybrid Participant System**: Allow users to choose the mix of players (e.g., 2 humans + 4 AIs, or 6 humans). Requires a lobby system and real-time backend.
+- **AI-Powered Intelligence**: Integrate LLMs (Gemini, OpenAI) for dynamic NPC dialogue and logical reasoning.
+- **Cross-platform Connectivity**: Implement adapters for Discord and Telegram as planned in `platform-response-plan.md`.
+- **Persistent Backend**: Move beyond `localStorage` to a real database (Supabase/Firebase) for user accounts and global leaderboards.
+- **Advanced Gameplay**: Add complex roles (Godfather, Serial Killer, Medium) and strategic items/skills.
+- **Asynchronous Multiplayer**: Challenge virtual versions of other players based on their recorded playstyles.
+
 ## Start Checklist For Codex
 
 If starting a new Codex session, send the prompt saved in `CONTINUE.md` first.
