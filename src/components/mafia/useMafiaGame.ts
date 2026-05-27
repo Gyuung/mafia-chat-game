@@ -435,6 +435,21 @@ export function useMafiaGame() {
     const botDecisions = alive.filter(p => !p.human).map((bot) => {
       const choices = alive.filter(t => t.id !== bot.id);
       const decision = chooseBotVoteTarget(bot, choices);
+      
+      // 투표 시 성격별 특징적 발언/행동 추가 (Tells)
+      if (bot.role === "mafia" && Math.random() > 0.7) {
+        const mafiaVoteTells = [
+          "다들 너무 몰아가는 거 아니에요? 조금만 더 신중하죠.",
+          "저는 일단 다수의 의견을 따르겠습니다.",
+          "어쩔 수 없네요. 상황이 이렇게 됐으니...",
+        ];
+        addMessage(bot.name, pickRandom(mafiaVoteTells));
+      } else if (bot.personality === "timid" && Math.random() > 0.5) {
+        addMessage(bot.name, "정말 이분이 맞는 걸까요? 무서워요...");
+      } else if (bot.personality === "aggressive" && Math.random() > 0.5) {
+        addMessage(bot.name, "무조건 이 사람입니다. 망설일 거 없어요!");
+      }
+
       return { bot, decision };
     });
 
