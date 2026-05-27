@@ -10,6 +10,7 @@ import { Panel, StatusItem } from "./Common";
 import { roleLabels, roleDescriptions, roleImages, personalityTraits, getTitle } from "./constants";
 import { Player, Role, Phase, Difficulty, PlayHistoryEntry } from "./types";
 import { LogViewer } from "./LogViewer";
+import { CareerStats } from "./CareerStats";
 
 export function MafiaGame() {
   const {
@@ -28,6 +29,7 @@ export function MafiaGame() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [viewingHistory, setViewingHistory] = useState<PlayHistoryEntry | null>(null);
   const [tutorialStep, setTutorialStep] = useState<number | null>(null);
+  const [showStats, setShowStats] = useState(false);
 
   const startTutorial = () => setTutorialStep(0);
 
@@ -74,10 +76,21 @@ export function MafiaGame() {
 
       {/* 환경 효과 (Ambient Effects) */}
       {phase === "night" && (
-        <div className="pointer-events-none fixed inset-0 z-[5] bg-[url('https://www.transparenttextures.com/patterns/fog.png')] opacity-20 animate-fog" />
+        <>
+          <div className="pointer-events-none fixed inset-0 z-[5] bg-[url('https://www.transparenttextures.com/patterns/fog.png')] opacity-20 animate-fog" />
+          <div className="pointer-events-none fixed inset-0 z-[6]">
+            <div className="absolute top-1/4 left-1/4 h-1 w-1 bg-yellow-200 rounded-full animate-fireflies opacity-0" />
+            <div className="absolute top-1/3 left-2/3 h-1 w-1 bg-yellow-200 rounded-full animate-fireflies opacity-0 [animation-delay:1s]" />
+            <div className="absolute top-2/3 left-1/2 h-1.5 w-1.5 bg-yellow-100 rounded-full animate-fireflies opacity-0 [animation-delay:2s]" />
+            <div className="absolute top-1/2 left-1/5 h-1 w-1 bg-yellow-200 rounded-full animate-fireflies opacity-0 [animation-delay:1.5s]" />
+          </div>
+        </>
       )}
       {phase === "day" && (
-        <div className="pointer-events-none fixed inset-0 z-[5] bg-blue-500/5 transition-colors duration-1000" />
+        <>
+          <div className="pointer-events-none fixed inset-0 z-[5] bg-blue-500/5 transition-colors duration-1000" />
+          <div className="pointer-events-none fixed -top-20 -left-20 w-96 h-[800px] bg-white/10 blur-3xl animate-rays origin-top-left z-[6]" />
+        </>
       )}
       
       {/* 모바일 상단 바 */}
@@ -198,14 +211,23 @@ export function MafiaGame() {
               <StatusItem label="인원" value={`${players.length || playerCount}명`} />
             </dl>
             <div className="mt-4 border border-neutral-800 bg-neutral-950 p-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-white">Lv. {level}</span>
-                <span className="text-neutral-400">{currentLevelXp}/100 XP</span>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-neutral-400">Lv. {level} 경험치</span>
+                <span className="text-neutral-200">{currentLevelXp}/100</span>
               </div>
               <div className="mt-2 h-2 bg-neutral-800">
                 <div className="h-full bg-red-500" style={{ width: `${currentLevelXp}%` }} />
               </div>
-              <p className="mt-2 text-xs text-neutral-500">총 {profile.xp} XP · {getTitle(level)}</p>
+              <div className="mt-3 flex items-center justify-between">
+                <p className="text-[10px] text-neutral-500">총 {profile.xp} XP</p>
+                <button 
+                  className="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-tighter underline underline-offset-2"
+                  onClick={() => setShowStats(true)}
+                  type="button"
+                >
+                  상세 통계 보기
+                </button>
+              </div>
             </div>
           </div>
 
@@ -403,6 +425,13 @@ export function MafiaGame() {
           messages={viewingHistory.messages || []} 
           onClose={() => setViewingHistory(null)} 
           players={viewingHistory.players || []} 
+        />
+      )}
+
+      {showStats && (
+        <CareerStats 
+          history={profile.history} 
+          onClose={() => setShowStats(false)} 
         />
       )}
     </section>

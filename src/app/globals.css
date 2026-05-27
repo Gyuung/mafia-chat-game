@@ -89,6 +89,25 @@ body {
   animation: fog 60s linear infinite;
 }
 
+@keyframes fireflies {
+  0%, 100% { opacity: 0; transform: translateY(0) translateX(0); }
+  50% { opacity: 0.8; transform: translateY(-20px) translateX(10px); }
+}
+
+.animate-fireflies {
+  animation: fireflies 4s ease-in-out infinite;
+}
+
+@keyframes rays {
+  0% { transform: rotate(-20deg); opacity: 0.1; }
+  50% { transform: rotate(-15deg); opacity: 0.3; }
+  100% { transform: rotate(-20deg); opacity: 0.1; }
+}
+
+.animate-rays {
+  animation: rays 10s ease-in-out infinite;
+}
+
 /* 스크롤바 커스텀 */
 ::-webkit-scrollbar {
   width: 6px;
