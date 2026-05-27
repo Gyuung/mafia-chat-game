@@ -293,7 +293,17 @@ export function useMafiaGame() {
   }, [gameMode, profile, todayKey, dailyCase, messages, round, mafiaCaughtCount, addMessage]);
 
   const startGame = useCallback((mode: GameMode = "normal", diff: Difficulty = "normal") => {
-    const names = shuffle(botNames).slice(0, playerCount - 1);
+    let availableNames = shuffle(botNames);
+    let finalMyName = myName.trim();
+    if (!finalMyName || finalMyName === "나") {
+      finalMyName = availableNames[0];
+      availableNames = availableNames.slice(1);
+    } else {
+      // 내가 입력한 이름이 봇 이름 목록에 있으면 그 이름은 제외
+      availableNames = availableNames.filter(n => n !== finalMyName);
+    }
+    
+    const names = availableNames.slice(0, playerCount - 1);
     const mafiaCount = Math.max(1, Math.floor(playerCount / 4));
     const roles: Role[] = [...Array<Role>(mafiaCount).fill("mafia"), ...(playerCount >= 5 ? ["doctor"] as Role[] : []), ...(playerCount >= 6 ? ["detective"] as Role[] : [])];
     while (roles.length < playerCount) roles.push("citizen");
@@ -301,12 +311,12 @@ export function useMafiaGame() {
     const personalities: PersonalityType[] = ["logical", "aggressive", "timid", "emotional", "cynic"];
 
     const createdPlayers: Player[] = [
-      { id: "me", name: myName.trim() || "나", role: assignedRoles[0], alive: true, human: true, suspicion: 0, trust: {} },
+      { id: "me", name: finalMyName, role: assignedRoles[0], alive: true, human: true, suspicion: 0, trust: {} },
       ...names.map((name, index) => ({ id: createId("bot"), name, role: assignedRoles[index + 1], alive: true, human: false, suspicion: 0, trust: {}, personality: pickRandom(personalities) })),
     ];
 
     const human = createdPlayers.find(p => p.human);
-    const intro = mode === "daily" ? `오늘의 사건 '${dailyCase.title}'이 시작되었습니다. ${dailyCase.briefing} 당신의 역할은 ${human?.role}입니다.` : `게임이 시작되었습니다. 당신의 역할은 ${human?.role}입니다. 난이도: ${diff === "easy" ? "쉬움" : (diff === "hard" ? "어려움" : "보통")}`;
+    const intro = mode === "daily" ? `오늘의 사건 '${dailyCase.title}'이 시작되었습니다. ${dailyCase.briefing} 당신의 이름은 '${finalMyName}'이며 역할은 ${human?.role}입니다.` : `게임이 시작되었습니다. 당신의 이름은 '${finalMyName}'이며 역할은 ${human?.role}입니다. 난이도: ${diff === "easy" ? "쉬움" : (diff === "hard" ? "어려움" : "보통")}`;
     
     setPlayers(createdPlayers);
     setRound(1);

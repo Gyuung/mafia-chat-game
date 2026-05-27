@@ -184,6 +184,7 @@ export function MafiaGame() {
 
           <div className="border border-neutral-800 bg-neutral-900 p-4">
             <h2 className="text-lg font-semibold">내 역할</h2>
+            <p className="text-xs text-neutral-400 mt-1">{me?.name || myName || "나"} {me && "(나)"}</p>
             {me ? (
               <div className="mt-3 border border-red-900 bg-red-950/30 p-3">
                 <div className="relative aspect-square overflow-hidden border border-neutral-800 bg-neutral-950">
