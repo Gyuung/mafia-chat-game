@@ -10,29 +10,24 @@ Last updated: 2026-05-26
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
-- Version: `1.0.0` (Milestone Reached!)
+- Version: `1.1.0` (Core Interaction Enhanced)
 
-## Recent Changes (v1.0.0)
+## Recent Changes (v1.1.0)
 
-- **Official Release Milestone Enhancements**:
-  - **Career Stats**: Implemented a comprehensive statistics modal showing total games, win rate, role distribution, and average survival.
-  - **Enhanced Voting Tells**: NPCs now exhibit personality-based behaviors during the voting phase (e.g., hesitation, mob mentality).
-  - **Ambient Visuals High-fidelity**: Added fireflies for night and light rays for day, complementing the fog effect.
-  - **Log Export & Improved Sharing**: Added `.txt` log download in LogViewer and refined the clipboard result report.
-- **Maintenance**:
-  - Fixed PostCSS syntax errors in `globals.css`.
-  - Resolved build/lint issues related to hook dependencies.
+- **Enhanced Player Identity**:
+  - Assigned random names (from the bot name pool) to the human player if no name is provided.
+  - Updated bot discussion and interrogation logic to use the player's assigned name naturally.
+  - UI now displays the assigned name followed by "(나)" in the sidebar for clarity.
+- **v1.0.0 Milestone (Earlier this session)**:
+  - Career Stats, Enhanced Voting Tells, Ambient Visuals, Log Export.
 
 ## Implemented
 
 - Solo Mafia game against virtual participants
-- Personality system (Logical, Aggressive, Timid, Emotional, Cynic)
+- Personality-based interactions and tells
 - Career Stats and persistent level/XP system
-- Daily Case mode with unique briefings
-- Enhanced Game Log Viewer with download capability
-- Ambient Effects (Fog, Fireflies, Light Rays, Screen Shake, Blood Splatter)
-- Step-by-step Interactive Tutorial
-- Mobile-optimized UI with Docs access
+- Ambient Effects and Interactive Tutorial
+- **Human player real-name identity for better NPC interaction.**
 
 ## Known Constraints
 
@@ -43,18 +38,9 @@ Last updated: 2026-05-26
 
 1. Add sound effects (requires external assets).
 2. Add more ambient effects (e.g., rain, fireflies refinement).
-3. Expand Daily Case variety (more scenarios).
-4. Implement "Achievements" system for hidden milestones.
-5. Consider a 'Replay' feature (visual step-by-step of past games).
-
-## Future Vision (v2.0.0 Planning)
-
-- **Hybrid Participant System**: Allow users to choose the mix of players (e.g., 2 humans + 4 AIs, or 6 humans). Requires a lobby system and real-time backend.
-- **AI-Powered Intelligence**: Integrate LLMs (Gemini, OpenAI) for dynamic NPC dialogue and logical reasoning.
-- **Cross-platform Connectivity**: Implement adapters for Discord and Telegram as planned in `platform-response-plan.md`.
-- **Persistent Backend**: Move beyond `localStorage` to a real database (Supabase/Firebase) for user accounts and global leaderboards.
-- **Advanced Gameplay**: Add complex roles (Godfather, Serial Killer, Medium) and strategic items/skills.
-- **Asynchronous Multiplayer**: Challenge virtual versions of other players based on their recorded playstyles.
+3. Expand Daily Case variety.
+4. Implement "Achievements" system.
+5. v2.0.0 Planning: LLM integration and Hybrid Multiplayer.
 
 ## Start Checklist For Codex
 
