@@ -10,7 +10,19 @@ Last updated: 2026-05-26
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
-- Version: `0.8.2`
+- Version: `0.9.0`
+
+## Recent Changes (v0.9.0)
+
+- **Comprehensive Gameplay & UI Enhancements**:
+  - **Personality-specific Tells**: Expanded Mafia interrogation responses based on NPC personality types.
+  - **Ambient Effects**: Added animated fog for night phase and subtle lighting for day phase.
+  - **Interactive Tutorial**: Implemented a step-by-step onboarding guide for new players.
+  - **Setup UI Revamp**: Improved the game configuration panel with better layout and intuitive controls.
+  - **Mobile Fix**: Added a "Docs" button to the mobile header for better navigation.
+- **Maintenance**:
+  - Fixed various build and lint issues.
+  - Improved `commit-script.ts` for Windows environment stability.
 
 ## Implemented
 
@@ -21,7 +33,7 @@ Last updated: 2026-05-26
 - Day discussion with free chat
 - Interrogation flow where NPCs answer according to role behavior
 - NPC voting behavior influenced by suspicion and trust
-- NPC personality system (Logical, Aggressive, Timid, Emotional) with unique dialogue and voting styles
+- NPC personality system (Logical, Aggressive, Timid, Emotional, Cynic) with unique dialogue and voting styles
 - Simple 'trust/friendship' system between participants
 - Win/loss resolution
 - Emoji-style result card with XP, level, and title
@@ -31,39 +43,26 @@ Last updated: 2026-05-26
 - Setup screen includes a chat response preview for commands, button choices, and compact result text
 - Vote decisions from NPCs are logged with reasons in the progress log
 - Result card displays an enhanced vote summary with role icons and revealing all roles
-- Daily case variety expanded (9 cases total, including 2 Hard Mode cases)
-- NPC dialogue variety expanded for more diverse discussions
-- Contextual NPC reactions based on death and round number
-- Detailed performance metrics on the result card (Mafia caught, total rounds)
-- Automatic shell command execution policy for smoother CLI experience
-- Log export feature to save game results as a text file
-- Expanded variety of NPC names and personality types (added Cynic personality)
-- Difficulty setting for normal games (Easy, Normal, Hard)
-- Visual feedback for phase transitions (Phase overlay)
-- Share Result feature (Copy to clipboard as formatted text)
-- Context-aware NPC dialogue (mentions player names, reacts to Mafia caught)
-- Detailed player performance stats (interrogations, correct votes, role success)
-- Visual animations (fade-in chat, phase transitions, pulse effects)
-- Elimination visual effects (Screen shake, blood splatter)
-- NPC dialogue feedback system (Thumbs up/down on chat messages)
-- Mobile responsiveness and layout optimizations (Collapsible menu)
-- Deduction clues (Interrogation inconsistency, nervous tells for Mafia)
-- In-game Guide section in setup phase
-- Fixed statistic bug where 'Mafia Caught' count was inaccurate in results
-- **Implemented Game Log Viewer**: Full logs and roles of past games are now stored and viewable.
+- Daily case variety expanded
+- contextual NPC reactions
+- Automatic shell command execution policy
+- Log export feature
+- Difficulty settings (Easy, Normal, Hard)
+- Phase transitions and elimination effects
+- Game Log Viewer for past games
+- **Implemented Ambient Effects, Personality Tells, and In-game Tutorial.**
 
 ## Known Constraints
 
 - NPC dialogue is rule-based, not LLM-generated.
 - No persistent user profile or database yet.
-- No production chat-platform adapter yet.
 
 ## Next Session TODO
 
 1. Add sound effects (assets needed).
-2. Add more ambient effects (e.g., fog for night, birds for day).
-3. Implement a simple tutorial for new players.
-4. Expand "Tells" to specific personalities.
+2. Add more ambient effects (e.g., rain, fireflies).
+3. Expand "Tells" to cover more game situations (e.g., voting patterns).
+4. Implement a "Leaderboard" or "Career Stats" page.
 5. Consider a 'Share Results' feature improvement or social integration.
 
 ## Start Checklist For Codex
