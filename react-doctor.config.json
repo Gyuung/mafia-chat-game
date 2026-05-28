@@ -1,0 +1,7 @@
+{
+  "diff": false,
+  "lint": false,
+  "deadCode": false,
+  "score": true,
+  "verbose": false
+}
