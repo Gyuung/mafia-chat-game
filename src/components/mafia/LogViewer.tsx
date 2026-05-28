@@ -119,7 +119,7 @@ ${messages.map(m => `[${m.sender}] ${m.text}`).join("\n")}
 function CloseIcon() {
   return (
     <svg 
-      className="h-6 w-6" 
+      className="size-6" 
       fill="none" 
       stroke="currentColor" 
       strokeWidth={2} 

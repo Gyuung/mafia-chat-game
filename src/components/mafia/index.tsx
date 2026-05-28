@@ -121,7 +121,7 @@ export function MafiaGame() {
           title="도움말 보기"
           type="button"
         >
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="size-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -133,20 +133,28 @@ export function MafiaGame() {
           <div className="w-full max-w-md border border-neutral-800 bg-neutral-950 p-6 shadow-2xl">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Tutorial {tutorialStep + 1}/{tutorialSteps.length}</span>
-              <button className="text-neutral-500 hover:text-white" onClick={() => setTutorialStep(null)}>✕</button>
+              <button 
+                className="text-neutral-500 hover:text-white" 
+                onClick={() => setTutorialStep(null)}
+                type="button"
+              >
+                ✕
+              </button>
             </div>
             <h2 className="mt-4 text-2xl font-bold text-white">{tutorialSteps[tutorialStep].title}</h2>
             <p className="mt-4 text-sm leading-7 text-neutral-400">{tutorialSteps[tutorialStep].content}</p>
             <div className="mt-8 flex gap-3">
               <button 
                 className="flex-1 border border-neutral-800 py-3 text-sm font-bold text-neutral-400 hover:bg-neutral-900"
-                onClick={() => setTutorialStep(tutorialStep > 0 ? tutorialStep - 1 : null)}
+                onClick={() => setTutorialStep(prev => prev !== null && prev > 0 ? prev - 1 : null)}
+                type="button"
               >
                 {tutorialStep === 0 ? "닫기" : "이전"}
               </button>
               <button 
                 className="flex-[2] bg-red-600 py-3 text-sm font-bold text-white hover:bg-red-500"
-                onClick={() => tutorialStep < tutorialSteps.length - 1 ? setTutorialStep(tutorialStep + 1) : setTutorialStep(null)}
+                onClick={() => setTutorialStep(prev => prev !== null && prev < tutorialSteps.length - 1 ? prev + 1 : null)}
+                type="button"
               >
                 {tutorialStep < tutorialSteps.length - 1 ? "다음" : "시작하기"}
               </button>
@@ -295,7 +303,7 @@ export function MafiaGame() {
               <label className="grid gap-2 text-sm">
                 <span className="font-semibold text-neutral-300">내 이름</span>
                 <input 
-                  className="border border-neutral-800 bg-neutral-950 px-4 py-4 text-white outline-none focus:border-red-500 transition-colors" 
+                  className="border border-neutral-800 bg-neutral-950 p-4 text-white outline-none focus:border-red-500 transition-colors" 
                   onChange={(e) => setMyName(e.target.value)} 
                   placeholder="당신의 닉네임"
                   value={myName} 
@@ -322,7 +330,7 @@ export function MafiaGame() {
               </label>
               <label className="grid gap-2 text-sm">
                 <span className="font-semibold text-neutral-300">난이도</span>
-                <select className="border border-neutral-800 bg-neutral-950 px-4 py-4 text-white outline-none focus:border-red-500 transition-colors appearance-none cursor-pointer" onChange={(e) => setSetupDifficulty(e.target.value as Difficulty)} value={setupDifficulty}>
+                <select className="border border-neutral-800 bg-neutral-950 p-4 text-white outline-none focus:border-red-500 transition-colors appearance-none cursor-pointer" onChange={(e) => setSetupDifficulty(e.target.value as Difficulty)} value={setupDifficulty}>
                   <option value="easy">쉬움 (추리 난이도 낮음)</option>
                   <option value="normal">보통 (표준 밸런스)</option>
                   <option value="hard">어려움 (베테랑용)</option>

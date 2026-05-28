@@ -11,7 +11,7 @@ import {
 } from "./constants";
 
 function shuffle<T>(items: T[]) {
-  return [...items].sort(() => Math.random() - 0.5);
+  return items.toSorted(() => Math.random() - 0.5);
 }
 
 function createId(prefix: string) {
@@ -192,7 +192,7 @@ export function useMafiaGame() {
       const adjustedSuspicion = Math.max(0, player.suspicion - (trustScore * trustWeight));
       return { player, adjustedSuspicion };
     });
-    const sortedBySuspicion = [...scoredChoices].sort((a, b) => b.adjustedSuspicion - a.adjustedSuspicion);
+    const sortedBySuspicion = scoredChoices.toSorted((a, b) => b.adjustedSuspicion - a.adjustedSuspicion);
     const mostSuspicious = sortedBySuspicion[0];
     
     let thresholdAdjustment = 0;
