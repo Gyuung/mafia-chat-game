@@ -18,7 +18,7 @@ export function ActionSelect({
       <span className="font-medium text-neutral-200">{label}</span>
       <select 
         aria-label={label}
-        className="border border-neutral-700 bg-neutral-950 px-3 py-3 text-white outline-none focus:border-red-400" 
+        className="border border-neutral-700 bg-neutral-950 p-3 text-white outline-none focus:border-red-400" 
         onChange={(e) => onChange(e.target.value)} 
         value={value}
       >

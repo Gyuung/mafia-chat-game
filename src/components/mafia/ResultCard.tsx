@@ -177,7 +177,7 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
                   return (
                     <div key={targetName} className="flex flex-col gap-2">
                       <div className="flex items-center gap-2">
-                        <div className="relative h-8 w-8 overflow-hidden rounded-full border border-red-500/50 bg-neutral-900">
+                        <div className="relative size-8 overflow-hidden rounded-full border border-red-500/50 bg-neutral-900">
                           {target && (
                             <Image
                               alt={target.role}
