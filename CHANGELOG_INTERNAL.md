@@ -25,6 +25,32 @@
 ### 프로세스 & 기록
 - **에이전트 작업 기록 시스템 도입**: `docs/AGENT_WORK_LOG.md`를 신설하고 `AGENTS.md`에 필수 기록 규칙을 추가하여 세션 간 작업 연속성 보장.
 
+## 2026-05-26
+
+### 기능 고도화 & 아키텍처
+- **커리어 통계(Career Stats) 및 경험치 시스템**: 
+  - `useMafiaGame.ts`에 XP 계산 공식(`calculateXp`) 및 레벨업 로직 구현.
+  - `SavedProfile` 타입을 확장하여 누적 XP, 플레이 히스토리, 칭호 관리 기능 추가.
+- **데이터 영속성(Persistence) 레이어**:
+  - `localStorage`를 활용한 사용자 프로필 자동 저장/불러오기 로직 구현 (`PROFILE_STORAGE_KEY`).
+  - 게임 종료 시마다 `PlayHistoryEntry`를 생성하여 최근 10개의 게임 로그 보존 처리.
+- **성격 기반 추리 시스템(Tells) 확장**:
+  - NPC별 성향(personalityTraits)에 따른 의심 수치 보정 및 투표 임계값(voteThreshold) 차등화.
+  - 마피아 전용 심리적 단서(personalityMafiaTells) 템플릿 도입 및 확률적 노출 로직 구현.
+
+### UI/UX & 시각 효과
+- **환경 효과 동기화**: `Fog`, `Fireflies`, `Rays` 등 페이즈별 애니메이션의 성능 최적화 및 렌더링 타이밍 정밀 조정.
+- **결과 리포트 시스템**: 
+  - `ResultCard` 컴포넌트에 심문 횟수, 투표 정확도, 역할별 특수 액션 성공 지표(metrics) 추가.
+  - 게임 로그를 텍스트 파일로 내려받는 `LogViewer` 다운로드 기능 구현.
+- **모바일 대응 강화**: 
+  - 모바일 해상도 전용 상단 바(`MobileTopBar`) 및 슬라이딩 사이드바 구조 도입.
+  - `docs-site` 연결 링크 및 모바일 터치 타겟 최적화.
+
+### 버그 수정 & 안정화
+- **상태 업데이트 지연 문제 해결**: `finishStep`에서 비동기 `players` 상태에 의존하던 로직을 직접 계산 방식으로 변경하여 '마피아 검거' 수치 오류 수정.
+- **Windows 호환성**: `commit-script.ts` 내 쉘 스크립트 실행 시 Windows 환경의 경로 및 인코딩 처리 보완.
+
 ## 2026-05-25
 
 ### CLI & 개발 도구

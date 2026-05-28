@@ -52,7 +52,9 @@
 4. `git log --oneline -8`로 최근 작업 내역을 확인하세요.
 5. 규칙, 로드맵 또는 변경 로그를 수정할 때는 `docs-site/docs/`의 문서 프론트엔드를 검사하세요.
 6. `docs/SESSION_NOTES.md`의 `Next Session TODO` 섹션부터 시작하는 것을 선호합니다.
-7. 모든 작업이 완료된 후, 혹은 주요 단계가 끝날 때마다 **`docs/AGENT_WORK_LOG.md`** 파일에 수행한 작업 내용을 날짜별로 기록해야 합니다.
+7. 모든 작업이 완료된 후, 혹은 주요 단계가 끝날 때마다 아래 두 파일을 반드시 업데이트해야 합니다:
+    - **`docs/AGENT_WORK_LOG.md`**: 수행한 작업 내용과 절차를 날짜별로 기록 (작업 투명성 확보).
+    - **`CHANGELOG_INTERNAL.md`**: 기술적 변경 사항, 아키텍처 리팩토링, 도구 도입 등을 기록 (기술 이력 관리).
 8. 작업 세션을 마치기 전, 프로젝트 방향이나 다음 할 일, 알려진 이슈가 변경되었다면 `docs/SESSION_NOTES.md`를 업데이트하세요.
 9. 앱 코드 변경 시 `npm run verify`, 문서 변경 시 `npm run docs:build`를 실행한 후, 사용자가 원격 저장을 원하면 `npm run commit`을 사용하여 커밋하고 `origin/main`으로 푸시하세요.
 
