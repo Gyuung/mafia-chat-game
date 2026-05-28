@@ -19,9 +19,12 @@ export function LogViewer({
             <button 
               className="text-[10px] bg-neutral-800 px-2 py-1 text-neutral-400 hover:text-white border border-neutral-700 font-bold uppercase tracking-tighter"
               onClick={() => {
+                const now = new Date();
+                const timestamp = now.getTime();
+                const localeStr = now.toLocaleString();
                 const text = `
 [마피아 채팅 게임 - 사건 수사 기록]
-종료 시각: ${new Date().toLocaleString()}
+종료 시각: ${localeStr}
 
 ■ 참가자 역할 정보:
 ${players.map(p => `- ${p.name}: ${roleLabels[p.role]} ${p.human ? "(나)" : ""} (${p.alive ? "생존" : "탈락"})`).join("\n")}
@@ -35,7 +38,7 @@ ${messages.map(m => `[${m.sender}] ${m.text}`).join("\n")}
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `mafia-log-${new Date().getTime()}.txt`;
+                a.download = `mafia-log-${timestamp}.txt`;
                 a.click();
                 URL.revokeObjectURL(url);
               }}

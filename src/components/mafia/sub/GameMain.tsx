@@ -106,11 +106,14 @@ export function GameMain({
           fallbackLevel={level} 
           fallbackTitle={getTitle(level)} 
           onReset={resetGame} 
-          onViewLog={() => setViewingHistory({ 
-            id: "current", endedAt: new Date().toISOString(), result: winner || "", role: me?.role || "citizen", 
-            round, survived: me?.alive || false, xpGained: 0, levelAfter: level, titleAfter: getTitle(level),
-            messages, players
-          })}
+          onViewLog={() => {
+            const now = new Date();
+            setViewingHistory({ 
+              id: "current", endedAt: now.toISOString(), result: winner || "", role: me?.role || "citizen", 
+              round, survived: me?.alive || false, xpGained: 0, levelAfter: level, titleAfter: getTitle(level),
+              messages, players
+            });
+          }}
           summary={gameResultSummary} 
           winner={winner} 
         />
