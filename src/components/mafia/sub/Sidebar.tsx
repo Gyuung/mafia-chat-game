@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { StatusItem } from "../Common";
-import { roleLabels, roleDescriptions, roleImages, personalityTraits, getTitle } from "../constants";
-import { Player, Phase, Role, PlayHistoryEntry } from "../types";
+import { roleLabels, roleDescriptions, roleImages, personalityTraits } from "../constants";
+import { Player, Phase, PlayHistoryEntry, SavedProfile } from "../types";
 
 export function Sidebar({ 
   isSidebarOpen, 
@@ -34,7 +34,7 @@ export function Sidebar({
   playerCount: number; 
   level: number; 
   currentLevelXp: number; 
-  profile: any; 
+  profile: SavedProfile; 
   setShowStats: (v: boolean) => void; 
   setViewingHistory: (v: PlayHistoryEntry | null) => void; 
 }) {
@@ -106,14 +106,14 @@ export function Sidebar({
           <div className="border border-neutral-800 bg-neutral-900 p-4">
             <h2 className="text-lg font-semibold">플레이 기록</h2>
             <div className="mt-3 grid gap-2">
-              {profile.history.slice(0, 3).map((entry: any) => (
+              {profile.history.slice(0, 3).map((entry) => (
                 <div className="group border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm" key={entry.id}>
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-semibold text-white">{entry.result}</span>
                     <span className="text-xs text-red-300">+{entry.xpGained} XP</span>
                   </div>
                   <div className="mt-1 flex items-center justify-between">
-                    <p className="text-xs text-neutral-400">{roleLabels[entry.role as Role]} 쨌 {entry.round}R</p>
+                    <p className="text-xs text-neutral-400">{roleLabels[entry.role]} · {entry.round}R</p>
                     {entry.messages && (
                       <button 
                         className="text-[10px] text-red-400 opacity-0 transition-opacity hover:text-red-300 group-hover:opacity-100"

@@ -1,7 +1,83 @@
-import { DailyCase, PersonalityType, PersonalityTrait, Role } from "./types";
+import { DailyCase, PersonalityType, PersonalityTrait, Role, Achievement } from "./types";
 
 export const PROFILE_STORAGE_KEY = "mafia-chat-game:profile:v1";
 export const MAX_HISTORY_ITEMS = 10;
+
+export const ACHIEVEMENTS: Achievement[] = [
+  {
+    id: "first_game",
+    title: "신입 탐정",
+    description: "첫 게임을 무사히 마쳤습니다.",
+    icon: "🔍",
+    condition: () => true,
+  },
+  {
+    id: "first_win",
+    title: "첫 승리의 맛",
+    description: "마피아 게임에서 처음으로 승리했습니다.",
+    icon: "🏆",
+    condition: (stats) => stats.result.includes("승리"),
+  },
+  {
+    id: "mafia_hunter_1",
+    title: "마피아 헌터",
+    description: "마피아를 누적 5명 이상 검거했습니다.",
+    icon: "🎯",
+    condition: (stats, profile) => {
+      const totalCaught = (profile.history || []).reduce((sum, h) => sum + (h.players?.filter(p => !p.human && p.role === "mafia" && !p.alive).length || 0), 0);
+      return (totalCaught + stats.mafiaCaughtCount) >= 5;
+    },
+  },
+  {
+    id: "phoenix",
+    title: "불사조",
+    description: "탈락하지 않고 끝까지 살아남아 승리했습니다.",
+    icon: "🔥",
+    condition: (stats) => stats.survived && stats.result.includes("승리"),
+  },
+  {
+    id: "sharp_insight",
+    title: "예리한 통찰력",
+    description: "정확한 투표로 마피아를 검거하는 데 기여했습니다.",
+    icon: "✨",
+    condition: (stats) => stats.correctVoteCount >= 2,
+  },
+  {
+    id: "thorough_investigation",
+    title: "철저한 수사",
+    description: "한 게임에서 5회 이상 심문을 수행했습니다.",
+    icon: "📝",
+    condition: (stats) => stats.interrogationCount >= 5,
+  },
+  {
+    id: "miraculous_defense",
+    title: "기적의 방어",
+    description: "의사로 활약하며 마피아의 공격을 성공적으로 막아냈습니다.",
+    icon: "🛡️",
+    condition: (stats) => stats.role === "doctor" && stats.roleActionSuccessCount >= 1,
+  },
+  {
+    id: "perfect_alibi",
+    title: "완벽한 알리바이",
+    description: "마피아로 플레이하며 한 번도 투표로 지목되지 않고 승리했습니다.",
+    icon: "🎭",
+    condition: (stats) => stats.role === "mafia" && stats.result.includes("승리") && stats.survived,
+  },
+  {
+    id: "daily_solver",
+    title: "오늘의 해결사",
+    description: "오늘의 사건을 성공적으로 해결했습니다.",
+    icon: "📅",
+    condition: (stats) => !!stats.dailyCaseTitle && stats.result.includes("승리"),
+  },
+  {
+    id: "veteran_investigator",
+    title: "베테랑 수사관",
+    description: "레벨 10에 도달했습니다.",
+    icon: "🎖️",
+    condition: (stats) => stats.levelAfter >= 10,
+  },
+];
 
 export const dailyCases: DailyCase[] = [
   {
@@ -13,6 +89,32 @@ export const dailyCases: DailyCase[] = [
     title: "비 내리는 골목 회의",
     briefing: "발자국이 겹쳐 단서가 흐려졌습니다. 투표 전 심문을 한 번 더 아끼지 마세요.",
     rewardXp: 25,
+  },
+  {
+    title: "눈보라 속의 산장",
+    briefing: "외부와 단절된 산장입니다. 서로의 알리바이가 엇갈리는 순간을 포착하세요.",
+    rewardXp: 35,
+  },
+  {
+    title: "버려진 지하 연구소",
+    briefing: "기괴한 소음이 들립니다. 평소와 다른 말투를 사용하는 사람을 경계하세요.",
+    rewardXp: 40,
+  },
+  {
+    title: "호화 유람선의 무도회",
+    briefing: "화려한 조명 뒤에 그림자가 숨어있습니다. 질문을 회피하는 태도를 유심히 보세요.",
+    rewardXp: 30,
+  },
+  {
+    title: "폭풍우 치는 외딴섬",
+    briefing: "탈출구는 없습니다. 마지막 투표까지 긴장을 늦추지 마세요.",
+    rewardXp: 45,
+  },
+  {
+    title: "🚨 최후의 보루 (HARD)",
+    briefing: "마피아들의 정체가 거의 드러났지만, 그만큼 더 필사적입니다. 압박 심문에 주의하세요.",
+    rewardXp: 70,
+    isHard: true,
   },
   {
     title: "잠긴 라운지의 속삭임",

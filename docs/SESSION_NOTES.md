@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-05-26
+Last updated: 2026-05-28
 
 ## Current State
 
@@ -10,24 +10,22 @@ Last updated: 2026-05-26
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
-- Version: `1.1.0` (Core Interaction Enhanced)
+- Version: `1.2.0` (Achievements & Atmosphere)
 
-## Recent Changes (v1.1.0)
+## Recent Changes (v1.2.0)
 
-- **Enhanced Player Identity**:
-  - Assigned random names (from the bot name pool) to the human player if no name is provided.
-  - Updated bot discussion and interrogation logic to use the player's assigned name naturally.
-  - UI now displays the assigned name followed by "(나)" in the sidebar for clarity.
-- **v1.0.0 Milestone (Earlier this session)**:
-  - Career Stats, Enhanced Voting Tells, Ambient Visuals, Log Export.
+- **Achievements System**: Added 10 types of achievements with auto-unlocking and local persistence. Visualized in Career Stats.
+- **Enhanced Ambient Effects**: Added scenario-based rain, dust, and vignette effects. Refactored to maintain React purity.
+- **Expanded Daily Cases**: Expanded total scenarios to 14, including new "HARD" difficulty cases.
+- **Refactoring & Performance**: Split MafiaGame into 8 sub-components. Achieved 100/100 score in React Doctor.
 
 ## Implemented
 
 - Solo Mafia game against virtual participants
 - Personality-based interactions and tells
 - Career Stats and persistent level/XP system
-- Ambient Effects and Interactive Tutorial
-- **Human player real-name identity for better NPC interaction.**
+- Interactive Tutorial and Mobile Optimization
+- **Achievements system and immersive ambient effects**
 
 ## Known Constraints
 
@@ -37,10 +35,9 @@ Last updated: 2026-05-26
 ## Next Session TODO
 
 1. Add sound effects (requires external assets).
-2. Add more ambient effects (e.g., rain, fireflies refinement).
-3. Expand Daily Case variety.
-4. Implement "Achievements" system.
-5. v2.0.0 Planning: LLM integration and Hybrid Multiplayer.
+2. v2.0.0 Planning: LLM integration and Hybrid Multiplayer.
+3. Visual Polish: Add card flipping animations and enhanced voting tally visuals.
+4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 
 ## Start Checklist For Codex
 
@@ -59,7 +56,7 @@ Read these files before editing:
 AGENTS.md
 README.md
 docs/SESSION_NOTES.md
-src/components/MafiaGame.tsx
+src/components/mafia/index.tsx
 docs-site/docs/intro.md
 docs-site/docs/changelog.md
 docs-site/docs/roadmap.md

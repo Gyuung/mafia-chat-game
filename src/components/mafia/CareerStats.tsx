@@ -1,11 +1,13 @@
-import { PlayHistoryEntry, Role } from "./types";
-import { roleLabels } from "./constants";
+import { PlayHistoryEntry, Role, SavedAchievement } from "./types";
+import { roleLabels, ACHIEVEMENTS } from "./constants";
 
 export function CareerStats({ 
   history,
+  achievements = [],
   onClose 
 }: { 
   history: PlayHistoryEntry[];
+  achievements?: SavedAchievement[];
   onClose: () => void;
 }) {
   const totalGames = history.length;
@@ -22,24 +24,26 @@ export function CareerStats({
     ? (history.reduce((sum, h) => sum + h.round, 0) / totalGames).toFixed(1) 
     : 0;
 
+  const unlockedIds = new Set(achievements.map(a => a.id));
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-      <div className="flex w-full max-w-lg flex-col border border-neutral-800 bg-neutral-950 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-neutral-800 p-5">
+      <div className="flex w-full max-w-lg flex-col border border-neutral-800 bg-neutral-950 shadow-2xl max-h-[90vh]">
+        <div className="flex items-center justify-between border-b border-neutral-800 p-5 shrink-0">
           <h2 className="text-xl font-bold text-white tracking-tight">수사 경력 통계</h2>
           <button className="text-neutral-500 hover:text-white" onClick={onClose} type="button">
             <CloseIcon />
           </button>
         </div>
 
-        <div className="overflow-y-auto p-6">
+        <div className="overflow-y-auto p-6 space-y-8">
           {totalGames === 0 ? (
             <div className="py-10 text-center">
               <p className="text-neutral-500">아직 플레이 기록이 없습니다.</p>
               <p className="mt-2 text-xs text-neutral-600">게임을 완료하면 통계가 집계됩니다.</p>
             </div>
           ) : (
-            <div className="grid gap-6">
+            <>
               {/* 요약 카드 */}
               <div className="grid grid-cols-2 gap-3">
                 <StatCard label="총 플레이" value={`${totalGames}회`} />
@@ -47,6 +51,33 @@ export function CareerStats({
                 <StatCard label="생존 횟수" value={`${survivedCount}회`} />
                 <StatCard label="평균 버틴 라운드" value={`${avgRounds}R`} />
               </div>
+
+              {/* 업적 섹션 */}
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest">달성한 업적</h3>
+                  <span className="text-[10px] font-mono text-neutral-600">{unlockedIds.size} / {ACHIEVEMENTS.length}</span>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {ACHIEVEMENTS.map(ach => {
+                    const isUnlocked = unlockedIds.has(ach.id);
+                    return (
+                      <div 
+                        className={`group relative flex aspect-square flex-col items-center justify-center border transition-all ${isUnlocked ? "border-red-900/50 bg-red-950/20" : "border-neutral-800 bg-neutral-900/30 grayscale opacity-40"}`} 
+                        key={ach.id}
+                        title={`${ach.title}: ${ach.description}`}
+                      >
+                        <span className="text-2xl">{ach.icon}</span>
+                        {/* Tooltip on hover */}
+                        <div className="absolute bottom-full left-1/2 mb-2 hidden w-40 -translate-x-1/2 border border-neutral-800 bg-neutral-950 p-2 text-center group-hover:block z-10 shadow-2xl">
+                          <p className="text-xs font-bold text-white">{ach.title}</p>
+                          <p className="mt-1 text-[10px] text-neutral-400 leading-tight">{ach.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
 
               {/* 역할 분포 */}
               <section>
@@ -76,11 +107,11 @@ export function CareerStats({
                    totalGames >= 5 ? "능숙한 탐정" : "수습 요원"}
                 </p>
               </div>
-            </div>
+            </>
           )}
         </div>
 
-        <div className="border-t border-neutral-800 p-4">
+        <div className="border-t border-neutral-800 p-4 shrink-0">
           <button 
             className="w-full bg-neutral-100 py-3 text-sm font-bold text-neutral-950 hover:bg-white"
             onClick={onClose}

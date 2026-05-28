@@ -45,11 +45,25 @@ export type DialogueFeedback = {
   timestamp: string;
 };
 
+export type SavedAchievement = {
+  id: string;
+  unlockedAt: string;
+};
+
 export type SavedProfile = {
   xp: number;
   history: PlayHistoryEntry[];
   lastDailyRewardDate?: string;
   dialogueFeedback?: DialogueFeedback[];
+  achievements?: SavedAchievement[];
+};
+
+export type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  condition: (stats: GameResultSummary, profile: SavedProfile) => boolean;
 };
 
 export type GameResultSummary = {

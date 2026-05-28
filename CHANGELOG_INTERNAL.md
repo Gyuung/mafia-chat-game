@@ -4,6 +4,18 @@
 
 ## 2026-05-28
 
+### 기능 구현 & UX
+- **업적(Achievements) 시스템 구현**:
+  - `types.ts`: `Achievement`, `SavedAchievement` 타입 추가.
+  - `constants.ts`: 10종 고유 업적 정의 및 조건식(condition) 할당.
+  - `useMafiaGame.ts`: 게임 종료 시 상태 기반 자동 해금 로직 및 `localStorage` 갱신.
+  - `CareerStats.tsx`: 업적 뱃지 및 설명 툴팁 렌더링.
+- **환경 효과(Ambient Effects) 고도화**:
+  - `globals.css`: 비(`rain`), 먼지(`dust`) 애니메이션 추가.
+  - `AmbientEffects.tsx`: 시나리오별 비 연출, 안개 및 비네트, 순수성(Purity)을 보장하기 위한 정적 좌표 데이터 사용.
+- **오늘의 사건 확장**:
+  - `constants.ts`: 고난이도를 포함한 5종의 신규 시나리오 추가 (총 14종).
+
 ### 아키텍처 & 리팩토링
 - **MafiaGame 컴포넌트 전면 리팩토링**:
   - `src/components/MafiaGame.tsx`의 430+ 라인 코드를 기능 단위로 분리하여 `src/components/mafia/sub/`에 모듈화.

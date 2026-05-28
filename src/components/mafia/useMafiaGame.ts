@@ -290,7 +290,7 @@ export function useMafiaGame() {
       addMessage("사회자", "다음 밤이 시작됩니다.", true);
     }
     setPhase(nextPhase);
-  }, [gameMode, profile, todayKey, dailyCase, messages, round, mafiaCaughtCount, addMessage]);
+  }, [gameMode, profile, todayKey, dailyCase, messages, round, correctVoteCount, interrogationCount, roleActionSuccessCount, addMessage]);
 
   const startGame = useCallback((mode: GameMode = "normal", diff: Difficulty = "normal") => {
     let availableNames = shuffle(botNames);
@@ -381,7 +381,7 @@ export function useMafiaGame() {
     }));
     botDiscuss(1);
     setQuestionTargetId("");
-  }, [players, questionTargetId, me, gameMode, dailyCase.isHard, addMessage, botDiscuss]);
+  }, [players, questionTargetId, me, gameMode, dailyCase.isHard, messages, addMessage, botDiscuss]);
 
   const resolveNight = useCallback(() => {
     if (!me) return;
@@ -514,6 +514,10 @@ export function useMafiaGame() {
     setWinner(null);
     setGameMode("normal");
     setGameResultSummary(null);
+    setMafiaCaughtCount(0);
+    setInterrogationCount(0);
+    setCorrectVoteCount(0);
+    setRoleActionSuccessCount(0);
   }, []);
 
   const submitDialogueFeedback = useCallback((feedback: Omit<DialogueFeedback, "timestamp">) => {

@@ -2,7 +2,7 @@
 
 import { Panel } from "../Common";
 import { ChatResponsePreview } from "../ChatResponsePreview";
-import { Difficulty } from "../types";
+import { Difficulty, DailyCase } from "../types";
 
 export function SetupPanel({ 
   myName, 
@@ -25,7 +25,7 @@ export function SetupPanel({
   startGame: (mode: "normal" | "daily", difficulty?: Difficulty) => void; 
   todayKey: string; 
   dailyRewardAvailable: boolean; 
-  dailyCase: any; 
+  dailyCase: DailyCase; 
 }) {
   return (
     <>

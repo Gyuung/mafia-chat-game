@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMafiaGame } from "./useMafiaGame";
-import { Player, Phase, Difficulty, PlayHistoryEntry } from "./types";
+import { Phase, Difficulty, PlayHistoryEntry } from "./types";
 import { LogViewer } from "./LogViewer";
 import { CareerStats } from "./CareerStats";
 

@@ -4,7 +4,7 @@ import { Panel } from "../Common";
 import { ActionSelect } from "./ActionSelect";
 import { ResultCard } from "../ResultCard";
 import { GameLog } from "../GameLog";
-import { Player, Phase, Role, PlayHistoryEntry, GameResultSummary } from "../types";
+import { Player, Phase, Role, PlayHistoryEntry, GameResultSummary, Message, DialogueFeedback } from "../types";
 import { getTitle } from "../constants";
 
 export function GameMain({ 
@@ -43,7 +43,7 @@ export function GameMain({
   questionTargetId: string; 
   setQuestionTargetId: (v: string) => void; 
   interrogateTarget: () => void; 
-  submitChat: (e: any) => void; 
+  submitChat: (e: React.FormEvent) => void; 
   chatText: string; 
   setChatText: (v: string) => void; 
   startVote: () => void; 
@@ -55,9 +55,9 @@ export function GameMain({
   gameResultSummary: GameResultSummary | null; 
   level: number; 
   round: number; 
-  messages: any[]; 
+  messages: Message[]; 
   players: Player[]; 
-  submitDialogueFeedback: any; 
+  submitDialogueFeedback: (f: Omit<DialogueFeedback, "timestamp">) => void; 
   setViewingHistory: (v: PlayHistoryEntry | null) => void; 
 }) {
   return (
