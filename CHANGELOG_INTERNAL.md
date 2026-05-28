@@ -2,6 +2,29 @@
 
 이 파일은 사용자에게 노출되지 않는 내부 코드 수정, 빌드 스크립트, CI/CD, 리팩토링 등의 기술적인 변경 사항을 기록합니다.
 
+## 2026-05-28
+
+### 아키텍처 & 리팩토링
+- **MafiaGame 컴포넌트 모듈화**: 434라인의 거대 컴포넌트를 기능별 서브 컴포넌트로 분리하여 구조적 부채 해결.
+  - `src/components/mafia/sub/` 디렉토리에 `TutorialModal`, `Sidebar`, `SetupPanel`, `GameMain`, `PhaseOverlay`, `AmbientEffects`, `MobileTopBar`, `ActionSelect`로 분리 및 타입 안전성 확보.
+- **상태 관리 최적화**: `useMafiaGame` 커스텀 훅 내 파생 상태(`alivePlayers`, `visibleTargets`)를 `useMemo`로 래핑하여 불필요한 재계산 방지.
+- **코드 품질 관리 도구 도입**: `react-doctor`를 프로젝트에 통합하고 에이전트 전용 기술(`SKILL.md`)로 설정하여 지속적인 품질 측정 환경 구축.
+
+### 성능 & 최적화
+- **React Doctor 점수 100/100 달성**: 68개의 기술적 이슈를 모두 해결하여 최상의 성능 및 접근성 지표 확보.
+- **Tailwind CSS 현대화**: 구식 `w-N h-N` 문법을 최신 `size-N` 축약어로 교체하고, 중복 패딩(`px-N py-N`)을 `p-N`으로 최적화.
+- **비동기 성능 향상**: `shared/commit-script.ts` 내 순차적 비동기 호출을 `Promise.all`을 이용한 병렬 처리 방식으로 전환하여 실행 속도 대폭 개선.
+- **JavaScript 런타임 최적화**: 불변성 유지를 위해 `[...array].sort()` 패턴을 ES2023 `toSorted()`로 대체.
+- **배열 연산 효율화**: 중복 배열 순회를 방지하기 위해 `filter().map()` 체인을 `flatMap()` 또는 단일 루프로 통합 고려 기반 마련.
+
+### 인프라 & 환경 설정
+- **Node.js 버전 고정**: 최신 도구(`oxlint` 등)와의 호환성을 위해 Node.js를 `v22.22.3`으로 업데이트하고 `.nvmrc`를 통해 환경 일관성 유지.
+- **SEO 및 메타데이터 강화**: Next.js 16 `Metadata` API를 적용하여 홈 페이지의 검색 엔진 최적화 수행.
+- **Hydration 이슈 해결**: 서버-클라이언트 간 `new Date()` 불일치로 인한 Hydration 에러를 브라우저 전용 실행 컨텍스트로 격리하여 해결.
+
+### 프로세스 & 기록
+- **에이전트 작업 기록 시스템 도입**: `docs/AGENT_WORK_LOG.md`를 신설하고 `AGENTS.md`에 필수 기록 규칙을 추가하여 세션 간 작업 연속성 보장.
+
 ## 2026-05-25
 
 ### CLI & 개발 도구
