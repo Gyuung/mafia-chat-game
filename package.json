@@ -17,7 +17,8 @@
     "verify:all": "npm run verify && npm run docs:build",
     "commit": "tsx shared/commit-script.ts",
     "commit:watch": "tsx shared/commit-script.ts --watch",
-    "commit:push": "tsx shared/commit-script.ts --push"
+    "commit:push": "tsx shared/commit-script.ts --push",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "next": "16.2.6",
