@@ -115,9 +115,14 @@ async function hasHeadCommit() {
 }
 
 async function getChangedFiles() {
+  const [headExists, untrackedFilesOutput] = await Promise.all([
+    hasHeadCommit(),
+    git(["ls-files", "--others", "--exclude-standard", "-z"])
+  ]);
+
   const files = new Set<string>();
 
-  if (await hasHeadCommit()) {
+  if (headExists) {
     const { stdout } = await git(["diff", "--name-only", "-z", "HEAD", "--"]);
     splitNullSeparated(stdout).forEach((file) => files.add(file));
   } else {
@@ -125,8 +130,7 @@ async function getChangedFiles() {
     splitNullSeparated(stdout).forEach((file) => files.add(file));
   }
 
-  const { stdout } = await git(["ls-files", "--others", "--exclude-standard", "-z"]);
-  splitNullSeparated(stdout).forEach((file) => files.add(file));
+  splitNullSeparated(untrackedFilesOutput.stdout).forEach((file) => files.add(file));
 
   return [...files]
     .filter(file => !file.startsWith(".git/") && !file.includes("node_modules/"))
@@ -140,29 +144,36 @@ async function getUntrackedFiles(files: string[]) {
 }
 
 async function getDiffForAi(files: string[]) {
+  const [trackedDiffRes, stagedDiffRes, untrackedFiles] = await Promise.all([
+    git(["diff", "--no-ext-diff", "--", ...files]),
+    git(["diff", "--cached", "--no-ext-diff", "--", ...files]),
+    getUntrackedFiles(files)
+  ]);
+
   const diffParts: string[] = [];
 
-  const { stdout: trackedDiff } = await git(["diff", "--no-ext-diff", "--", ...files]);
-  if (trackedDiff.trim()) {
-    diffParts.push(trackedDiff);
+  if (trackedDiffRes.stdout.trim()) {
+    diffParts.push(trackedDiffRes.stdout);
   }
 
-  const { stdout: stagedDiff } = await git(["diff", "--cached", "--no-ext-diff", "--", ...files]);
-  if (stagedDiff.trim()) {
-    diffParts.push(stagedDiff);
+  if (stagedDiffRes.stdout.trim()) {
+    diffParts.push(stagedDiffRes.stdout);
   }
 
-  const untrackedFiles = await getUntrackedFiles(files);
-  for (const file of untrackedFiles) {
-    try {
-      const content = await readFile(file, "utf8");
-      if (content.trim()) {
-        diffParts.push(`New file: ${file}\n\n${content}`);
+  const fileContents = await Promise.all(
+    untrackedFiles.map(async (file) => {
+      try {
+        const content = await readFile(file, "utf8");
+        return content.trim() ? `New file: ${file}\n\n${content}` : null;
+      } catch (error) {
+        return `New or binary file: ${file}\n\n${String(error)}`;
       }
-    } catch (error) {
-      diffParts.push(`New or binary file: ${file}\n\n${String(error)}`);
-    }
-  }
+    })
+  );
+
+  fileContents.forEach(content => {
+    if (content) diffParts.push(content);
+  });
 
   const diff = diffParts.join("\n");
   return diff.length > MAX_DIFF_CHARS
