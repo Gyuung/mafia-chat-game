@@ -16,6 +16,7 @@ const config: Config = {
 
   url: docsSiteUrl,
   baseUrl: '/',
+  customFields: {appUrl},
   organizationName: 'Gyuung',
   projectName: 'mafia-chat-game',
 

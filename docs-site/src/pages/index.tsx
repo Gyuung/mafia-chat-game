@@ -6,10 +6,11 @@ import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
 
-const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
-
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
+  const appUrl = typeof siteConfig.customFields?.appUrl === 'string'
+    ? siteConfig.customFields.appUrl
+    : 'http://localhost:3000';
 
   return (
     <header className={styles.heroBanner}>
