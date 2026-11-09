@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-05-28
+Last updated: 2026-11-09
 
 ## Current State
 
@@ -31,6 +31,13 @@ Last updated: 2026-05-28
 
 - NPC dialogue is rule-based, not LLM-generated.
 - No production chat-platform adapter yet.
+
+## Development Environment
+
+- macOS(MacBook)와 Windows에서 작업 가능하도록 `AGENTS.md`의 스킬 탐색 경로를 환경 독립적으로 변경했습니다.
+- Vercel React Best Practices는 `react-best-practices` 이름으로도 제공됩니다. 현재 세션 목록과 숨김 플러그인 디렉터리까지 확인하세요.
+- macOS 초기 설정은 `README.md` 참고: `.nvmrc`의 Node 22 선택 후 루트와 `docs-site/` 각각 `npm ci` 실행.
+- 이번 세션에서 확인한 기본 Node는 v24.10.0이며, 앱 작업 전 Node 22 전환과 루트 의존성 설치가 필요합니다. 문서 의존성은 설치했고 `npm run docs:build`가 통과했습니다(Node 24에서 실행).
 
 ## Next Session TODO
 
