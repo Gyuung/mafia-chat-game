@@ -9,8 +9,10 @@
 
 ## Required Skill (필수 기술)
 
-- 이 저장소의 React/Next.js 코드를 작성, 검토 또는 리팩토링할 때는 설치된 Codex 스킬인 `vercel-react-best-practices`를 사용하세요.
-- 상세한 규칙 가이드는 `C:\Users\Wang\.codex\skills\react-best-practices\rules`의 관련 파일을 참조하세요.
+- 이 저장소의 React/Next.js 코드를 작성, 검토 또는 리팩토링할 때는 Vercel React Best Practices 스킬을 사용하세요. 배포 패키지에 따라 이름은 `vercel-react-best-practices` 또는 `react-best-practices`일 수 있으므로 `SKILL.md`의 내용으로 확인하세요.
+- 특정 PC의 절대 경로를 가정하지 마세요. 현재 세션의 스킬 목록을 먼저 확인하고, 저장소의 `.agents/skills/`, Codex 홈(`CODEX_HOME`, 미설정 시 `~/.codex`)의 `skills/` 및 플러그인 캐시에서 해당 `SKILL.md`를 찾으세요. 숨김 디렉터리 검색 시 `rg --files --hidden`을 사용하세요.
+- 상세한 규칙은 찾은 스킬 디렉터리의 `rules/`에서 참조하세요. 임시 플러그인 캐시 경로는 환경마다 달라질 수 있으므로 공유 문서에 고정하지 마세요.
+- macOS와 Windows 모두 같은 규칙을 적용하며, 스킬이 실제로 없으면 누락 사실을 알리고 설치 또는 경로 복구 후 React 작업을 진행하세요.
 - Vercel 규칙 우선순위: 폭포수(waterfalls) 제거, 번들 크기 최적화, 서버 측 성능, 클라이언트 측 데이터 페칭, 재렌더링 최적화, 렌더링 성능, JavaScript 성능, 고급 패턴 순입니다.
 
 ## React And Next.js Practices (권장 사례)
@@ -27,6 +29,12 @@
 - 이전 상태에 의존하는 콜백의 경우 함수형 상태 업데이트를 사용하세요.
 - 의존성 배열은 원시 값 위주로 안정적으로 유지하세요. 상수 배열, 객체, 정규식 및 기본 비원시 props는 컴포넌트 외부로 분리하세요.
 - 시각적 자산은 가능한 경우 `next/image`, 명시적 크기 및 안정적인 레이아웃 제약 조건을 사용하세요.
+
+## Local Environment (로컬 환경)
+
+- macOS와 Windows에서 함께 개발합니다. 경로는 저장소 기준 상대 경로와 현재 사용자의 홈 디렉터리를 사용하고, 사용자 이름이나 드라이브 문자를 고정하지 마세요.
+- Node.js는 `.nvmrc`와 `package.json`의 `engines.node`를 기준으로 맞추세요. macOS에서 nvm을 사용하는 경우 `nvm install` 후 `nvm use`를 실행하세요.
+- 각 장비에서 루트와 `docs-site/`의 의존성을 각각 설치하세요. `node_modules`나 빌드 결과물을 장비 사이에 복사하지 마세요. 자세한 절차는 `README.md`를 참조하세요.
 
 ## Vercel Deployment (Vercel 배포)
 
@@ -53,7 +61,7 @@
 5. 규칙, 로드맵 또는 변경 로그를 수정할 때는 `docs-site/docs/`의 문서 프론트엔드를 검사하세요.
 6. `docs/SESSION_NOTES.md`의 `Next Session TODO` 섹션부터 시작하는 것을 선호합니다.
 7. 모든 작업이 완료된 후, 혹은 주요 단계가 끝날 때마다 아래 두 파일을 반드시 업데이트해야 합니다:
-    - **`docs/AGENT_WORK_LOG.md`**: 수행한 작업 내용과 절차를 날짜별로 기록 (작업 투명성 확보).
+    - **`docs/AGENT_WORK_LOG.md`**: 수행한 작업 내용과 절차를 날짜별로 기록 (작업 투명성 확보). 각 작업에 실제 수행 에이전트(예: Codex, Gemini CLI)를 명시하고, 기존 기록의 수행 주체는 근거 없이 변경하지 마세요.
     - **`CHANGELOG_INTERNAL.md`**: 기술적 변경 사항, 아키텍처 리팩토링, 도구 도입 등을 기록 (기술 이력 관리).
 8. 작업 세션을 마치기 전, 프로젝트 방향이나 다음 할 일, 알려진 이슈가 변경되었다면 `docs/SESSION_NOTES.md`를 업데이트하세요.
 9. 앱 코드 변경 시 `npm run verify`, 문서 변경 시 `npm run docs:build`를 실행한 후, 사용자가 원격 저장을 원하면 `npm run commit`을 사용하여 커밋하고 `origin/main`으로 푸시하세요.

@@ -36,6 +36,24 @@ npm run commit
 
 ## Getting Started
 
+### macOS / MacBook 개발 준비
+
+Node.js 버전 관리 도구인 nvm이 설치되어 있다면 저장소 루트에서 실행합니다.
+
+```bash
+nvm install
+nvm use
+node --version
+npm ci
+npm --prefix docs-site ci
+```
+
+Node 버전은 `.nvmrc`에 지정된 버전(22.x)과 맞춥니다. 다른 버전 관리 도구를 사용해도 같은 버전을 선택하세요. Windows에서도 동일한 저장소와 npm 명령을 사용하며, 각 장비에서 의존성을 새로 설치합니다.
+
+Codex의 React 규칙 스킬은 현재 세션 목록과 로컬 스킬/플러그인 디렉터리에서 찾습니다. Windows의 사용자별 절대 경로를 Mac에 그대로 사용하지 않습니다. 탐색 규칙은 `AGENTS.md`의 Required Skill 항목을 따릅니다.
+
+### 개발 서버
+
 게임 개발 서버:
 
 ```bash
