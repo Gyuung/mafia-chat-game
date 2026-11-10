@@ -14,6 +14,7 @@ import { Sidebar } from "./sub/Sidebar";
 import { SetupPanel } from "./sub/SetupPanel";
 import { GameMain } from "./sub/GameMain";
 import { PhaseOverlay } from "./sub/PhaseOverlay";
+import { SoundControl } from "./sub/SoundControl";
 
 export function MafiaGame() {
   const {
@@ -113,6 +114,7 @@ export function MafiaGame() {
       />
 
       <div className="grid gap-4">
+        <SoundControl lastEvent={lastEvent} phase={phase} />
         {phase === "setup" ? (
           <SetupPanel 
             dailyCase={dailyCase} 
