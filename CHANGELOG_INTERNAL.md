@@ -1,6 +1,17 @@
 # Internal Development Log (기술적 변경 이력)
 
+## 2026-11-11
+
+### 역할 공개 및 최종 투표 집계 표현
+
+- `Sidebar` 역할 카드에 CSS perspective/rotateY 공개 효과 추가.
+- `ResultCard`의 기존 voteRecords를 정렬하고 총 득표 대비 막대 및 접근성 meter 추가. 공동 최다 득표 모두 표시.
+- 신규 애니메이션은 prefers-reduced-motion에서 생략. 역할 썸네일 sizes 및 한국어 대체 텍스트 보완.
+- 게임 규칙과 저장 데이터 구조 변경 없음.
+
 이 파일은 프로젝트의 기술적 진화 과정, 아키텍처 결정, 리팩토링 및 도구 최적화 내역을 상세히 기록합니다.
+
+- 검증: Node v22.22.3에서 `npm run verify` 통과, `npm run docs:build` 통과, React Doctor 변경 파일 2개 100/100. CRLF를 고려한 diff 공백 검사 통과. 실제 브라우저 시각 확인과 효과음 청음은 미실시.
 
 ## 2026-11-10
 
