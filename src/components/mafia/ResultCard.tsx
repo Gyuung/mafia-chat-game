@@ -17,6 +17,12 @@ export function ResultCard({
   summary: GameResultSummary | null;
   winner: string | null;
 }) {
+  const voteEntries = Object.entries(summary?.voteRecords ?? {}).sort(
+    ([, left], [, right]) => right.length - left.length,
+  );
+  const totalVotes = voteEntries.reduce((total, [, voters]) => total + voters.length, 0);
+  const highestVotes = voteEntries[0]?.[1].length ?? 0;
+
   const titleUnlocked =
     summary && summary.titleBefore !== summary.titleAfter
       ? `${summary.titleBefore} → ${summary.titleAfter}`
@@ -170,9 +176,10 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
 
           {summary.voteRecords && Object.keys(summary.voteRecords).length > 0 && (
             <div className="mt-4 border border-neutral-800 bg-neutral-950/70 p-4">
-              <h3 className="text-sm font-semibold text-white">🗳️ 투표 요약</h3>
+              <h3 className="text-sm font-semibold text-white">🗳️ 마지막 투표 집계</h3>
+              <p className="mt-2 text-xs text-neutral-400">총 {totalVotes}표 · 최다 득표 대상은 공동 1위를 포함해 표시됩니다.</p>
               <div className="mt-4 space-y-4">
-                {Object.entries(summary.voteRecords).map(([targetName, voters]) => {
+                {voteEntries.map(([targetName, voters]) => {
                   const target = summary.finalPlayers?.find((p) => p.name === targetName);
                   return (
                     <div key={targetName} className="flex flex-col gap-2">
@@ -180,9 +187,10 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
                         <div className="relative size-8 overflow-hidden rounded-full border border-red-500/50 bg-neutral-900">
                           {target && (
                             <Image
-                              alt={target.role}
+                              alt={roleLabels[target.role]}
                               className="object-cover"
                               fill
+                              sizes="32px"
                               src={roleImages[target.role]}
                             />
                           )}
@@ -194,8 +202,19 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
                           ({target ? roleLabels[target.role] : "???"})
                         </span>
                         <span className="ml-auto text-xs font-semibold text-red-500">
-                          {voters.length}표
+                          {voters.length === highestVotes ? "최다 득표 · " : ""}{voters.length}표
                         </span>
+                      </div>
+                      <div className="ml-10 h-2 overflow-hidden rounded-full bg-neutral-800">
+                        <div
+                          aria-label={`${targetName} 득표`}
+                          aria-valuemax={totalVotes}
+                          aria-valuemin={0}
+                          aria-valuenow={voters.length}
+                          className="vote-tally-fill h-full origin-left rounded-full bg-red-500"
+                          role="meter"
+                          style={{ width: `${totalVotes ? (voters.length / totalVotes) * 100 : 0}%` }}
+                        />
                       </div>
                       <div className="flex flex-wrap gap-1 pl-10">
                         {voters.map((voterName) => {
@@ -210,9 +229,10 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
                               {voter && (
                                 <div className="relative h-3 w-3 overflow-hidden rounded-full border border-neutral-600">
                                   <Image
-                                    alt={voter.role}
+                                    alt={roleLabels[voter.role]}
                                     className="object-cover"
                                     fill
+                                    sizes="12px"
                                     src={roleImages[voter.role]}
                                   />
                                 </div>

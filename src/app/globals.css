@@ -143,3 +143,29 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(239, 68, 68, 0.5);
 }
+
+/* 역할 배정 시 한 번만 공개하며, 동작 줄이기 설정에서는 즉시 표시합니다. */
+@keyframes roleCardReveal {
+  from { transform: perspective(800px) rotateY(-90deg); opacity: 0; }
+  to { transform: perspective(800px) rotateY(0); opacity: 1; }
+}
+
+.role-card-reveal {
+  animation: roleCardReveal 0.65s ease-out both;
+  backface-visibility: hidden;
+}
+
+@keyframes voteTallyFill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.vote-tally-fill {
+  animation: voteTallyFill 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .role-card-reveal, .vote-tally-fill {
+    animation: none;
+  }
+}
