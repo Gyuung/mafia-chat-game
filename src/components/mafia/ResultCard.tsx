@@ -1,3 +1,4 @@
+import { hasWon } from "./results";
 import Image from "next/image";
 import { GameResultSummary } from "./types";
 import { roleLabels, roleImages } from "./constants";
@@ -31,7 +32,7 @@ export function ResultCard({
   const handleShare = () => {
     if (!summary) return;
 
-    const winEmoji = summary.result.includes("승리") ? "🏆" : "💀";
+    const winEmoji = hasWon(summary.role, summary.result) ? "🏆" : "💀";
     const survivalStatus = summary.survived ? "살아남음" : "희생됨";
     const dailyCaseText = summary.dailyCaseTitle ? `🗓️ 오늘의 사건: ${summary.dailyCaseTitle}\n` : "";
 
@@ -45,7 +46,7 @@ export function ResultCard({
     const text = `
 [마피아 채팅 게임 - 사건 종결 리포트] ${winEmoji}
 
-결과: ${summary.result} (${summary.team} 승리)
+결과: ${summary.result} (내 결과: ${hasWon(summary.role, summary.result) ? "승리" : "패배"})
 ${dailyCaseText}
 🎭 나의 역할: ${roleLabels[summary.role]}
 🫀 생존 상태: ${survivalStatus}

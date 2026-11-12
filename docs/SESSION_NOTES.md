@@ -10,7 +10,7 @@ Last updated: 2026-11-12
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
-- Version: `1.2.3` (Reduced Motion Support)
+- Version: `1.2.4` (Achievement & Result Fixes)
 
 ## Recent Changes (v1.2.0)
 
@@ -26,6 +26,12 @@ Last updated: 2026-11-12
 - Career Stats and persistent level/XP system
 - Interactive Tutorial and Mobile Optimization
 - **Achievements system and immersive ambient effects**
+
+## Latest Fixes (v1.2.4)
+
+- 업적 판정·알림·저장·통계 화면 연결 복구. 승리 여부는 내 진영으로 판정.
+- 마지막 행동 수치와 전체 게임 피득표 여부를 업적 조건에 반영. 검거 수는 별도 누적 저장.
+- 경력 통계의 승률·역할 분포는 저장된 최근 10개 기록 기준. 기존 데이터에서 이미 지워진 기록의 검거 수는 복원 불가.
 
 ## Known Constraints
 

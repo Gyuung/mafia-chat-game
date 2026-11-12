@@ -52,6 +52,7 @@ export type SavedAchievement = {
 
 export type SavedProfile = {
   xp: number;
+  mafiaCaughtTotal?: number;
   history: PlayHistoryEntry[];
   lastDailyRewardDate?: string;
   dialogueFeedback?: DialogueFeedback[];
@@ -87,6 +88,7 @@ export type GameResultSummary = {
   totalRounds: number;
   interrogationCount: number;
   correctVoteCount: number;
+  receivedVote?: boolean;
   roleActionSuccessCount: number;
 };
 
