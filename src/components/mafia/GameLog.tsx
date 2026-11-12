@@ -13,7 +13,8 @@ export function GameLog({
   const logEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    logEndRef.current?.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "end" });
   }, [messages.length]);
 
   const handleFeedback = (message: Message, rating: "good" | "bad") => {

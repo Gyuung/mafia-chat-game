@@ -165,7 +165,23 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .role-card-reveal, .vote-tally-fill {
-    animation: none;
+  /* 게임 영역에 한정해 기존 효과와 유틸리티 애니메이션도 함께 중지합니다. */
+  .mafia-game,
+  .mafia-game *,
+  .mafia-game *::before,
+  .mafia-game *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* 움직임을 멈춘 장식이 화면에 잔상처럼 남지 않도록 숨깁니다. */
+  .mafia-game .animate-blood-splatter,
+  .mafia-game .animate-fog,
+  .mafia-game .animate-fireflies,
+  .mafia-game .animate-rays,
+  .mafia-game .animate-rain,
+  .mafia-game .animate-dust {
+    display: none;
   }
 }

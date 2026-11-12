@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-11-11
+Last updated: 2026-11-12
 
 ## Current State
 
@@ -10,7 +10,7 @@ Last updated: 2026-11-11
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
-- Version: `1.2.2` (Role Reveal & Vote Tally)
+- Version: `1.2.3` (Reduced Motion Support)
 
 ## Recent Changes (v1.2.0)
 
@@ -43,7 +43,7 @@ Last updated: 2026-11-11
 
 1. Sound effects implemented with original synthesized WAV assets. Next: manually check audio playback on desktop/mobile browsers.
 2. v2.0.0 Planning: LLM integration and Hybrid Multiplayer.
-3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 다음은 데스크톱·모바일에서 실제 화면 및 동작 줄이기 설정 확인.
+3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 브라우저 호스트 연결 불가로 데스크톱·모바일 실제 화면 검증은 미완료.
 4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 
 ## Start Checklist For Codex
