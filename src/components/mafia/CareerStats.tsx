@@ -1,4 +1,5 @@
 import { PlayHistoryEntry, Role, SavedAchievement } from "./types";
+import { hasWon } from "./results";
 import { roleLabels, ACHIEVEMENTS } from "./constants";
 
 export function CareerStats({ 
@@ -11,7 +12,7 @@ export function CareerStats({
   onClose: () => void;
 }) {
   const totalGames = history.length;
-  const wins = history.filter(h => h.result.includes("승리")).length;
+  const wins = history.filter(h => hasWon(h.role, h.result)).length;
   const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
   
   const roleStats = history.reduce((acc, h) => {
@@ -46,7 +47,7 @@ export function CareerStats({
             <>
               {/* 요약 카드 */}
               <div className="grid grid-cols-2 gap-3">
-                <StatCard label="총 플레이" value={`${totalGames}회`} />
+                <StatCard label="최근 플레이" value={`${totalGames}회`} />
                 <StatCard color="text-red-500" label="승률" value={`${winRate}%`} />
                 <StatCard label="생존 횟수" value={`${survivedCount}회`} />
                 <StatCard label="평균 버틴 라운드" value={`${avgRounds}R`} />

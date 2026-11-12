@@ -169,6 +169,7 @@ export function MafiaGame() {
 
       {showStats && (
         <CareerStats 
+          achievements={profile.achievements}
           history={profile.history} 
           onClose={() => setShowStats(false)} 
         />

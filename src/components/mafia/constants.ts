@@ -1,5 +1,7 @@
 import { DailyCase, PersonalityType, PersonalityTrait, Role, Achievement } from "./types";
 
+import { hasWon } from "./results";
+
 export const PROFILE_STORAGE_KEY = "mafia-chat-game:profile:v1";
 export const MAX_HISTORY_ITEMS = 10;
 
@@ -16,7 +18,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     title: "첫 승리의 맛",
     description: "마피아 게임에서 처음으로 승리했습니다.",
     icon: "🏆",
-    condition: (stats) => stats.result.includes("승리"),
+    condition: (stats) => hasWon(stats.role, stats.result),
   },
   {
     id: "mafia_hunter_1",
@@ -25,7 +27,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: "🎯",
     condition: (stats, profile) => {
       const totalCaught = (profile.history || []).reduce((sum, h) => sum + (h.players?.filter(p => !p.human && p.role === "mafia" && !p.alive).length || 0), 0);
-      return (totalCaught + stats.mafiaCaughtCount) >= 5;
+      return ((profile.mafiaCaughtTotal ?? totalCaught) + stats.mafiaCaughtCount) >= 5;
     },
   },
   {
@@ -33,7 +35,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     title: "불사조",
     description: "탈락하지 않고 끝까지 살아남아 승리했습니다.",
     icon: "🔥",
-    condition: (stats) => stats.survived && stats.result.includes("승리"),
+    condition: (stats) => stats.survived && hasWon(stats.role, stats.result),
   },
   {
     id: "sharp_insight",
@@ -61,14 +63,14 @@ export const ACHIEVEMENTS: Achievement[] = [
     title: "완벽한 알리바이",
     description: "마피아로 플레이하며 한 번도 투표로 지목되지 않고 승리했습니다.",
     icon: "🎭",
-    condition: (stats) => stats.role === "mafia" && stats.result.includes("승리") && stats.survived,
+    condition: (stats) => stats.role === "mafia" && hasWon(stats.role, stats.result) && stats.survived && stats.receivedVote === false,
   },
   {
     id: "daily_solver",
     title: "오늘의 해결사",
     description: "오늘의 사건을 성공적으로 해결했습니다.",
     icon: "📅",
-    condition: (stats) => !!stats.dailyCaseTitle && stats.result.includes("승리"),
+    condition: (stats) => !!stats.dailyCaseTitle && hasWon(stats.role, stats.result),
   },
   {
     id: "veteran_investigator",

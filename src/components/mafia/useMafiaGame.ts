@@ -1,3 +1,4 @@
+import { completeProfile } from "./progression";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { 
   Player, Role, Phase, Message, SavedProfile, GameResultSummary, 
@@ -67,6 +68,11 @@ function loadSavedProfile(): SavedProfile | null {
       history: Array.isArray(parsed.history) ? parsed.history.slice(0, MAX_HISTORY_ITEMS) : [],
       lastDailyRewardDate: typeof parsed.lastDailyRewardDate === "string" ? parsed.lastDailyRewardDate : undefined,
       dialogueFeedback: Array.isArray(parsed.dialogueFeedback) ? parsed.dialogueFeedback : [],
+      achievements: Array.isArray(parsed.achievements) ? parsed.achievements.filter(
+        (achievement) => achievement && typeof achievement.id === "string" && typeof achievement.unlockedAt === "string",
+      ) : [],
+      mafiaCaughtTotal: typeof parsed.mafiaCaughtTotal === "number" && Number.isFinite(parsed.mafiaCaughtTotal)
+        ? Math.max(0, parsed.mafiaCaughtTotal) : undefined,
       };
 
   } catch { return null; }
@@ -98,6 +104,7 @@ export function useMafiaGame() {
   const [interrogationCount, setInterrogationCount] = useState(0);
   const [correctVoteCount, setCorrectVoteCount] = useState(0);
   const [roleActionSuccessCount, setRoleActionSuccessCount] = useState(0);
+  const [receivedVote, setReceivedVote] = useState(false);
   const [lastEvent, setLastEvent] = useState<GameEventType>("none");
   const [profile, setProfile] = useState<SavedProfile>(() => loadSavedProfile() ?? { xp: 0, history: [] });
 
@@ -230,7 +237,7 @@ export function useMafiaGame() {
     return { target: pickRandom(choices), reason: "뚜렷한 단서가 없어 상황을 지켜보며 선택했습니다." };
   }, [gameMode, difficulty, dailyCase.isHard]);
 
-  const finishStep = useCallback((nextPlayers: Player[], nextPhase: Phase, latestEvent: string, voteRecords?: Record<string, string[]>) => {
+  const finishStep = useCallback((nextPlayers: Player[], nextPhase: Phase, latestEvent: string, voteRecords?: Record<string, string[]>, metrics?: { correctVoteCount?: number; roleActionSuccessCount?: number; receivedVote?: boolean }) => {
     const res = getWinner(nextPlayers);
     setPlayers(nextPlayers);
     if (res) {
@@ -249,37 +256,47 @@ export function useMafiaGame() {
 
       setWinner(res);
       if (human) {
-        setGameResultSummary({
+        const summary: GameResultSummary = {
           result: res, role: human.role, team: human.role === "mafia" ? "마피아 팀" : "시민 팀",
           xpGained: gainedXp, levelBefore, levelAfter, levelProgress: nextXp % 100,
           titleBefore: getTitle(levelBefore), titleAfter: getTitle(levelAfter),
           survived: human.alive, keyEvents, dailyCaseTitle: gameMode === "daily" ? dailyCase.title : undefined,
           dailyRewardXp, dailyRewardClaimed, voteRecords, finalPlayers: nextPlayers,
           mafiaCaughtCount: finalMafiaCaught, totalRounds: round,
-          interrogationCount, correctVoteCount, roleActionSuccessCount,
-        });
+          interrogationCount,
+          correctVoteCount: metrics?.correctVoteCount ?? correctVoteCount,
+          roleActionSuccessCount: metrics?.roleActionSuccessCount ?? roleActionSuccessCount,
+          receivedVote: metrics?.receivedVote ?? receivedVote,
+        };
+        setGameResultSummary(summary);
 
-        setProfile((current) => {
-          const nXp = current.xp + gainedXp;
-          const nLevel = Math.floor(nXp / 100) + 1;
-          const historyEntry: PlayHistoryEntry = { 
-            id: createId("history"), 
-            endedAt: new Date().toISOString(), 
-            result: res, 
-            role: human.role, 
-            round, 
-            survived: human.alive, 
-            xpGained: gainedXp, 
-            levelAfter: nLevel, 
-            titleAfter: getTitle(nLevel),
-            messages: [...messages, { id: createId("msg"), sender: "사회자", text: `🏁 ${res}로 게임이 종료되었습니다. +${gainedXp} XP를 획득했습니다.`, system: true }],
-            players: nextPlayers,
-          };
-          return {
-            xp: nXp, lastDailyRewardDate: (gameMode === "daily" && current.lastDailyRewardDate !== todayKey) ? todayKey : current.lastDailyRewardDate,
-            history: [historyEntry, ...current.history].slice(0, MAX_HISTORY_ITEMS),
-          };
+        const current = profile;
+        const nXp = current.xp + gainedXp;
+        const nLevel = Math.floor(nXp / 100) + 1;
+        const historyEntry: PlayHistoryEntry = {
+          id: createId("history"),
+          endedAt: new Date().toISOString(),
+          result: res,
+          role: human.role,
+          round,
+          survived: human.alive,
+          xpGained: gainedXp,
+          levelAfter: nLevel,
+          titleAfter: getTitle(nLevel),
+          messages: [...messages, { id: createId("msg"), sender: "사회자", text: `🏁 ${res}로 게임이 종료되었습니다. +${gainedXp} XP를 획득했습니다.`, system: true }],
+          players: nextPlayers,
+        };
+        const completed = completeProfile(current, summary, historyEntry);
+        const achievementMessages: Message[] = completed.newlyUnlocked.map((achievement) => ({
+          id: createId("msg"), sender: "사회자",
+          text: `🏅 업적 달성: ${achievement.title}`, system: true,
+        }));
+        historyEntry.messages?.push(...achievementMessages);
+        setProfile({
+          ...completed.profile,
+          lastDailyRewardDate: dailyRewardClaimed ? todayKey : current.lastDailyRewardDate,
         });
+        setMessages((currentMessages) => [...currentMessages, ...achievementMessages]);
       }
       setPhase("ended");
       addMessage("사회자", `🏁 ${res}로 게임이 종료되었습니다. +${gainedXp} XP를 획득했습니다.`, true);
@@ -290,7 +307,7 @@ export function useMafiaGame() {
       addMessage("사회자", "다음 밤이 시작됩니다.", true);
     }
     setPhase(nextPhase);
-  }, [gameMode, profile, todayKey, dailyCase, messages, round, correctVoteCount, interrogationCount, roleActionSuccessCount, addMessage]);
+  }, [gameMode, profile, todayKey, dailyCase, messages, round, correctVoteCount, interrogationCount, roleActionSuccessCount, receivedVote, addMessage]);
 
   const startGame = useCallback((mode: GameMode = "normal", diff: Difficulty = "normal") => {
     let availableNames = shuffle(botNames);
@@ -331,6 +348,7 @@ export function useMafiaGame() {
     setMafiaCaughtCount(0);
     setInterrogationCount(0);
     setCorrectVoteCount(0);
+    setReceivedVote(false);
     setRoleActionSuccessCount(0);
     setMessages([{ id: createId("msg"), sender: "사회자", text: intro, system: true }]);
   }, [myName, playerCount, dailyCase]);
@@ -391,6 +409,7 @@ export function useMafiaGame() {
     const alive = nextPlayers.filter(p => p.alive);
     const mafias = alive.filter(p => p.role === "mafia");
     const doctor = alive.find(p => p.role === "doctor");
+    let actionSuccess = 0;
     let nightEvent = "밤이 조용히 지나갔습니다.";
 
     if (me.role === "mafia") mafiaTargetId = nightTargetId;
@@ -406,7 +425,7 @@ export function useMafiaGame() {
       const target = nextPlayers.find(p => p.id === nightTargetId);
       if (target) {
         addMessage("사회자", `${target.name}님은 ${target.role === "mafia" ? "마피아" : "마피아가 아닙니다"}.`, true);
-        if (target.role === "mafia") setRoleActionSuccessCount((c) => c + 1);
+        if (target.role === "mafia") actionSuccess = 1;
       }
     }
 
@@ -415,17 +434,20 @@ export function useMafiaGame() {
       nextPlayers = nextPlayers.map(p => p.id === mafiaTargetId ? { ...p, alive: false } : p);
       const target = players.find(p => p.id === mafiaTargetId);
       nightEvent = `밤 사이 ${target?.name ?? "누군가"}님이 탈락했습니다.`;
-      if (me.role === "mafia") setRoleActionSuccessCount((c) => c + 1);
+      if (me.role === "mafia") actionSuccess = 1;
       setLastEvent("elimination");
       addMessage("사회자", nightEvent, true);
     } else {
       nightEvent = "의사의 보호로 밤 공격이 실패했습니다.";
-      if (me.role === "doctor" && protectedId === mafiaTargetId) setRoleActionSuccessCount((c) => c + 1);
+      if (me.role === "doctor" && protectedId === mafiaTargetId) actionSuccess = 1;
       addMessage("사회자", nightEvent, true);
     }
-    finishStep(nextPlayers, "day", nightEvent);
+    setRoleActionSuccessCount((count) => count + actionSuccess);
+    finishStep(nextPlayers, "day", nightEvent, undefined, {
+      roleActionSuccessCount: roleActionSuccessCount + actionSuccess,
+    });
     setNightTargetId("");
-  }, [me, players, nightTargetId, addMessage, finishStep]);
+  }, [me, players, nightTargetId, roleActionSuccessCount, addMessage, finishStep]);
 
   const resolveVote = useCallback(() => {
     if (!me || !voteTargetId) return;
@@ -499,9 +521,14 @@ export function useMafiaGame() {
     const event = tied ? "투표가 동률로 끝나 아무도 탈락하지 않았습니다." : `투표 결과 ${players.find(p => p.id === eliminatedId)?.name ?? "누군가"}님이 탈락했습니다.`;
     if (!tied) setLastEvent("elimination");
     addMessage("사회자", event, true);
-    finishStep(nextPlayers, "night", event, voteRecords);
+    const nextReceivedVote = receivedVote || (voteRecords[me.name]?.length ?? 0) > 0;
+    setReceivedVote(nextReceivedVote);
+    finishStep(nextPlayers, "night", event, voteRecords, {
+      correctVoteCount: correctVoteCount + (humanVoteTarget?.role === "mafia" ? 1 : 0),
+      receivedVote: nextReceivedVote,
+    });
     setVoteTargetId("");
-  }, [me, players, voteTargetId, addMessage, chooseBotVoteTarget, finishStep]);
+  }, [me, players, voteTargetId, receivedVote, correctVoteCount, addMessage, chooseBotVoteTarget, finishStep]);
 
   const resetGame = useCallback(() => {
     setPhase("setup");
