@@ -62,7 +62,7 @@ export function MafiaGame() {
   const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL ?? "http://localhost:3001";
 
   return (
-    <section className={`mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8 ${isEliminating ? "animate-shake" : ""} relative overflow-hidden`}>
+    <section className={`mafia-game mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 py-5 text-neutral-100 sm:px-6 lg:grid-cols-[320px_1fr] lg:px-8 ${isEliminating ? "animate-shake" : ""} relative overflow-hidden`}>
       {isEliminating && (
         <div className="animate-blood-splatter fixed inset-0 z-[60] pointer-events-none bg-red-900/20 mix-blend-multiply" />
       )}
