@@ -1,7 +1,8 @@
+import { createRoleDeck, getActionTargets, getWinner, validateTargetCommand } from "./engine/rules";
 import { completeProfile } from "./progression";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { 
-  Player, Role, Phase, Message, SavedProfile, GameResultSummary, 
+  Player, Phase, Message, SavedProfile, GameResultSummary,
   GameMode, VoteDecision, PersonalityType, Difficulty, GameEventType,
   DialogueFeedback, PlayHistoryEntry
 } from "./types";
@@ -34,16 +35,6 @@ function getTodayKey() {
 function getDailyCase(todayKey: string) {
   const seed = [...todayKey].reduce((sum, character) => sum + character.charCodeAt(0), 0);
   return dailyCases[seed % dailyCases.length];
-}
-
-function getWinner(players: Player[]) {
-  const alive = players.filter((player) => player.alive);
-  const mafiaCount = alive.filter((player) => player.role === "mafia").length;
-  const citizenCount = alive.length - mafiaCount;
-
-  if (mafiaCount === 0) return "시민 팀 승리";
-  if (mafiaCount >= citizenCount) return "마피아 팀 승리";
-  return null;
 }
 
 function calculateXp(result: string, players: Player[]) {
@@ -321,10 +312,7 @@ export function useMafiaGame() {
     }
     
     const names = availableNames.slice(0, playerCount - 1);
-    const mafiaCount = Math.max(1, Math.floor(playerCount / 4));
-    const roles: Role[] = [...Array<Role>(mafiaCount).fill("mafia"), ...(playerCount >= 5 ? ["doctor"] as Role[] : []), ...(playerCount >= 6 ? ["detective"] as Role[] : [])];
-    while (roles.length < playerCount) roles.push("citizen");
-    const assignedRoles = shuffle(roles);
+    const assignedRoles = shuffle(createRoleDeck(playerCount));
     const personalities: PersonalityType[] = ["logical", "aggressive", "timid", "emotional", "cynic"];
 
     const createdPlayers: Player[] = [
@@ -355,7 +343,9 @@ export function useMafiaGame() {
 
   const interrogateTarget = useCallback(() => {
     const target = players.find(p => p.id === questionTargetId);
-    if (!target || !target.alive || !me) return;
+    if (!target || !me || !validateTargetCommand({ phase, players }, {
+      type: "interrogate", actorId: me.id, targetId: questionTargetId,
+    }).ok) return;
 
     addMessage(me.name, `${target.name}님, 어젯밤 뭐 했는지 설명해주세요.`);
     const p = target.personality || "logical";
@@ -399,10 +389,13 @@ export function useMafiaGame() {
     }));
     botDiscuss(1);
     setQuestionTargetId("");
-  }, [players, questionTargetId, me, gameMode, dailyCase.isHard, messages, addMessage, botDiscuss]);
+  }, [phase, players, questionTargetId, me, gameMode, dailyCase.isHard, messages, addMessage, botDiscuss]);
 
   const resolveNight = useCallback(() => {
-    if (!me) return;
+    if (!me || phase !== "night") return;
+    if (me.alive && me.role !== "citizen" && !validateTargetCommand({ phase, players }, {
+      type: "night-action", actorId: me.id, targetId: nightTargetId,
+    }).ok) return;
     let nextPlayers = [...players];
     let protectedId: string | undefined;
     let mafiaTargetId: string | undefined;
@@ -412,16 +405,17 @@ export function useMafiaGame() {
     let actionSuccess = 0;
     let nightEvent = "밤이 조용히 지나갔습니다.";
 
-    if (me.role === "mafia") mafiaTargetId = nightTargetId;
+    if (me.alive && me.role === "mafia") mafiaTargetId = nightTargetId;
     else {
-      const choices = alive.filter(p => p.role !== "mafia");
+      const mafia = mafias[0];
+      const choices = mafia ? getActionTargets({ phase, players }, mafia.id, "night-action") : [];
       mafiaTargetId = pickRandom(choices)?.id;
     }
 
-    if (me.role === "doctor") protectedId = nightTargetId;
-    else if (doctor) protectedId = pickRandom(alive)?.id;
+    if (me.alive && me.role === "doctor") protectedId = nightTargetId;
+    else if (doctor) protectedId = pickRandom(getActionTargets({ phase, players }, doctor.id, "night-action"))?.id;
 
-    if (me.role === "detective" && nightTargetId) {
+    if (me.alive && me.role === "detective" && nightTargetId) {
       const target = nextPlayers.find(p => p.id === nightTargetId);
       if (target) {
         addMessage("사회자", `${target.name}님은 ${target.role === "mafia" ? "마피아" : "마피아가 아닙니다"}.`, true);
@@ -434,12 +428,12 @@ export function useMafiaGame() {
       nextPlayers = nextPlayers.map(p => p.id === mafiaTargetId ? { ...p, alive: false } : p);
       const target = players.find(p => p.id === mafiaTargetId);
       nightEvent = `밤 사이 ${target?.name ?? "누군가"}님이 탈락했습니다.`;
-      if (me.role === "mafia") actionSuccess = 1;
+      if (me.alive && me.role === "mafia") actionSuccess = 1;
       setLastEvent("elimination");
       addMessage("사회자", nightEvent, true);
     } else {
       nightEvent = "의사의 보호로 밤 공격이 실패했습니다.";
-      if (me.role === "doctor" && protectedId === mafiaTargetId) actionSuccess = 1;
+      if (me.alive && me.role === "doctor" && protectedId === mafiaTargetId) actionSuccess = 1;
       addMessage("사회자", nightEvent, true);
     }
     setRoleActionSuccessCount((count) => count + actionSuccess);
@@ -447,15 +441,19 @@ export function useMafiaGame() {
       roleActionSuccessCount: roleActionSuccessCount + actionSuccess,
     });
     setNightTargetId("");
-  }, [me, players, nightTargetId, roleActionSuccessCount, addMessage, finishStep]);
+  }, [me, phase, players, nightTargetId, roleActionSuccessCount, addMessage, finishStep]);
 
   const resolveVote = useCallback(() => {
-    if (!me || !voteTargetId) return;
+    if (!me || phase !== "vote") return;
+    if (me.alive && !validateTargetCommand({ phase, players }, {
+      type: "vote", actorId: me.id, targetId: voteTargetId,
+    }).ok) return;
     const alive = players.filter(p => p.alive);
-    const votes: Record<string, number> = { [voteTargetId]: 1 };
+    const votes: Record<string, number> = {};
     const voteRecords: Record<string, string[]> = {};
-    const humanVoteTarget = alive.find(p => p.id === voteTargetId);
+    const humanVoteTarget = me.alive ? alive.find(p => p.id === voteTargetId) : undefined;
     if (humanVoteTarget) {
+      votes[humanVoteTarget.id] = 1;
       addMessage("사회자", `${me.name}님은 ${humanVoteTarget.name}님에게 투표했습니다.`, true);
       voteRecords[humanVoteTarget.name] = [me.name];
       if (humanVoteTarget.role === "mafia") {
@@ -465,7 +463,7 @@ export function useMafiaGame() {
     }
 
     const botDecisions = alive.filter(p => !p.human).map((bot) => {
-      const choices = alive.filter(t => t.id !== bot.id);
+      const choices = getActionTargets({ phase, players }, bot.id, "vote");
       const decision = chooseBotVoteTarget(bot, choices);
       
       // 투표 시 성격별 특징적 발언/행동 추가 (Tells)
@@ -528,7 +526,7 @@ export function useMafiaGame() {
       receivedVote: nextReceivedVote,
     });
     setVoteTargetId("");
-  }, [me, players, voteTargetId, receivedVote, correctVoteCount, addMessage, chooseBotVoteTarget, finishStep]);
+  }, [me, phase, players, voteTargetId, receivedVote, correctVoteCount, addMessage, chooseBotVoteTarget, finishStep]);
 
   const resetGame = useCallback(() => {
     setPhase("setup");
@@ -566,7 +564,7 @@ export function useMafiaGame() {
     lastEvent, resetEvent: () => setLastEvent("none"),
     submitDialogueFeedback,
     startGame, submitChat: (e: React.FormEvent) => { e.preventDefault(); if (me?.alive && chatText.trim()) { addMessage(me.name, chatText.trim()); botDiscuss(1); setChatText(""); } },
-    interrogateTarget, resolveNight, startVote: () => { botDiscuss(); setPhase("vote"); setVoteTargetId(""); addMessage("사회자", "투표를 시작합니다. 의심되는 참가자를 선택하세요.", true); }, 
+    interrogateTarget, resolveNight, startVote: () => { if (phase !== "day") return; botDiscuss(); setPhase("vote"); setVoteTargetId(""); addMessage("사회자", "투표를 시작합니다. 의심되는 참가자를 선택하세요.", true); },
     resolveVote, resetGame,
   };
 }
