@@ -62,11 +62,11 @@ async function git(args: string[]): Promise<{ stdout: string; stderr: string }> 
   };
 
   if (cachedGitPath) {
-    return await run(cachedGitPath, true);
+    return await run(cachedGitPath, process.platform === "win32");
   }
 
   try {
-    return await run("git", true);
+    return await run("git", process.platform === "win32");
   } catch (originalError) {
     if (process.platform === "win32") {
       const commonPaths = [
