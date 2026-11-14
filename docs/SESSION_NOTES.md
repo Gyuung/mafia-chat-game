@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-11-13
+Last updated: 2026-11-14
 
 ## Current State
 
@@ -10,7 +10,7 @@ Last updated: 2026-11-13
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
-- Version: `1.2.4` (Achievement & Result Fixes)
+- Version: `1.2.5` (Rule Validation Foundation)
 
 ## Recent Changes (v1.2.0)
 
@@ -35,6 +35,9 @@ Last updated: 2026-11-13
 
 ## Known Constraints
 
+- v1.2.5: 순수 `engine/rules.ts`와 내부 상태·대상 명령 타입 추가. 훅과 UI에서 역할 구성·승패·대상 검증 공유.
+- 탈락자 행동·투표를 제외하고 NPC 결과만 진행. 검증은 TypeScript 내부 호출용이며 외부 요청 스키마·인증·동시성 제어는 후속 단계.
+
 - NPC dialogue is rule-based, not LLM-generated.
 - No production chat-platform adapter yet.
 
@@ -48,7 +51,7 @@ Last updated: 2026-11-13
 ## Next Session TODO
 
 1. Sound effects implemented with original synthesized WAV assets. Next: manually check audio playback on desktop/mobile browsers.
-2. v2 계획 문서 완료: `docs-site/docs/v2-implementation-plan.md`. 다음 구현은 작업 단위 A(순수 규칙 엔진 상태·명령 타입, 승패·대상 검증 분리). 이어서 B(밤·투표 판정과 솔로 훅 연결), C(정보 분리), D~F(선택형 AI·혼합 방) 순서. 공급자·인프라는 미선정이며 현재 게임 버전은 1.2.4 유지.
+2. v2 작업 A 완료: 상태·대상 명령 타입, 역할 구성·승패·대상 검증 분리 및 훅 연결. 다음은 B(밤·투표 전체 판정 분리), C(정보 분리), D~F(선택형 AI·혼합 방) 순서. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts`.
 3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 브라우저 호스트 연결 불가로 데스크톱·모바일 실제 화면 검증은 미완료.
 4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 

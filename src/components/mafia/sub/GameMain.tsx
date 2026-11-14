@@ -1,5 +1,7 @@
 "use client";
 
+import { getActionTargets } from "../engine/rules";
+
 import { Panel } from "../Common";
 import { ActionSelect } from "./ActionSelect";
 import { ResultCard } from "../ResultCard";
@@ -64,12 +66,14 @@ export function GameMain({
     <main className="grid gap-4">
       {phase === "night" && me && (
         <Panel title="밤 행동">
-          {me.role === "citizen" ? (
+          {!me.alive ? (
+            <p className="text-sm text-neutral-400">탈락자는 밤 행동을 할 수 없습니다. 밤 결과를 진행하세요.</p>
+          ) : me.role === "citizen" ? (
             <p className="text-sm text-neutral-400">시민은 밤 행동이 없습니다. 밤 결과를 진행하세요.</p>
           ) : (
-            <ActionSelect label={getNightActionLabel(me.role)} onChange={setNightTargetId} players={getNightTargets(me, visibleTargets)} value={nightTargetId} />
+            <ActionSelect label={getNightActionLabel(me.role)} onChange={setNightTargetId} players={getActionTargets({ phase, players }, me.id, "night-action")} value={nightTargetId} />
           )}
-          <button className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700" disabled={me.role !== "citizen" && !nightTargetId} onClick={resolveNight} type="button">밤 결과 보기</button>
+          <button className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700" disabled={me.alive && me.role !== "citizen" && !nightTargetId} onClick={resolveNight} type="button">밤 결과 보기</button>
         </Panel>
       )}
 
@@ -129,10 +133,4 @@ function getNightActionLabel(role: Role) {
   if (role === "doctor") return "보호 대상";
   if (role === "detective") return "조사 대상";
   return "대상";
-}
-
-function getNightTargets(me: Player, targets: Player[]) {
-  if (me.role === "mafia") return targets.filter(p => p.role !== "mafia");
-  if (me.role === "detective") return targets;
-  return [me, ...targets].filter(p => p.alive);
 }
