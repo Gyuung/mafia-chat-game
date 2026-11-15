@@ -18,7 +18,8 @@ export type TargetCommand = {
   targetId: string;
 };
 
-// Start and phase-resolution commands will be added with the transition engine.
+// Target submissions are shared; batch resolution uses resolveNightStep/resolveVoteStep.
+// Transport-level start/advance commands belong to the future server adapter.
 export type GameCommand = TargetCommand;
 export type ActionState = Pick<GameState, "phase" | "players">;
 export type ValidationResult =
