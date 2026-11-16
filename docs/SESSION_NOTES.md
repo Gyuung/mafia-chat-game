@@ -50,6 +50,9 @@ Last updated: 2026-11-16
 
 ## Development Environment
 
+- 2026-11-16 Git 신원 복구: 이 저장소 로컬 설정은 `King <79718172+Gyuung@users.noreply.github.com>`, `user.useConfigOnly=true`. GitHub 로그인과 별개이며 다른 PC나 새 clone에는 별도 설정 필요.
+- 잘못된 맥 이메일의 15개 커밋은 내용·날짜 보존 후 ID 변경 및 원격 반영(`bd329e2` → `6b031ae`). 복구 전 이력은 로컬 `backup/identity-before-20261116`에 보관. 다른 체크아웃의 미저장 작업을 먼저 보존하고 새 이력과 동기화할 것.
+
 - macOS(MacBook)와 Windows에서 작업 가능하도록 `AGENTS.md`의 스킬 탐색 경로를 환경 독립적으로 변경했습니다.
 - Vercel React Best Practices는 `react-best-practices` 이름으로도 제공됩니다. 현재 세션 목록과 숨김 플러그인 디렉터리까지 확인하세요.
 - macOS 초기 설정은 `README.md` 참고: `.nvmrc`의 Node 22 선택 후 루트와 `docs-site/` 각각 `npm ci` 실행.

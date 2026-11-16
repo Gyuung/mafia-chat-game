@@ -2,6 +2,16 @@
 
 ## 2026-11-16
 
+### Git 작성자 설정 및 기여 이력 복구
+
+- 수행 에이전트: Codex
+- 사용자 요청과 확인된 주소를 기준으로 이 저장소의 `user.name=King`, `user.email=79718172+Gyuung@users.noreply.github.com`, `user.useConfigOnly=true` 설정.
+- 맥 자동 생성 이메일로 기록된 최근 15개 커밋의 작성자·커미터를 같은 정보로 수정. 정상 이메일의 이전 108개 커밋은 유지.
+- 로컬 `backup/identity-before-20261116` 브랜치와 `/private/tmp/mafia-identity-backup-m8g4ayvk/before.bundle`에 복구 전 이력 보관. 같은 폴더의 `mapping.json`에 15개 SHA 대응표 저장.
+- 모든 대상 커밋의 트리·메시지·작성/커미터 날짜·추가 헤더 보존을 바이트 단위로 검사. 전체 파일 차이 0 및 변경 개수 15 확인.
+- 원격 기준 SHA를 고정한 `--force-with-lease`로 사용자 요청 이력 복구 반영: `bd329e2` → `6b031ae`. 백업 브랜치는 원격에 올리지 않음.
+- GitHub에서 새 최신 커밋의 author·committer가 `Gyuung`(79718172)으로 연결됨을 확인. 잔디 화면 재집계 자체는 미확인.
+
 ### 참가자별 화면 데이터와 개인 로그 분리
 
 - 수행 에이전트: Codex
