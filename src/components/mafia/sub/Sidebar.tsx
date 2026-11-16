@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { StatusItem } from "../Common";
 import { roleLabels, roleDescriptions, roleImages, personalityTraits } from "../constants";
-import { Player, Phase, PlayHistoryEntry, SavedProfile } from "../types";
+import { VisiblePlayer, RevealedPlayer, Phase, PlayHistoryEntry, SavedProfile } from "../types";
 
 export function Sidebar({ 
   isSidebarOpen, 
@@ -24,13 +24,13 @@ export function Sidebar({
 }: { 
   isSidebarOpen: boolean; 
   docsUrl: string; 
-  me: Player | null; 
+  me: RevealedPlayer | null;
   myName: string; 
   phase: Phase; 
   round: number; 
-  alivePlayers: Player[]; 
+  alivePlayers: VisiblePlayer[];
   winner: string | null; 
-  players: Player[]; 
+  players: VisiblePlayer[];
   playerCount: number; 
   level: number; 
   currentLevelXp: number; 
@@ -138,10 +138,10 @@ export function Sidebar({
                 <div className="flex flex-col border border-neutral-800 px-3 py-2 text-sm" key={player.id}>
                   <div className="flex items-center justify-between">
                     <span className={player.alive ? "text-white" : "text-neutral-500 line-through"}>
-                      {player.name}{player.human ? " (나)" : ""}
+                      {player.name}{player.id === me?.id ? " (나)" : ""}
                     </span>
                     <span className="text-neutral-400">
-                      {phase === "ended" || player.human ? roleLabels[player.role] : "비공개"}
+                      {player.role ? roleLabels[player.role] : "비공개"}
                     </span>
                   </div>
                   {player.personality && (

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Message, DialogueFeedback, Player } from "./types";
+import { Message, DialogueFeedback, VisiblePlayer } from "./types";
 
 export function GameLog({ 
   messages, 
@@ -8,7 +8,7 @@ export function GameLog({
 }: { 
   messages: Message[];
   submitDialogueFeedback?: (f: Omit<DialogueFeedback, "timestamp">) => void;
-  players: Player[];
+  players: VisiblePlayer[];
 }) {
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +34,7 @@ export function GameLog({
     if (messages.length === 0) return;
     
     const logText = messages
-      .map((m) => `${m.system ? "[시스템] " : ""}${m.sender}: ${m.text}`)
+      .map((m) => `${m.personal ? "[나만 보기] " : ""}${m.system ? "[시스템] " : ""}${m.sender}: ${m.text}`)
       .join("\n");
     
     const blob = new Blob([logText], { type: "text/plain;charset=utf-8" });
@@ -78,6 +78,7 @@ export function GameLog({
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-neutral-400">
                   {message.sender}
+                  {message.personal && <span className="ml-2 text-red-300">나만 보기</span>}
                 </p>
                 {!message.system && players.find(p => p.name === message.sender && !p.human) && (
                   <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Player } from "../types";
+import { VisiblePlayer } from "../types";
 
 export function ActionSelect({ 
   label, 
@@ -10,7 +10,7 @@ export function ActionSelect({
 }: { 
   label: string; 
   onChange: (v: string) => void; 
-  players: Player[]; 
+  players: VisiblePlayer[];
   value: string; 
 }) {
   return (

@@ -62,7 +62,8 @@ test("누적 검거는 최근 10개 기록 삭제 이후에도 유지하며 현�
 });
 
 test("기존 저장 기록의 검거 수를 초기 누적값으로 이어받는다", () => {
-  const current: SavedProfile = { xp: 0, history: [{ ...entry, players: [{ id: "bot", name: "참가자", role: "mafia", alive: false, human: false, suspicion: 0, trust: {} }] }] };
+  const legacyPlayer = { id: "bot", name: "참가자", role: "mafia" as const, alive: false, human: false, suspicion: 0, trust: {} };
+  const current: SavedProfile = { xp: 0, history: [{ ...entry, players: [legacyPlayer] }] };
   assert.equal(completeProfile(current, { ...losingSummary, mafiaCaughtCount: 1 }, entry).profile.mafiaCaughtTotal, 2);
 });
 

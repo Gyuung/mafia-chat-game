@@ -1,12 +1,12 @@
 "use client";
 
-import { getActionTargets } from "../engine/rules";
+import { visibleNightTargets } from "../engine/view";
 
 import { Panel } from "../Common";
 import { ActionSelect } from "./ActionSelect";
 import { ResultCard } from "../ResultCard";
 import { GameLog } from "../GameLog";
-import { Player, Phase, Role, PlayHistoryEntry, GameResultSummary, Message, DialogueFeedback } from "../types";
+import { VisiblePlayer, RevealedPlayer, Phase, Role, PlayHistoryEntry, GameResultSummary, Message, DialogueFeedback } from "../types";
 import { getTitle } from "../constants";
 
 export function GameMain({ 
@@ -37,8 +37,8 @@ export function GameMain({
   setViewingHistory 
 }: { 
   phase: Phase; 
-  me: Player | null; 
-  visibleTargets: Player[]; 
+  me: RevealedPlayer | null;
+  visibleTargets: VisiblePlayer[];
   nightTargetId: string; 
   setNightTargetId: (v: string) => void; 
   resolveNight: () => void; 
@@ -58,7 +58,7 @@ export function GameMain({
   level: number; 
   round: number; 
   messages: Message[]; 
-  players: Player[]; 
+  players: VisiblePlayer[];
   submitDialogueFeedback: (f: Omit<DialogueFeedback, "timestamp">) => void; 
   setViewingHistory: (v: PlayHistoryEntry | null) => void; 
 }) {
@@ -71,7 +71,7 @@ export function GameMain({
           ) : me.role === "citizen" ? (
             <p className="text-sm text-neutral-400">시민은 밤 행동이 없습니다. 밤 결과를 진행하세요.</p>
           ) : (
-            <ActionSelect label={getNightActionLabel(me.role)} onChange={setNightTargetId} players={getActionTargets({ phase, players }, me.id, "night-action")} value={nightTargetId} />
+            <ActionSelect label={getNightActionLabel(me.role)} onChange={setNightTargetId} players={visibleNightTargets(me, players)} value={nightTargetId} />
           )}
           <button className="mt-5 bg-red-500 px-5 py-3 text-sm font-bold text-white hover:bg-red-400 disabled:bg-neutral-700" disabled={me.alive && me.role !== "citizen" && !nightTargetId} onClick={resolveNight} type="button">밤 결과 보기</button>
         </Panel>

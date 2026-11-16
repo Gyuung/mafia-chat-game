@@ -15,11 +15,15 @@ export type Player = {
   personality?: PersonalityType;
 };
 
+export type VisiblePlayer = Pick<Player, "id" | "name" | "alive" | "human" | "personality"> & { role?: Role };
+export type RevealedPlayer = Omit<VisiblePlayer, "role"> & { role: Role };
+
 export type Message = {
   id: string;
   sender: string;
   text: string;
   system?: boolean;
+  personal?: boolean;
 };
 
 export type PlayHistoryEntry = {
@@ -33,7 +37,7 @@ export type PlayHistoryEntry = {
   levelAfter: number;
   titleAfter: string;
   messages?: Message[];
-  players?: Player[];
+  players?: VisiblePlayer[];
 };
 
 export type DialogueFeedback = {
@@ -83,7 +87,7 @@ export type GameResultSummary = {
   dailyRewardXp: number;
   dailyRewardClaimed: boolean;
   voteRecords?: Record<string, string[]>;
-  finalPlayers?: Player[];
+  finalPlayers?: RevealedPlayer[];
   mafiaCaughtCount: number;
   totalRounds: number;
   interrogationCount: number;

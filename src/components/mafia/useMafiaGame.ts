@@ -1,11 +1,13 @@
+import { projectForViewer, projectMessagesForViewer, revealedPlayers } from "./engine/view";
+import type { Audience, InternalMessage } from "./engine/view";
 import { resolveNightStep, resolveVoteStep } from "./engine/resolve";
 import type { ResolvedStep } from "./engine/resolve";
-import type { TargetCommand } from "./engine/types";
+import type { TargetCommand, Winner } from "./engine/types";
 import { createRoleDeck, getActionTargets, validateTargetCommand } from "./engine/rules";
 import { completeProfile } from "./progression";
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { 
-  Player, Phase, Message, SavedProfile, GameResultSummary,
+  Player, Phase, SavedProfile, GameResultSummary,
   GameMode, VoteDecision, PersonalityType, Difficulty, GameEventType,
   DialogueFeedback, PlayHistoryEntry
 } from "./types";
@@ -85,12 +87,12 @@ export function useMafiaGame() {
   const [myName, setMyName] = useState("나");
   const [playerCount, setPlayerCount] = useState(6);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<InternalMessage[]>([]);
   const [chatText, setChatText] = useState("");
   const [questionTargetId, setQuestionTargetId] = useState("");
   const [nightTargetId, setNightTargetId] = useState("");
   const [voteTargetId, setVoteTargetId] = useState("");
-  const [winner, setWinner] = useState<string | null>(null);
+  const [winner, setWinner] = useState<Winner | null>(null);
   const [gameMode, setGameMode] = useState<GameMode>("normal");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [gameResultSummary, setGameResultSummary] = useState<GameResultSummary | null>(null);
@@ -115,20 +117,22 @@ export function useMafiaGame() {
     saveProfileToStorage(profile);
   }, [profile]);
 
-  const addMessage = useCallback((sender: string, text: string, system = false) => {
+  const addMessage = useCallback((sender: string, text: string, system = false, audience: Audience = { type: "public" }) => {
     setMessages((current) => [
       ...current,
-      { id: createId("msg"), sender, text, system },
+      { id: createId("msg"), sender, text, system, audience },
     ]);
   }, []);
 
   const botDiscuss = useCallback((count = 2) => {
     const speakers = shuffle(alivePlayers.filter((p) => !p.human)).slice(0, count);
-    const lastMessage = messages[messages.length - 1];
-    const isDeathMorning = lastMessage?.system && lastMessage.text.includes("탈락했습니다");
+
     const isLateGame = round >= 4;
 
     speakers.forEach((speaker) => {
+      const speakerMessages = projectMessagesForViewer(players, messages, speaker.id);
+      const lastMessage = speakerMessages[speakerMessages.length - 1];
+      const isDeathMorning = lastMessage?.system && lastMessage.text.includes("탈락했습니다");
       const suspects = visibleTargets.filter((p) => p.id !== speaker.id);
       const suspect = suspects.length > 0 ? pickRandom(suspects) : null;
       const p = speaker.personality || "logical";
@@ -184,7 +188,7 @@ export function useMafiaGame() {
 
       addMessage(speaker.name, line);
     });
-  }, [alivePlayers, visibleTargets, messages, round, mafiaCaughtCount, addMessage]);
+  }, [players, alivePlayers, visibleTargets, messages, round, mafiaCaughtCount, addMessage]);
 
   const chooseBotVoteTarget = useCallback((bot: Player, choices: Player[]): VoteDecision => {
     const pType = bot.personality || "logical";
@@ -233,7 +237,7 @@ export function useMafiaGame() {
     return { target: pickRandom(choices), reason: "뚜렷한 단서가 없어 상황을 지켜보며 선택했습니다." };
   }, [gameMode, difficulty, dailyCase.isHard]);
 
-  const finishStep = useCallback((step: ResolvedStep, latestEvent: string, stepMessages: Message[], voteRecords?: Record<string, string[]>, metrics?: { correctVoteCount?: number; roleActionSuccessCount?: number; receivedVote?: boolean }) => {
+  const finishStep = useCallback((step: ResolvedStep, latestEvent: string, stepMessages: InternalMessage[], voteRecords?: Record<string, string[]>, metrics?: { correctVoteCount?: number; roleActionSuccessCount?: number; receivedVote?: boolean }) => {
     const stepKey = `${round}:${phase}`;
     if (resolvedSteps.current.has(stepKey)) return;
     resolvedSteps.current.add(stepKey);
@@ -248,12 +252,13 @@ export function useMafiaGame() {
       const dailyRewardClaimed = gameMode === "daily" && profile.lastDailyRewardDate !== todayKey;
       const dailyRewardXp = dailyRewardClaimed ? dailyCase.rewardXp : 0;
       const gainedXp = baseXp + dailyRewardXp;
-      const endMessage: Message = { id: createId("msg"), sender: "사회자", text: `🏁 ${res}로 게임이 종료되었습니다. +${gainedXp} XP를 획득했습니다.`, system: true };
-      setMessages((current) => [...current, endMessage]);
+      const endMessage: InternalMessage = { id: createId("msg"), sender: "사회자", text: `🏁 ${res}로 게임이 종료되었습니다.`, system: true, audience: { type: "public" } };
+      const rewardMessage: InternalMessage | null = human ? { id: createId("msg"), sender: "사회자", text: `+${gainedXp} XP를 획득했습니다.`, system: true, audience: { type: "private", playerId: human.id } } : null;
+      setMessages((current) => [...current, endMessage, ...(rewardMessage ? [rewardMessage] : [])]);
       const nextXp = profile.xp + gainedXp;
       const levelBefore = Math.floor(profile.xp / 100) + 1;
       const levelAfter = Math.floor(nextXp / 100) + 1;
-      const keyEvents = [...messages.filter(m => m.system).map(m => m.text).slice(-3), latestEvent].filter((e, i, arr) => arr.indexOf(e) === i).slice(-4);
+      const keyEvents = [...projectMessagesForViewer(nextPlayers, messages, human?.id ?? "").filter(m => m.system).map(m => m.text).slice(-3), latestEvent].filter((e, i, arr) => arr.indexOf(e) === i).slice(-4);
 
       // 상태 업데이트 지연을 피하기 위해 현재 값 기반으로 직접 계산
       const finalMafiaCaught = nextPlayers.filter(p => !p.human && p.role === "mafia" && !p.alive).length;
@@ -265,7 +270,7 @@ export function useMafiaGame() {
           xpGained: gainedXp, levelBefore, levelAfter, levelProgress: nextXp % 100,
           titleBefore: getTitle(levelBefore), titleAfter: getTitle(levelAfter),
           survived: human.alive, keyEvents, dailyCaseTitle: gameMode === "daily" ? dailyCase.title : undefined,
-          dailyRewardXp, dailyRewardClaimed, voteRecords, finalPlayers: nextPlayers,
+          dailyRewardXp, dailyRewardClaimed, voteRecords, finalPlayers: revealedPlayers(step),
           mafiaCaughtCount: finalMafiaCaught, totalRounds: round,
           interrogationCount,
           correctVoteCount: metrics?.correctVoteCount ?? correctVoteCount,
@@ -287,15 +292,15 @@ export function useMafiaGame() {
           xpGained: gainedXp,
           levelAfter: nLevel,
           titleAfter: getTitle(nLevel),
-          messages: [...messages, ...stepMessages, endMessage],
-          players: nextPlayers,
+          messages: projectMessagesForViewer(nextPlayers, [...messages, ...stepMessages, endMessage, ...(rewardMessage ? [rewardMessage] : [])], human.id),
+          players: revealedPlayers(step),
         };
         const completed = completeProfile(current, summary, historyEntry);
-        const achievementMessages: Message[] = completed.newlyUnlocked.map((achievement) => ({
+        const achievementMessages: InternalMessage[] = completed.newlyUnlocked.map((achievement) => ({
           id: createId("msg"), sender: "사회자",
-          text: `🏅 업적 달성: ${achievement.title}`, system: true,
+          text: `🏅 업적 달성: ${achievement.title}`, system: true, audience: { type: "private", playerId: human.id },
         }));
-        historyEntry.messages?.push(...achievementMessages);
+        historyEntry.messages?.push(...projectMessagesForViewer(nextPlayers, achievementMessages, human.id));
         setProfile({
           ...completed.profile,
           lastDailyRewardDate: dailyRewardClaimed ? todayKey : current.lastDailyRewardDate,
@@ -332,7 +337,7 @@ export function useMafiaGame() {
     ];
 
     const human = createdPlayers.find(p => p.human);
-    const intro = mode === "daily" ? `오늘의 사건 '${dailyCase.title}'이 시작되었습니다. ${dailyCase.briefing} 당신의 이름은 '${finalMyName}'이며 역할은 ${human?.role}입니다.` : `게임이 시작되었습니다. 당신의 이름은 '${finalMyName}'이며 역할은 ${human?.role}입니다. 난이도: ${diff === "easy" ? "쉬움" : (diff === "hard" ? "어려움" : "보통")}`;
+    const intro = mode === "daily" ? `오늘의 사건 '${dailyCase.title}'이 시작되었습니다. ${dailyCase.briefing}` : `게임이 시작되었습니다. 난이도: ${diff === "easy" ? "쉬움" : (diff === "hard" ? "어려움" : "보통")}`;
     
     resolvedSteps.current.clear();
     setPlayers(createdPlayers);
@@ -350,7 +355,10 @@ export function useMafiaGame() {
     setCorrectVoteCount(0);
     setReceivedVote(false);
     setRoleActionSuccessCount(0);
-    setMessages([{ id: createId("msg"), sender: "사회자", text: intro, system: true }]);
+    setMessages([
+      { id: createId("msg"), sender: "사회자", text: intro, system: true, audience: { type: "public" } },
+      { id: createId("msg"), sender: "사회자", text: `당신의 이름은 '${finalMyName}'이며 역할은 ${human?.role}입니다.`, system: true, audience: { type: "private", playerId: "me" } },
+    ]);
   }, [myName, playerCount, dailyCase]);
 
   const interrogateTarget = useCallback(() => {
@@ -408,7 +416,10 @@ export function useMafiaGame() {
     const commands: TargetCommand[] = [];
     if (me.alive && me.role !== "citizen") {
       const command: TargetCommand = { type: "night-action", actorId: me.id, targetId: nightTargetId };
-      if (!validateTargetCommand({ phase, players }, command).ok) return;
+      if (!validateTargetCommand({ phase, players }, command).ok) {
+        addMessage("사회자", "선택한 대상을 처리할 수 없습니다. 다른 대상을 선택해주세요.", true, { type: "private", playerId: me.id });
+        return;
+      }
       commands.push(command);
     }
     const mafia = players.find((p) => p.alive && p.role === "mafia");
@@ -420,13 +431,12 @@ export function useMafiaGame() {
     }
     const step = resolveNightStep({ phase, players, round }, commands);
     if (!step.ok) return;
-    const stepMessages: Message[] = [];
+    const stepMessages: InternalMessage[] = [];
     let nightEvent = "밤이 조용히 지나갔습니다.";
     for (const event of step.events) {
       if (event.type === "investigation") {
-        if (event.actorId !== me.id) continue;
         const target = players.find((p) => p.id === event.targetId);
-        stepMessages.push({ id: createId("msg"), sender: "사회자", text: `${target?.name}님은 ${event.isMafia ? "마피아" : "마피아가 아닙니다"}.`, system: true });
+        stepMessages.push({ id: createId("msg"), sender: "사회자", text: `${target?.name}님은 ${event.isMafia ? "마피아" : "마피아가 아닙니다"}.`, system: true, audience: { type: "private", playerId: event.actorId } });
       } else if (event.type === "elimination") {
         nightEvent = `밤 사이 ${players.find((p) => p.id === event.targetId)?.name ?? "누군가"}님이 탈락했습니다.`;
         setLastEvent("elimination");
@@ -434,21 +444,21 @@ export function useMafiaGame() {
         nightEvent = "의사의 보호로 밤 공격이 실패했습니다.";
       }
     }
-    stepMessages.push({ id: createId("msg"), sender: "사회자", text: nightEvent, system: true });
+    stepMessages.push({ id: createId("msg"), sender: "사회자", text: nightEvent, system: true, audience: { type: "public" } });
     const actionSuccess = step.actionSuccessIds.includes(me.id) ? 1 : 0;
     setRoleActionSuccessCount((count) => count + actionSuccess);
     finishStep(step, nightEvent, stepMessages, undefined, {
       roleActionSuccessCount: roleActionSuccessCount + actionSuccess,
     });
     setNightTargetId("");
-  }, [me, phase, players, round, nightTargetId, roleActionSuccessCount, finishStep]);
+  }, [me, phase, players, round, nightTargetId, roleActionSuccessCount, addMessage, finishStep]);
 
   const resolveVote = useCallback(() => {
     if (!me || phase !== "vote" || resolvedSteps.current.has(`${round}:${phase}`)) return;
     const commands: TargetCommand[] = [];
-    const stepMessages: Message[] = [];
-    const log = (sender: string, text: string, system = false) => {
-      stepMessages.push({ id: createId("msg"), sender, text, system });
+    const stepMessages: InternalMessage[] = [];
+    const log = (sender: string, text: string, system = false, audience: Audience = { type: "public" }) => {
+      stepMessages.push({ id: createId("msg"), sender, text, system, audience });
     };
     if (me.alive) {
       const command: TargetCommand = { type: "vote", actorId: me.id, targetId: voteTargetId };
@@ -477,7 +487,8 @@ export function useMafiaGame() {
     const step = resolveVoteStep({ phase, players, round }, commands);
     if (!step.ok) return;
     decisions.forEach(({ bot, decision }) => {
-      log("사회자", `${bot.name}님은 ${decision.target.name}님에게 투표했습니다. ${decision.reason}`, true);
+      log("사회자", `${bot.name}님은 ${decision.target.name}님에게 투표했습니다.`, true);
+      log("사회자", `투표 선택 이유: ${decision.reason}`, true, { type: "private", playerId: bot.id });
     });
     const voteRecords = Object.fromEntries(Object.entries(step.ballots).map(([targetId, voterIds]) => [
       players.find((p) => p.id === targetId)?.name ?? targetId,
@@ -531,12 +542,21 @@ export function useMafiaGame() {
     }));
   }, []);
 
+  const viewer = useMemo(() => projectForViewer({
+    phase, round, players, winner,
+    nightActions: me ? { [me.id]: nightTargetId } : {},
+    votes: me ? { [me.id]: voteTargetId } : {},
+  }, me?.id ?? "", messages), [phase, round, players, winner, me, nightTargetId, voteTargetId, messages]);
+  const publicPlayers = viewer?.players ?? [];
+
   return {
-    phase, round, myName, setMyName, playerCount, setPlayerCount, players, alivePlayers, 
-    visibleTargets, messages, chatText, setChatText, questionTargetId, setQuestionTargetId, 
+    phase, round, myName, setMyName, playerCount, setPlayerCount,
+    players: publicPlayers, alivePlayers: publicPlayers.filter((player) => player.alive),
+    visibleTargets: publicPlayers.filter((player) => player.alive && player.id !== me?.id),
+    messages: viewer?.messages ?? [], chatText, setChatText, questionTargetId, setQuestionTargetId,
     nightTargetId, setNightTargetId, voteTargetId, setVoteTargetId, winner, gameMode, difficulty,
     gameResultSummary, profile, todayKey, dailyCase, dailyRewardAvailable: profile.lastDailyRewardDate !== todayKey,
-    me, level: Math.floor(profile.xp / 100) + 1, currentLevelXp: profile.xp % 100, 
+    me: viewer?.self ?? null, level: Math.floor(profile.xp / 100) + 1, currentLevelXp: profile.xp % 100,
     lastEvent, resetEvent: () => setLastEvent("none"),
     submitDialogueFeedback,
     startGame, submitChat: (e: React.FormEvent) => { e.preventDefault(); if (me?.alive && chatText.trim()) { addMessage(me.name, chatText.trim()); botDiscuss(1); setChatText(""); } },

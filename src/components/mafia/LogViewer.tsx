@@ -1,4 +1,4 @@
-import { Message, Player } from "./types";
+import { Message, VisiblePlayer } from "./types";
 import { roleLabels } from "./constants";
 
 export function LogViewer({ 
@@ -7,7 +7,7 @@ export function LogViewer({
   onClose 
 }: { 
   messages: Message[];
-  players: Player[];
+  players: VisiblePlayer[];
   onClose: () => void;
 }) {
   return (
@@ -27,10 +27,10 @@ export function LogViewer({
 종료 시각: ${localeStr}
 
 ■ 참가자 역할 정보:
-${players.map(p => `- ${p.name}: ${roleLabels[p.role]} ${p.human ? "(나)" : ""} (${p.alive ? "생존" : "탈락"})`).join("\n")}
+${players.map(p => `- ${p.name}: ${(p.role ? roleLabels[p.role] : "비공개")} ${p.human ? "(나)" : ""} (${p.alive ? "생존" : "탈락"})`).join("\n")}
 
 ■ 진행 메시지:
-${messages.map(m => `[${m.sender}] ${m.text}`).join("\n")}
+${messages.map(m => `${m.personal ? "[나만 보기] " : ""}[${m.sender}] ${m.text}`).join("\n")}
 
 #마피아게임 #수사기록
                 `.trim();
@@ -74,7 +74,7 @@ ${messages.map(m => `[${m.sender}] ${m.text}`).join("\n")}
                     </span>
                   </div>
                   <div className="mt-1 text-neutral-400">
-                    {roleLabels[p.role]} {p.human && "(나)"}
+                    {(p.role ? roleLabels[p.role] : "비공개")} {p.human && "(나)"}
                   </div>
                 </div>
               ))}
@@ -95,6 +95,7 @@ ${messages.map(m => `[${m.sender}] ${m.text}`).join("\n")}
                 >
                   <p className="text-xs font-semibold text-neutral-400">
                     {m.sender}
+                    {m.personal && <span className="ml-2 text-red-300">나만 보기</span>}
                   </p>
                   <p className="mt-1 text-sm leading-6 text-neutral-100">
                     {m.text}
