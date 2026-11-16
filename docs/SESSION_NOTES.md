@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-11-15
+Last updated: 2026-11-16
 
 ## Current State
 
@@ -10,7 +10,7 @@ Last updated: 2026-11-15
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
-- Version: `1.2.6` (Pure Night & Vote Resolution)
+- Version: `1.2.7` (Viewer State & Private Logs)
 
 ## Recent Changes (v1.2.0)
 
@@ -35,6 +35,10 @@ Last updated: 2026-11-15
 
 ## Known Constraints
 
+- v1.2.7: `engine/view.ts`에서 참가자별 상태·개인 로그 투영. 렌더러에는 `VisiblePlayer`/`RevealedPlayer`만 전달. 원본 전체 상태는 솔로 브라우저 메모리에 유지되며 서버 인증은 아직 없음.
+- 새 완료 기록은 본인에게 보이는 메시지·최종 공개 역할만 저장. 기존 로컬 기록은 소급 분류하지 않으며 멀티 공용 로그로 재사용 금지.
+- 비공개 역할로 밤 선택지 필터링하지 않음. 부적합한 선택은 본인에게 일반 오류로 안내. 행동 성공·실패를 통한 추론은 여전히 가능.
+
 - v1.2.6: 밤·투표 전체 판정을 `engine/resolve.ts`로 분리. 훅은 NPC 결정·메시지·보상을 연결. 단계별 중복 실행 차단 및 마지막 단계 로그 보존.
 - 규칙·진행도·판정 테스트 25개. 엔진 단계 흐름은 확인했으나 실제 브라우저 한 판·연속 클릭·새로고침 점검은 남아 있음.
 
@@ -54,7 +58,7 @@ Last updated: 2026-11-15
 ## Next Session TODO
 
 1. Sound effects implemented with original synthesized WAV assets. Next: manually check audio playback on desktop/mobile browsers.
-2. v2 작업 A 및 B 코드·테스트 완료. 다음 구현은 C(참가자별 공개 상태·개인 로그 분리), D~F(선택형 AI·혼합 방) 순서. B 실제 브라우저 한 판 점검은 미완료. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts`.
+2. v2 작업 A~C 코드·테스트 완료. 다음은 D(공급자 중립 대사 어댑터·가짜 응답·실패 흐름), E(공급자·예산 선정 후 실제 AI 연동), F(혼합 방). B·C 실제 브라우저 점검은 미완료. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (34개).
 3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 브라우저 호스트 연결 불가로 데스크톱·모바일 실제 화면 검증은 미완료.
 4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 
