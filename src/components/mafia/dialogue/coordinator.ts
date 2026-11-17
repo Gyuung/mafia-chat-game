@@ -13,7 +13,7 @@ function outputText(value: unknown, maxChars: number): string | null {
   return text;
 }
 
-// Explicitly copy known fields before fingerprinting or sending to any provider.
+// 요청 내용을 비교하거나 공급자에 전달하기 전에 허용된 필드만 명시적으로 복사합니다.
 function snapshot(context: DialogueContext): DialogueContext {
   return {
     gameId: context.gameId, round: context.round, phase: context.phase, kind: context.kind,
@@ -111,14 +111,14 @@ export function createDialogueCoordinator(options: Options) {
       if (before.cancelled) return Promise.resolve({ status: "discarded", reason: "cancelled" });
       return before.promise;
     }
-    // Retain every admitted ID until disposal; eviction could cause duplicate provider calls.
+    // 중간에 삭제하면 공급자를 중복 호출할 수 있으므로, 승인된 모든 ID는 폐기 시점까지 보관합니다.
     if (jobs.size >= maxRequests) return Promise.resolve({ status: "discarded", reason: "capacity" });
     const job: Job = {
       fingerprint, context, controller: new AbortController(), cancelled: false, claimed: false,
       promise: Promise.resolve({ status: "discarded", reason: "invalid-request" }),
     };
     jobs.set(input.requestId, job);
-    // Start after registering the ID so concurrent/reentrant callers share one job.
+    // 동시 호출과 재진입이 같은 작업을 공유하도록 ID를 등록한 뒤 실행합니다.
     job.promise = Promise.resolve().then(() => run(job, fallback)).then((result) => {
       job.result = Object.freeze(result);
       return job.result;

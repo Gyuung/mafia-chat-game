@@ -69,7 +69,7 @@ export function CareerStats({
                         title={`${ach.title}: ${ach.description}`}
                       >
                         <span className="text-2xl">{ach.icon}</span>
-                        {/* Tooltip on hover */}
+                        {/* 마우스를 올리면 업적 설명을 표시합니다. */}
                         <div className="absolute bottom-full left-1/2 mb-2 hidden w-40 -translate-x-1/2 border border-neutral-800 bg-neutral-950 p-2 text-center group-hover:block z-10 shadow-2xl">
                           <p className="text-xs font-bold text-white">{ach.title}</p>
                           <p className="mt-1 text-[10px] text-neutral-400 leading-tight">{ach.description}</p>

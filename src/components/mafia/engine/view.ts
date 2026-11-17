@@ -55,7 +55,7 @@ export function projectForViewer(state: GameState, viewerId: string, messages: r
   };
 }
 
-// Visible choices must not depend on another participant's secret role.
+// 화면의 선택지는 다른 참가자의 비공개 역할에 의존하지 않아야 합니다.
 export function visibleNightTargets(self: RevealedPlayer, players: readonly VisiblePlayer[]) {
   if (!self.alive || self.role === "citizen") return [];
   return players.filter((player) => player.alive && (self.role === "doctor" || player.id !== self.id));

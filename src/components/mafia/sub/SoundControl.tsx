@@ -24,7 +24,7 @@ export function SoundControl({ phase, lastEvent }: { phase: Phase; lastEvent: st
     if (cue && audio) {
       audio.src = `/sounds/${cue}.wav`;
       audio.volume = 0.35;
-      // Autoplay restrictions or unavailable audio must never interrupt a game.
+      // 자동 재생 제한이나 오디오 오류가 게임 진행을 막지 않도록 처리합니다.
       void audio.play().catch(() => {});
     }
   }, [phase, lastEvent, enabled]);
@@ -41,7 +41,7 @@ export function SoundControl({ phase, lastEvent }: { phase: Phase; lastEvent: st
       if (!audio) return;
       audio.src = "/sounds/day.wav";
       audio.volume = 0.35;
-      // Start in the click handler to respect browser user-gesture policies.
+      // 브라우저의 사용자 동작 정책을 준수하도록 클릭 처리 함수에서 재생을 시작합니다.
       void audio.play().catch(() => {});
     }
     setEnabled((value) => !value);

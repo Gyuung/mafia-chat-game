@@ -15,7 +15,7 @@ export function completeProfile(
   entry: PlayHistoryEntry,
 ) {
   const unlockedIds = new Set(current.achievements?.map((achievement) => achievement.id));
-  // Conditions receive the profile before this game to avoid counting it twice.
+  // 현재 게임을 중복 집계하지 않도록 조건 검사에는 게임 반영 전 프로필을 전달합니다.
   const before = { ...current, mafiaCaughtTotal: getCaughtTotal(current) };
   const newlyUnlocked = ACHIEVEMENTS.filter(
     (achievement) => !unlockedIds.has(achievement.id) && achievement.condition(summary, before),

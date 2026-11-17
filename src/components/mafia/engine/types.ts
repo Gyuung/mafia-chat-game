@@ -2,7 +2,7 @@ import type { Phase, Player } from "../types";
 
 export type Winner = "시민 팀 승리" | "마피아 팀 승리";
 
-// Internal state; this is not a public client response contract.
+// 엔진 내부 상태이며, 클라이언트에 공개하는 응답 형식이 아닙니다.
 export type GameState = {
   phase: Phase;
   round: number;
@@ -18,8 +18,8 @@ export type TargetCommand = {
   targetId: string;
 };
 
-// Target submissions are shared; batch resolution uses resolveNightStep/resolveVoteStep.
-// Transport-level start/advance commands belong to the future server adapter.
+// 대상 제출 형식은 공통으로 사용하고, 일괄 판정은 resolveNightStep/resolveVoteStep이 담당합니다.
+// 통신 계층의 시작·진행 명령은 추후 서버 어댑터에서 정의합니다.
 export type GameCommand = TargetCommand;
 export type ActionState = Pick<GameState, "phase" | "players">;
 export type ValidationResult =

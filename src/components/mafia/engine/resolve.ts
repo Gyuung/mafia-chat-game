@@ -18,7 +18,7 @@ export type ResolvedStep = {
   actionSuccessIds: string[];
   correctVoterIds: string[];
   receivedVoteIds: string[];
-  // Internal IDs avoid merging people who have the same display name.
+  // 표시 이름이 같은 참가자를 잘못 합치지 않도록 내부 ID로 구분합니다.
   ballots: Record<string, string[]>;
 };
 type Rejection = { ok: false; reason: string };
@@ -46,7 +46,7 @@ function finish(state: StepState, players: Player[], nextPhase: "day" | "night",
   };
 }
 
-// Decisions and randomness belong to callers. Resolution has no external effects.
+// 행동 선택과 난수 처리는 호출자가 담당하며, 판정은 외부 상태를 변경하지 않습니다.
 export function resolveNightStep(state: StepState, commands: readonly TargetCommand[]): StepResult {
   const validation = validateSubmissions(state, commands, "night-action");
   if (!validation.ok) return validation;

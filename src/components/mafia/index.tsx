@@ -6,7 +6,7 @@ import { Phase, Difficulty, PlayHistoryEntry } from "./types";
 import { LogViewer } from "./LogViewer";
 import { CareerStats } from "./CareerStats";
 
-// Sub-components
+// 하위 컴포넌트
 import { AmbientEffects } from "./sub/AmbientEffects";
 import { MobileTopBar } from "./sub/MobileTopBar";
 import { TutorialModal } from "./sub/TutorialModal";
