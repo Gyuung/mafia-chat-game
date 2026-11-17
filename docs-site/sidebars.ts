@@ -8,6 +8,7 @@ const sidebars: SidebarsConfig = {
     'roadmap',
     'v2-implementation-plan',
     'platform-response-plan',
+    'dialogue-adapter',
   ],
 };
 
