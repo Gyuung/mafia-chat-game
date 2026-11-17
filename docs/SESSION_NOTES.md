@@ -54,6 +54,9 @@ Last updated: 2026-11-17
 
 ## Development Environment
 
+- 사용자 작업 규칙의 원본은 `AGENTS.md`: 독립적인 기능·버그 수정·도구·문서는 작업 의도별 분할 커밋, 모든 설명용 코드·설정 주석은 한국어. 도구 지시문·식별자 문법은 유지.
+- 커밋 분할·메시지는 `npm run commit`의 자동 분석에 맡기며, 직접 `COMMIT_PLAN`을 주입하지 않음. 분할 지침은 커밋 스크립트의 분석 프롬프트에도 반영.
+
 - 2026-11-16 Git 신원 복구: 이 저장소 로컬 설정은 `King <79718172+Gyuung@users.noreply.github.com>`, `user.useConfigOnly=true`. GitHub 로그인과 별개이며 다른 PC나 새 clone에는 별도 설정 필요.
 - 잘못된 맥 이메일의 15개 커밋은 내용·날짜 보존 후 ID 변경 및 원격 반영(`bd329e2` → `6b031ae`). 복구 전 이력은 로컬 `backup/identity-before-20261116`에 보관. 다른 체크아웃의 미저장 작업을 먼저 보존하고 새 이력과 동기화할 것.
 

@@ -360,6 +360,7 @@ async function createAiCommitPlan(files: string[], diff: string): Promise<Commit
     "- Choose the emoji/type from this list only:",
     commitTypes,
     "- Prefer small, meaningful commits by task intent, not by folder only.",
+    "- 기능·버그 수정·도구·문서 등 독립적으로 검토 가능한 작업은 별도 커밋으로 분할하세요. 관련 없는 변경을 한 커밋에 묶지 마세요.",
     "- Do not invent files that are not in the changed file list.",
     '- Return JSON only, with this shape: {"commits":[{"message":"✨ feat(scope): message","files":["path"]}]}',
     "",
