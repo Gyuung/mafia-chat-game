@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-11-17
+Last updated: 2026-11-18
 
 ## Current State
 
@@ -35,6 +35,9 @@ Last updated: 2026-11-17
 
 ## Known Constraints
 
+- 2026-11-18 E1 완료: `dialogue/budget.ts`에 공급자 중립 게임별 예산 예약 장부 추가. 전체 입력·출력 최대 비용을 정수 마이크로달러로 예약하고 중복·충돌·토큰·요청 수·금액 상한을 검사. 10개 신규 테스트 포함 전체 58개 통과. 현재 조정기·서버·UI에는 연결하지 않음.
+- E2에서 공급자·운영 예산·단가·토크나이저를 선정하고 인증·영속 요청/예산 저장소·출력 제한과 연결해야 함. 메모리 예약 장부는 실제 청구액이나 다중 프로세스 원자성을 보장하지 않음.
+
 - 2026-11-17 작업 D 완료: `dialogue/`에 최소 NPC 입력·공급자 계약·중복/시간 제한/취소/단일 소비 조정기 추가. 가짜 공급자는 테스트에만 있으며 현재 게임 훅에는 연결하지 않음. 게임 버전 v1.2.7 유지.
 - 호출자는 게임당 인스턴스를 만들고 `request` 완료 후 `claim`한 결과만 게시해야 함. 새 게임·종료 시 `dispose`, 단계 변경 시 최신 상태 검사와 취소 필요. 상세 계약은 `docs-site/docs/dialogue-adapter.md`.
 - D는 외부 API·키·공급자·실제 금액 예산·서버 인증을 포함하지 않음. 내부 중복 제어는 한 프로세스·게임 인스턴스 범위.
@@ -68,7 +71,7 @@ Last updated: 2026-11-17
 ## Next Session TODO
 
 1. Sound effects implemented with original synthesized WAV assets. Next: manually check audio playback on desktop/mobile browsers.
-2. v2 작업 A~D 코드·테스트 완료. 다음은 E(공급자·예산 선정 및 서버 대사 엔드포인트·UI 연결), F(혼합 방). B·C 실제 브라우저 점검은 미완료. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (48개).
+2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약 계층 완료. 다음은 E2(공급자·운영 예산 선정 및 인증·영속 예산·서버 대사 엔드포인트·UI 연결), F(혼합 방). B·C 실제 브라우저 점검은 미완료. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (58개).
 3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 브라우저 호스트 연결 불가로 데스크톱·모바일 실제 화면 검증은 미완료.
 4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 
