@@ -25,6 +25,7 @@ function snapshot(context: DialogueContext): DialogueContext {
 }
 
 type Job = {
+  requestId: string;
   fingerprint: string;
   context: DialogueContext;
   controller: AbortController;
@@ -74,7 +75,7 @@ export function createDialogueCoordinator(options: Options) {
     let reason: "provider-error" | "timeout" | "invalid-output" = "provider-error";
     try {
       const input: ProviderInput = { instructions: INSTRUCTIONS, context: snapshot(job.context), maxOutputChars };
-      const value = await Promise.race([provider.generate(input, { signal }), interrupted]);
+      const value = await Promise.race([provider.generate(input, { signal, requestId: job.requestId }), interrupted]);
       if (disposed) return { status: "discarded", reason: "disposed" };
       if (job.cancelled) return { status: "discarded", reason: "cancelled" };
       if (!isCurrent(job.context)) return { status: "discarded", reason: "stale" };
@@ -114,6 +115,7 @@ export function createDialogueCoordinator(options: Options) {
     // 중간에 삭제하면 공급자를 중복 호출할 수 있으므로, 승인된 모든 ID는 폐기 시점까지 보관합니다.
     if (jobs.size >= maxRequests) return Promise.resolve({ status: "discarded", reason: "capacity" });
     const job: Job = {
+      requestId: input.requestId,
       fingerprint, context, controller: new AbortController(), cancelled: false, claimed: false,
       promise: Promise.resolve({ status: "discarded", reason: "invalid-request" }),
     };

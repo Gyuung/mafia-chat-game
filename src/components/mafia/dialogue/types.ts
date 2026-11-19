@@ -17,7 +17,7 @@ export type ProviderInput = {
   maxOutputChars: number;
 };
 export type DialogueProvider = {
-  generate(input: ProviderInput, options: { signal: AbortSignal }): Promise<unknown>;
+  generate(input: ProviderInput, options: { signal: AbortSignal; requestId: string }): Promise<unknown>;
 };
 export type DialogueResult =
   | { status: "ready"; source: "provider"; text: string }
