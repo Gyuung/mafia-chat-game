@@ -72,6 +72,8 @@ npm run docs:dev
 
 ## Project Docs
 
+선택형 AI 대사의 서버용 OpenAI 어댑터를 제공합니다. `OPENAI_API_KEY`와 `OPENAI_DIALOGUE_MODEL`은 서버 전용이며 키가 없으면 비활성화합니다. 현재 공개 API·게임 화면은 미연결이므로 설정만으로 AI가 켜지지 않습니다. 운영 전 인증·영속 예산 저장소 연결과 실제 모델 평가가 필요하며 상세 계약은 [대사 어댑터 문서](docs-site/docs/dialogue-adapter.md)를 참고하세요.
+
 - `AGENTS.md`: Codex/AI 작업 규칙과 세션 이어하기 프로토콜
 - `docs/SESSION_NOTES.md`: 세션 재개용 현재 상태 노트
 - `docs/GIT_UPLOAD.md`: GitHub 업로드 절차 문서
