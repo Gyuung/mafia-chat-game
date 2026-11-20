@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-11-19
+Last updated: 2026-11-20
 
 ## Current State
 
@@ -35,8 +35,11 @@ Last updated: 2026-11-19
 
 ## Known Constraints
 
+- 2026-11-20 선택형 OpenAI HTTP 어댑터 구현: `openai-provider.ts`가 입력 토큰 조회 → 예산 예약 → Responses 생성 → 구조화 응답 검사를 연결. 키 미설정 시 비활성, 모델은 명시 설정. 모의 HTTP 테스트 14개 추가, 전체 85개. 실제 키·모델·단가·예산·운영 공급자 확정 및 실호출 검증은 미완료.
+- 서버용 환경 변수 이름 `OPENAI_API_KEY`·`OPENAI_DIALOGUE_MODEL`을 `.env.example`에 빈 값으로 추가. 자동으로 읽거나 호출하는 공개 API·UI는 아직 없으므로 설정만으로 게임에 AI가 켜지지 않음. 인증·영속 요청/예산 저장소·서버 API·UI를 다음으로 연결해야 함.
+
 - 2026-11-19 E2 공통 호출 경로 구현: `src/server/dialogue/metered-provider.ts`로 대사 조정기·예산·준비/생성 함수를 연결. 계산 전후 현재 단계 확인, 취소·시간 초과 후 지연 생성 차단, 새 예약만 생성하고 출력 토큰 상한 전달. 연결 테스트 13개 추가, 전체 71개. 실제 공급자·인증·영속 저장소·공개 API·UI는 미연결.
-- 공급자 선택 질문(OpenAI / Gemini / 미정)은 아직 답변 없음. 실제 공급자·운영 예산은 결정하지 않았으며 다음 작업에서 확인. API 키는 채팅·브라우저에 넣지 않고 실제 연동 시 서버 환경 변수로 설정.
+- 공급자 선택 질문에는 아직 답변 없음. 첫 구현 선택지로 OpenAI 어댑터를 추가했으나 운영 공급자·모델·단가·예산은 미확정. API 키는 채팅·브라우저에 넣지 않고 실제 연동 시 서버 환경 변수로 설정.
 
 - 2026-11-18 E1 완료: `dialogue/budget.ts`에 공급자 중립 게임별 예산 예약 장부 추가. 전체 입력·출력 최대 비용을 정수 마이크로달러로 예약하고 중복·충돌·토큰·요청 수·금액 상한을 검사. 10개 신규 테스트 포함 전체 58개 통과. E2 서버 래퍼로 조정기와 연결 가능하며 공개 API·UI는 미연결.
 - E2에서 공급자·운영 예산·단가·토크나이저를 선정하고 인증·영속 요청/예산 저장소·출력 제한과 연결해야 함. 메모리 예약 장부는 실제 청구액이나 다중 프로세스 원자성을 보장하지 않음.
@@ -74,7 +77,7 @@ Last updated: 2026-11-19
 ## Next Session TODO
 
 1. Sound effects implemented with original synthesized WAV assets. Next: manually check audio playback on desktop/mobile browsers.
-2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약과 E2의 조정기·예산 공통 호출 경로 완료. 다음은 E2의 실제 공급자 연결(공급자·운영 예산 선정 및 인증·영속 예산·서버 대사 엔드포인트·UI 연결), F(혼합 방). B·C 실제 브라우저 점검은 미완료. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (71개).
+2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약, E2의 조정기·예산 공통 호출 경로 및 선택형 OpenAI HTTP 어댑터 완료. 다음은 E2의 운영 설정·실제 검증과 인증·영속 요청/예산 저장소·서버 API·UI 연결, F(혼합 방). B·C 실제 브라우저 점검은 미완료. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (85개).
 3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 브라우저 호스트 연결 불가로 데스크톱·모바일 실제 화면 검증은 미완료.
 4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 
