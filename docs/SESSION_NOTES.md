@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-11-20
+Last updated: 2026-11-22
 
 ## Current State
 
@@ -10,7 +10,7 @@ Last updated: 2026-11-20
 - App stack: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4
 - Primary screen: playable solo Mafia chat game at `/`
 - Docs front: Docusaurus app in `docs-site/`
-- Version: `1.2.7` (Viewer State & Private Logs)
+- Version: `1.2.8` (Responsive Layout & Scoped Log Scroll)
 
 ## Recent Changes (v1.2.0)
 
@@ -35,6 +35,8 @@ Last updated: 2026-11-20
 
 ## Known Constraints
 
+- 2026-11-22 레이아웃 수정: 그리드 상단 정렬·최소 너비, 로그 내부 자동 스크롤, 모바일 상단 줄바꿈·사이드바 스크롤/닫기·결과 버튼 배치 보완. 네이티브 Chrome으로 320·400·640·1024px 및 데스크톱 화면 확인. 6인 경찰·4인 마피아 두 판 종료, 밤 선택·생존/탈락 후 진행·채팅·심문·투표·결과·로그 모달·새 게임 확인. 실제 모바일 기기·청음·연속 클릭·새로고침 검증은 남음.
+
 - 2026-11-20 선택형 OpenAI HTTP 어댑터 구현: `openai-provider.ts`가 입력 토큰 조회 → 예산 예약 → Responses 생성 → 구조화 응답 검사를 연결. 키 미설정 시 비활성, 모델은 명시 설정. 모의 HTTP 테스트 14개 추가, 전체 85개. 실제 키·모델·단가·예산·운영 공급자 확정 및 실호출 검증은 미완료.
 - 서버용 환경 변수 이름 `OPENAI_API_KEY`·`OPENAI_DIALOGUE_MODEL`을 `.env.example`에 빈 값으로 추가. 자동으로 읽거나 호출하는 공개 API·UI는 아직 없으므로 설정만으로 게임에 AI가 켜지지 않음. 인증·영속 요청/예산 저장소·서버 API·UI를 다음으로 연결해야 함.
 
@@ -53,7 +55,7 @@ Last updated: 2026-11-20
 - 비공개 역할로 밤 선택지 필터링하지 않음. 부적합한 선택은 본인에게 일반 오류로 안내. 행동 성공·실패를 통한 추론은 여전히 가능.
 
 - v1.2.6: 밤·투표 전체 판정을 `engine/resolve.ts`로 분리. 훅은 NPC 결정·메시지·보상을 연결. 단계별 중복 실행 차단 및 마지막 단계 로그 보존.
-- 규칙·진행도·판정 테스트 25개. 엔진 단계 흐름은 확인했으나 실제 브라우저 한 판·연속 클릭·새로고침 점검은 남아 있음.
+- 규칙·진행도·판정 테스트 25개. 엔진 단계 흐름과 Chrome 두 판 진행은 확인. 연속 클릭·새로고침 점검은 남아 있음.
 
 - v1.2.5: 순수 `engine/rules.ts`와 내부 상태·대상 명령 타입 추가. 훅과 UI에서 역할 구성·승패·대상 검증 공유.
 - 탈락자 행동·투표를 제외하고 NPC 결과만 진행. 검증은 TypeScript 내부 호출용이며 외부 요청 스키마·인증·동시성 제어는 후속 단계.
@@ -77,8 +79,8 @@ Last updated: 2026-11-20
 ## Next Session TODO
 
 1. Sound effects implemented with original synthesized WAV assets. Next: manually check audio playback on desktop/mobile browsers.
-2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약, E2의 조정기·예산 공통 호출 경로 및 선택형 OpenAI HTTP 어댑터 완료. 다음은 E2의 운영 설정·실제 검증과 인증·영속 요청/예산 저장소·서버 API·UI 연결, F(혼합 방). B·C 실제 브라우저 점검은 미완료. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (85개).
-3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 브라우저 호스트 연결 불가로 데스크톱·모바일 실제 화면 검증은 미완료.
+2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약, E2의 조정기·예산 공통 호출 경로 및 선택형 OpenAI HTTP 어댑터 완료. 다음은 E2의 운영 설정·실제 검증과 인증·영속 요청/예산 저장소·서버 API·UI 연결, F(혼합 방). B·C 기본 흐름은 Chrome 두 판으로 확인했으며 추가 경계·재시작 점검은 남음. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (85개).
+3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 네이티브 Chrome 데스크톱·반응형 화면 검증 완료. 실제 모바일 기기·청음은 후속 점검.
 4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 
 ## Start Checklist For Codex
