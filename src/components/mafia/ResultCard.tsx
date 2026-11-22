@@ -257,7 +257,7 @@ ${summary.keyEvents.map((e) => `• ${e}`).join("\n")}
         </div>
       )}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
         <button
           className="flex-1 bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-500"
           onClick={onViewLog}

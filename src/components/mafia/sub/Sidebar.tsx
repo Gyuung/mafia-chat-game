@@ -20,7 +20,8 @@ export function Sidebar({
   currentLevelXp, 
   profile, 
   setShowStats, 
-  setViewingHistory 
+  setViewingHistory,
+  onClose,
 }: { 
   isSidebarOpen: boolean; 
   docsUrl: string; 
@@ -36,10 +37,14 @@ export function Sidebar({
   currentLevelXp: number; 
   profile: SavedProfile; 
   setShowStats: (v: boolean) => void; 
-  setViewingHistory: (v: PlayHistoryEntry | null) => void; 
+  setViewingHistory: (v: PlayHistoryEntry | null) => void;
+  onClose: () => void;
 }) {
   return (
-    <aside className={`fixed inset-y-0 left-0 z-40 w-80 transform border-r border-neutral-800 bg-neutral-950 p-4 transition-transform duration-300 lg:static lg:z-0 lg:w-auto lg:translate-x-0 lg:border-none lg:bg-transparent lg:p-0 ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}>
+    <aside className={`fixed inset-y-0 left-0 z-40 w-80 max-w-full overflow-y-auto overscroll-contain transform border-r border-neutral-800 bg-neutral-950 p-4 transition-transform duration-300 lg:static lg:z-0 lg:overflow-visible lg:w-auto lg:translate-x-0 lg:border-none lg:bg-transparent lg:p-0 ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`}>
+      <div className="mb-4 flex justify-end lg:hidden">
+        <button aria-label="사이드바 닫기" className="min-h-11 px-3 text-sm text-neutral-300 hover:text-white" onClick={onClose} type="button">✕ 메뉴 닫기</button>
+      </div>
       <div className="grid gap-4 self-start lg:sticky lg:top-5">
         <div className="border border-neutral-800 bg-neutral-950 p-4 hidden lg:block">
           <div className="flex items-center justify-between gap-3">

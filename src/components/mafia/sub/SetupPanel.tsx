@@ -31,17 +31,17 @@ export function SetupPanel({
     <>
       <Panel title="새 게임">
         <div className="grid gap-6 sm:grid-cols-3">
-          <label className="grid gap-2 text-sm">
+          <label className="grid min-w-0 gap-2 text-sm">
             <span className="font-semibold text-neutral-300">내 이름</span>
             <input 
               aria-label="내 이름 입력"
-              className="border border-neutral-800 bg-neutral-950 p-4 text-white outline-none focus:border-red-500 transition-colors" 
+              className="min-w-0 w-full border border-neutral-800 bg-neutral-950 p-4 text-white outline-none focus:border-red-500 transition-colors"
               onChange={(e) => setMyName(e.target.value)} 
               placeholder="당신의 닉네임"
               value={myName} 
             />
           </label>
-          <label className="grid gap-2 text-sm">
+          <label className="grid min-w-0 gap-2 text-sm">
             <span className="font-semibold text-neutral-300">전체 인원</span>
             <div className="grid grid-cols-5 gap-1">
               {[4, 5, 6, 7, 8].map((count) => (
@@ -61,11 +61,11 @@ export function SetupPanel({
               ))}
             </div>
           </label>
-          <label className="grid gap-2 text-sm">
+          <label className="grid min-w-0 gap-2 text-sm">
             <span className="font-semibold text-neutral-300">난이도</span>
             <select 
               aria-label="난이도 선택"
-              className="border border-neutral-800 bg-neutral-950 p-4 text-white outline-none focus:border-red-500 transition-colors appearance-none cursor-pointer" 
+              className="min-w-0 w-full border border-neutral-800 bg-neutral-950 p-4 text-white outline-none focus:border-red-500 transition-colors appearance-none cursor-pointer"
               onChange={(e) => setSetupDifficulty(e.target.value as Difficulty)} 
               value={setupDifficulty}
             >

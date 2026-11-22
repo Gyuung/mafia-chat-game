@@ -63,7 +63,7 @@ export function GameMain({
   setViewingHistory: (v: PlayHistoryEntry | null) => void; 
 }) {
   return (
-    <main className="grid gap-4">
+    <main className="grid min-w-0 content-start gap-4">
       {phase === "night" && me && (
         <Panel title="밤 행동">
           {!me.alive ? (
@@ -86,7 +86,7 @@ export function GameMain({
           <form className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={submitChat}>
             <input 
               aria-label="채팅 입력"
-              className="h-12 border border-neutral-700 bg-neutral-950 px-4 text-sm text-white outline-none focus:border-red-400 sm:h-auto sm:py-3" 
+              className="h-12 min-w-0 w-full border border-neutral-700 bg-neutral-950 px-4 text-sm text-white outline-none focus:border-red-400 sm:h-auto sm:py-3"
               disabled={!me?.alive} 
               onChange={(e) => setChatText(e.target.value)} 
               placeholder={me?.alive ? "채팅을 입력하세요" : "탈락자는 발언할 수 없습니다"} 

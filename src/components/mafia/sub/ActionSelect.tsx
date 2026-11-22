@@ -14,11 +14,11 @@ export function ActionSelect({
   value: string; 
 }) {
   return (
-    <label className="grid gap-2 text-sm">
+    <label className="grid min-w-0 gap-2 text-sm">
       <span className="font-medium text-neutral-200">{label}</span>
       <select 
         aria-label={label}
-        className="border border-neutral-700 bg-neutral-950 p-3 text-white outline-none focus:border-red-400" 
+        className="min-w-0 w-full border border-neutral-700 bg-neutral-950 p-3 text-white outline-none focus:border-red-400"
         onChange={(e) => onChange(e.target.value)} 
         value={value}
       >
