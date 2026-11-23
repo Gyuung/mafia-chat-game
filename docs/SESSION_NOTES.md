@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-11-22
+Last updated: 2026-11-23
 
 ## Current State
 
@@ -34,6 +34,8 @@ Last updated: 2026-11-22
 - 경력 통계의 승률·역할 분포는 저장된 최근 10개 기록 기준. 기존 데이터에서 이미 지워진 기록의 검거 수는 복원 불가.
 
 ## Known Constraints
+
+- 2026-11-23 E2 요청 접근 검증 처리기 구현: `request-handler.ts`가 POST JSON·출처·본문 크기·인증 결과·사람 참가/생존·대상 NPC·예상 단계/라운드를 검사한 뒤 공유 조정기에 전달. 응답 직전 세션·게임 재검사, 참가자별 요청 ID 분리, 오류·응답 필드 제한. 18개 신규 테스트 포함 전체 103개. 실제 로그인 검증 함수·서버 게임/영속 저장소·Next 공개 라우트·UI는 미연결.
 
 - 2026-11-22 레이아웃 수정: 그리드 상단 정렬·최소 너비, 로그 내부 자동 스크롤, 모바일 상단 줄바꿈·사이드바 스크롤/닫기·결과 버튼 배치 보완. 네이티브 Chrome으로 320·400·640·1024px 및 데스크톱 화면 확인. 6인 경찰·4인 마피아 두 판 종료, 밤 선택·생존/탈락 후 진행·채팅·심문·투표·결과·로그 모달·새 게임 확인. 실제 모바일 기기·청음·연속 클릭·새로고침 검증은 남음.
 
@@ -79,7 +81,7 @@ Last updated: 2026-11-22
 ## Next Session TODO
 
 1. Sound effects implemented with original synthesized WAV assets. Next: manually check audio playback on desktop/mobile browsers.
-2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약, E2의 조정기·예산 공통 호출 경로 및 선택형 OpenAI HTTP 어댑터 완료. 다음은 E2의 운영 설정·실제 검증과 인증·영속 요청/예산 저장소·서버 API·UI 연결, F(혼합 방). B·C 기본 흐름은 Chrome 두 판으로 확인했으며 추가 경계·재시작 점검은 남음. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (85개).
+2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약, E2의 조정기·예산 공통 호출 경로, 선택형 OpenAI HTTP 어댑터 및 요청 접근 검증 처리기 완료. 다음은 E2의 실제 로그인·권위 있는 서버 게임/영속 요청·예산 저장소를 요청 처리기에 연결하고 운영 설정·실제 검증·공개 라우트·UI 연결, F(혼합 방). B·C 기본 흐름은 Chrome 두 판으로 확인했으며 추가 경계·재시작 점검은 남음. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (103개).
 3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 네이티브 Chrome 데스크톱·반응형 화면 검증 완료. 실제 모바일 기기·청음은 후속 점검.
 4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 
