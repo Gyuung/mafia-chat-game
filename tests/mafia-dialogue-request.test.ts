@@ -5,9 +5,27 @@ import type { GameState } from "../src/components/mafia/engine/types";
 import type { InternalMessage } from "../src/components/mafia/engine/view";
 import { createDialogueRequestHandler, type DialogueGameAccess } from "../src/server/dialogue/request-handler";
 import { fakeDialogueProvider } from "./fixtures/fake-dialogue-provider";
+import { createParticipantSessions, type ParticipantSession } from "../src/server/auth/participant-session";
 
 const origin = "https://mafia.example";
 const fallback = "제 진술은 같습니다.";
+
+test("서버 세션 인증을 요청 처리기에 연결하고 폐기·사칭을 거절", async () => {
+  const rows = new Map<string, ParticipantSession>();
+  const sessions = createParticipantSessions({ origin, store: {
+    async insert(key, row) { rows.set(key, row); },
+    async find(key) { return rows.get(key) ?? null; },
+    async delete(key) { rows.delete(key); },
+  } });
+  const cookie = (await sessions.issue("me")).split(";")[0];
+  const f = fixture({ authenticate: sessions.authenticate });
+  assert.equal((await f.handler(request(input(), { headers: { cookie } }))).status, 200);
+  assert.equal((await f.handler(request(input(), { headers: { "x-test-player": "me" } }))).status, 401);
+  await sessions.revoke(new Request(origin, { headers: { cookie } }));
+  assert.equal((await f.handler(request(input(), { headers: { cookie } }))).status, 401);
+  const outsider = (await sessions.issue("outsider")).split(";")[0];
+  assert.equal((await f.handler(request(input(), { headers: { cookie: outsider } }))).status, 404);
+});
 const initial: GameState = {
   phase: "day", round: 1, winner: null, votes: {}, nightActions: {},
   players: [
