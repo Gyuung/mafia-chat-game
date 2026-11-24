@@ -21,6 +21,23 @@ v2 작업 D의 대사 준비 계층, E1의 예산 예약, E2의 서버 측 예�
 
 인증 결과에 따른 게임 접근 검사와 HTTP 처리기는 구현했습니다. 실제 로그인 서비스·영속 게임/예산 저장소·공개 라우트·UI 연결, 운영 모델·단가·예산 확정은 후속 작업 E2·F에 남아 있습니다. 인증·저장소 구현 없이 이 모듈을 그대로 공개 API로 노출하지 않습니다.
 
+## 참가자 세션 인증
+
+`src/server/auth/participant-session.ts`의 `createParticipantSessions({ origin, store, ttlSeconds?, now? })`는 서버가 확정한 참가자 ID에 세션을 발급하고 기존 요청 처리기의 `authenticate`로 연결할 수 있습니다. 계정 로그인이나 입장 권한 판정 자체를 제공하지 않습니다.
+
+- `issue(playerId)`는 무작위 32바이트 토큰의 SHA-256 해시와 `{ playerId, issuedAt, expiresAt }`를 저장한 뒤 Set-Cookie 헤더 값을 반환합니다. 평문 토큰은 저장소·로그·JSON 응답에 기록하지 않습니다.
+- 저장소의 `insert`는 해시 고유 제약으로 덮어쓰기를 거절해야 합니다. `find`는 폐기 완료 이후 오래된 캐시를 반환하지 않아야 하며, `delete`는 영속 삭제 완료 후 반환해야 합니다. 모든 서버 인스턴스는 같은 저장소를 사용해야 합니다. 운영 구현은 아직 없습니다.
+- HTTPS 쿠키는 `__Host-mafia-session`, Path=/, HttpOnly, SameSite=Strict, Secure입니다. Domain은 설정하지 않습니다. HTTP는 localhost에서 별도 `mafia-local-session` 이름으로만 허용합니다.
+- 수명 기본값은 7200초, 최대 86400초입니다. 인증할 때 저장소를 재조회하고 발급·만료 시각을 확인합니다. 자동 갱신은 하지 않습니다.
+- `authenticate(request)`는 유효한 쿠키와 저장된 세션이 있을 때 `{ playerId }`만 반환합니다. 게임 참가·생존·단계 권한은 기존 대사 요청 처리기에서 별도로 확인합니다.
+- `revoke(request)`는 토큰 해시를 삭제하고 Max-Age=0 쿠키 값을 반환합니다. 개별 세션 폐기이며 모든 장비 로그아웃은 별도 정책이 필요합니다. 저장소 오류를 삼키지 않습니다.
+
+발급 호출자는 브라우저가 제출한 playerId를 그대로 쓰지 않고 서버 입장 과정에서 확정해야 합니다. 발급·폐기 라우트에는 출처 검사·속도 제한을 적용하고 Set-Cookie 및 캐시 금지 헤더를 설정해야 합니다. 세션 토큰은 소지자가 사용할 수 있으므로 HTTPS로만 운영합니다. 쿠키 삭제만으로 서버 세션 폐기를 대체하지 않습니다.
+
+이 모듈은 공개 라우트를 자동 생성하지 않습니다. 운영 세션 저장소·입장/퇴장 처리·공개 API·UI·권위 있는 게임 상태 저장소 연결이 남아 있습니다. 세션 단위 테스트 8개와 대사 요청 연결 테스트 1개를 추가해 전체 112개를 검증했습니다.
+
+구현 기준: [Node.js crypto](https://nodejs.org/docs/latest-v22.x/api/crypto.html), [쿠키 속성과 접두사](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie).
+
 ## 입력 경계
 
 `buildDialogueContext`에는 권한 확인을 마친 내부 게임 상태를 전달합니다. 낮·투표 단계의 살아 있는 NPC만 발언 대상으로 허용합니다. 심문은 살아 있는 다른 참가자의 요청과 길이 제한을 통과한 질문이 있어야 합니다.

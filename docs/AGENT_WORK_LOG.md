@@ -1,5 +1,17 @@
 # Agent Work Log
 
+## 2026-11-24
+
+### E2: 참가자 세션 발급·검증·폐기 모듈
+
+- 수행 에이전트: Codex
+- 세션 재개 문서·Git 상태 확인, Vercel React Best Practices의 요청별 인증 원칙 적용.
+- `src/server/auth/participant-session.ts`: 암호학적 무작위 32바이트 토큰 발급, SHA-256 해시만 저장하는 주입형 저장소 계약, 만료·폐기 검사 추가.
+- HTTPS에서 `__Host-`·Secure·HttpOnly·SameSite=Strict·Path=/ 쿠키 사용. HTTP는 localhost 개발용 이름으로만 허용. 중복·잘못된·과대 쿠키, 다른 출처, 손상된 세션과 미래 발급 시각 거절.
+- 저장소 장애는 호출자에게 전파해 인증·발급·폐기 성공을 가장하지 않음. 입장 처리에서 확정한 ID만 발급하며 브라우저의 참가자 ID를 신뢰하지 않음.
+- 신규 세션 테스트 8개와 실제 요청 처리기 연결 테스트 1개 추가, 전체 112개 통과. 실제 DB·입장/로그아웃 라우트·게임 UI는 미연결. 계정 로그인 기능은 추가하지 않음.
+- 검증: Node 22 테스트 112개, `npm run verify`, `npm run docs:build`, 생성 문서 본문·사이드바 및 diff 공백 검사 통과. React 컴포넌트 미변경으로 React Doctor 미실행. 실제 DB·브라우저 쿠키 왕복·공개 API 운영 검증은 후속.
+
 ## 2026-11-23
 
 ### E2: 서버 대사 요청의 인증 결과·게임 접근 검증
