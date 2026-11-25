@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Current State
 
@@ -34,6 +34,8 @@ Last updated: 2026-11-24
 - 경력 통계의 승률·역할 분포는 저장된 최근 10개 기록 기준. 기존 데이터에서 이미 지워진 기록의 검거 수는 복원 불가.
 
 ## Known Constraints
+
+- 2026-11-25 로그아웃 HTTP 처리기 구현: POST·고정 출처 검사 후 서버 세션 폐기 완료 시 쿠키 삭제·204 반환. 오류 상세 비노출·캐시 금지·재전송·취소 검증. 신규 5개 포함 전체 117개. 공개 라우트·영속 저장소·입장 처리·UI는 미연결.
 
 - 2026-11-24 참가자 세션 모듈 구현: 무작위 토큰·해시 저장소 계약·쿠키·만료·폐기 검증을 요청 처리기에 연결 테스트. 신규 9개 포함 전체 112개. 운영 저장소·서버 입장/로그아웃 라우트·계정 로그인·UI는 미연결. 입장 처리에서 확정한 참가자 ID로만 발급해야 함.
 
@@ -83,7 +85,7 @@ Last updated: 2026-11-24
 ## Next Session TODO
 
 1. Sound effects implemented with original synthesized WAV assets. Next: manually check audio playback on desktop/mobile browsers.
-2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약, E2의 조정기·예산 공통 호출 경로, 선택형 OpenAI HTTP 어댑터 및 요청 접근 검증 처리기 완료. 다음은 참가자 세션 모듈에 영속 저장소·서버 입장/로그아웃 처리를 연결하고, E2의 권위 있는 서버 게임/영속 요청·예산 저장소를 요청 처리기에 연결하고 운영 설정·실제 검증·공개 라우트·UI 연결, F(혼합 방). B·C 기본 흐름은 Chrome 두 판으로 확인했으며 추가 경계·재시작 점검은 남음. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (112개).
+2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약, E2의 조정기·예산 공통 호출 경로, 선택형 OpenAI HTTP 어댑터 및 요청 접근 검증 처리기 완료. 다음은 참가자 세션 모듈에 영속 저장소·서버 입장 처리와 구현된 로그아웃 HTTP 처리기의 공개 라우트를 연결하고, E2의 권위 있는 서버 게임/영속 요청·예산 저장소를 요청 처리기에 연결하고 운영 설정·실제 검증·공개 라우트·UI 연결, F(혼합 방). B·C 기본 흐름은 Chrome 두 판으로 확인했으며 추가 경계·재시작 점검은 남음. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (117개).
 3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 네이티브 Chrome 데스크톱·반응형 화면 검증 완료. 실제 모바일 기기·청음은 후속 점검.
 4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 

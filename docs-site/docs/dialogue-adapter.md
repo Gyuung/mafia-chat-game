@@ -38,6 +38,18 @@ v2 작업 D의 대사 준비 계층, E1의 예산 예약, E2의 서버 측 예�
 
 구현 기준: [Node.js crypto](https://nodejs.org/docs/latest-v22.x/api/crypto.html), [쿠키 속성과 접두사](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie).
 
+## 로그아웃 HTTP 처리기
+
+`src/server/auth/logout-handler.ts`의 `createLogoutHandler({ origin, sessions })`에 기존 참가자 세션 모듈을 전달하면 `(Request) => Promise<Response>` 처리기를 얻습니다. 공개 Next 라우트는 자동 생성하지 않습니다.
+
+- POST만 허용하며 그 외 메서드는 405와 Allow: POST를 반환합니다.
+- 요청 URL과 Origin 헤더가 설정된 출처와 모두 같아야 합니다. 누락·다른 출처는 403이며 세션 폐기를 호출하지 않습니다.
+- 세션 저장소 삭제 완료 후 Set-Cookie로 쿠키를 지우고 본문 없는 204를 반환합니다. 이미 폐기되었거나 쿠키가 없는 요청도 204로 처리합니다.
+- 저장소 장애는 일반 500 응답이며 쿠키만 삭제해서 성공으로 표시하지 않습니다. 오류 상세·세션 토큰은 응답에 넣지 않습니다.
+- 모든 응답은 Cache-Control: no-store와 nosniff를 적용합니다. 시작한 서버 폐기는 클라이언트 연결 취소와 무관하게 완료합니다.
+
+라우트 등록 전 영속 세션 저장소와 요청 제한을 연결해야 합니다. 로그아웃은 해당 세션 인증만 폐기하며 방 퇴장·게임 참가자 삭제·모든 장비 로그아웃을 수행하지 않습니다. 발급·입장 처리, 브라우저 쿠키 왕복·UI 검증은 후속입니다. 로그아웃 테스트 5개를 포함한 전체 테스트는 117개입니다.
+
 ## 입력 경계
 
 `buildDialogueContext`에는 권한 확인을 마친 내부 게임 상태를 전달합니다. 낮·투표 단계의 살아 있는 NPC만 발언 대상으로 허용합니다. 심문은 살아 있는 다른 참가자의 요청과 길이 제한을 통과한 질문이 있어야 합니다.
