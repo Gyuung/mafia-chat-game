@@ -38,6 +38,23 @@ v2 작업 D의 대사 준비 계층, E1의 예산 예약, E2의 서버 측 예�
 
 구현 기준: [Node.js crypto](https://nodejs.org/docs/latest-v22.x/api/crypto.html), [쿠키 속성과 접두사](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie).
 
+## PostgreSQL 세션 저장소
+
+`src/server/auth/postgres-session-store.ts`의 `createPostgresSessionStore(query)`를 세션 모듈의 store로 전달할 수 있습니다. 이는 PostgreSQL용 첫 어댑터이며 운영 인프라 선정·DB 연결 완료를 뜻하지 않습니다.
+
+1. 배포 마이그레이션 도구에서 `db/migrations/001_participant_sessions.sql`을 한 번 적용합니다. 기존 같은 테이블이 있으면 덮어쓰지 않고 실패하므로 적용 이력을 관리해야 합니다.
+2. 선택한 PostgreSQL 드라이버의 매개변수 질의를 `(sql, values) => Promise<{ rows }>`로 감싸 전달합니다. 값은 SQL 문자열에 합치지 않습니다.
+3. 모든 인스턴스는 같은 기본 DB를 사용합니다. 질의 함수는 자동 커밋으로 실행하고 성공이 커밋된 뒤 반환해야 합니다. 읽기 복제본·오래된 트랜잭션·응답 캐시를 사용하면 폐기 후 인증이 남을 수 있으므로 연결하지 않습니다.
+4. 서버에서 세션 모듈과 로그아웃 처리기를 구성합니다. 드라이버 자격 증명과 DB 접속 주소는 브라우저에 전달하지 않습니다.
+
+테이블은 해시 기본 키로 중복 삽입을 거절하며 upsert하지 않습니다. 시각은 정수 밀리초 bigint이고 안전한 JavaScript 정수 범위와 최대 24시간 수명을 제한합니다. 어댑터는 bigint 문자열을 검증해 숫자로 변환하며 손상된 행은 오류로 처리합니다. 저장소 오류는 상위 처리기로 전파합니다.
+
+만료 인덱스는 정리 작업용입니다. 인증 만료 검사는 기존 세션 모듈에서 계속 수행하므로 정리 지연으로 인증이 연장되지 않습니다. 운영 정리 스케줄·최소 DB 권한·연결 풀·질의 시간 제한은 실제 드라이버 연결 때 설정해야 합니다. 참가자 테이블이 아직 없어 외래 키는 추가하지 않았으며 입장 권한은 서버 입장 처리에서 확정해야 합니다.
+
+SQL 실행 계약과 세션·로그아웃 연결의 모의 테스트 6개 포함 전체 123개가 통과했습니다. 실제 PostgreSQL에서 마이그레이션·중복/동시 삽입·재시작 후 조회·폐기 후 새 연결 조회 검증은 아직 수행하지 않았습니다. 신규 DB 드라이버나 공개 라우트를 자동 설치·등록하지 않습니다.
+
+SQL 기준은 [PostgreSQL 테이블 제약](https://www.postgresql.org/docs/current/sql-createtable.html)과 [매개변수](https://www.postgresql.org/docs/current/sql-prepare.html)를 참고했습니다.
+
 ## 로그아웃 HTTP 처리기
 
 `src/server/auth/logout-handler.ts`의 `createLogoutHandler({ origin, sessions })`에 기존 참가자 세션 모듈을 전달하면 `(Request) => Promise<Response>` 처리기를 얻습니다. 공개 Next 라우트는 자동 생성하지 않습니다.

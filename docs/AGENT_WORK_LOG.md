@@ -1,5 +1,17 @@
 # Agent Work Log
 
+## 2026-11-26
+
+### E2: PostgreSQL 참가자 세션 저장소 어댑터
+
+- 수행 에이전트: Codex
+- 재개 문서·Git 상태 확인, Vercel React Best Practices의 서버 전용 데이터 처리 원칙 적용.
+- `postgres-session-store.ts`에 매개변수 SQL 기반 insert/find/delete 구현. 고정 테이블·해시/세션 검증·bigint 안전 변환·허용 필드 반환·중복/장애 전파 적용. 캐시와 자동 재시도 없음.
+- `db/migrations/001_participant_sessions.sql`에 해시 기본 키·필수 필드·시간 범위/수명 제약과 만료 정리 인덱스 추가. 요청 중 마이그레이션은 실행하지 않음.
+- 모의 SQL 테스트 6개 추가, 전체 123개 통과. 서로 다른 어댑터 인스턴스의 세션 발급·조회·로그아웃 연결 확인.
+- 검증: Node 22 전체 테스트·`npm run verify`·`npm run docs:build`·생성 문서 본문/사이드바·diff 공백 검사 통과. React 컴포넌트 미변경으로 React Doctor 미실행.
+- 로컬 PostgreSQL/psql/Docker 미설치로 실제 DB 마이그레이션·고유 제약·동시성·재시작 검증은 미실시. 드라이버·운영 DB·입장/공개 API/UI 연결은 후속. 신규 의존성·비밀값·게임 버전 변경 없음.
+
 ## 2026-11-25
 
 ### E2: 세션 로그아웃 HTTP 처리기
