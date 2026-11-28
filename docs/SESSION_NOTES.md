@@ -1,6 +1,6 @@
 # Session Notes
 
-Last updated: 2026-11-26
+Last updated: 2026-11-28
 
 ## Current State
 
@@ -34,6 +34,8 @@ Last updated: 2026-11-26
 - 경력 통계의 승률·역할 분포는 저장된 최근 10개 기록 기준. 기존 데이터에서 이미 지워진 기록의 검거 수는 복원 불가.
 
 ## Known Constraints
+
+- 2026-11-28 pg 드라이버 런타임 추가: 기존 저장소와 TLS 검증·연결 풀·시간 제한·종료 처리 연결. 서버 SESSION_DATABASE_URL 예제는 빈 값이며 자동 사용하지 않음. 전체 129개 테스트. 실제 운영 DB 접속·마이그레이션·재시작/동시성 검증·공개 라우트/UI는 미실시.
 
 - 2026-11-26 PostgreSQL 세션 저장소 어댑터·초기 SQL 마이그레이션 구현. 매개변수 SQL·해시 중복 거절·bigint 검증·세션/로그아웃 모의 연결 포함 전체 123개. 로컬 DB 도구 미설치로 실제 DB 검증은 미실시. 운영 DB/드라이버·입장 처리·공개 라우트·UI는 미연결.
 
@@ -87,7 +89,7 @@ Last updated: 2026-11-26
 ## Next Session TODO
 
 1. Sound effects implemented with original synthesized WAV assets. Next: manually check audio playback on desktop/mobile browsers.
-2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약, E2의 조정기·예산 공통 호출 경로, 선택형 OpenAI HTTP 어댑터 및 요청 접근 검증 처리기 완료. 다음은 참가자 세션 모듈에 구현된 PostgreSQL 어댑터에 실제 DB/드라이버를 연결·검증하고 서버 입장 처리와 구현된 로그아웃 HTTP 처리기의 공개 라우트를 연결하고, E2의 권위 있는 서버 게임/영속 요청·예산 저장소를 요청 처리기에 연결하고 운영 설정·실제 검증·공개 라우트·UI 연결, F(혼합 방). B·C 기본 흐름은 Chrome 두 판으로 확인했으며 추가 경계·재시작 점검은 남음. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (123개).
+2. v2 작업 A~D 코드·테스트 완료. E1 예산 예약, E2의 조정기·예산 공통 호출 경로, 선택형 OpenAI HTTP 어댑터 및 요청 접근 검증 처리기 완료. 다음은 참가자 세션 모듈에 구현된 PostgreSQL 어댑터에 구현된 pg 런타임을 실제 DB에 연결·검증하고 서버 입장 처리와 구현된 로그아웃 HTTP 처리기의 공개 라우트를 연결하고, E2의 권위 있는 서버 게임/영속 요청·예산 저장소를 요청 처리기에 연결하고 운영 설정·실제 검증·공개 라우트·UI 연결, F(혼합 방). B·C 기본 흐름은 Chrome 두 판으로 확인했으며 추가 경계·재시작 점검은 남음. 공급자·인프라는 미선정. 검증 명령은 Node 22에서 `node --import tsx --test tests/*.test.ts` (129개).
 3. Visual Polish: 역할 카드 공개 애니메이션과 결과 화면 마지막 투표 집계 시각화 완료. 동작 줄이기 설정을 게임 전체 연출·자동 스크롤에 적용. 네이티브 Chrome 데스크톱·반응형 화면 검증 완료. 실제 모바일 기기·청음은 후속 점검.
 4. Expand Role Variety: Consider adding "Serial Killer" or "Cult Leader" for more complex sessions.
 

@@ -1,5 +1,17 @@
 # Agent Work Log
 
+## 2026-11-28
+
+### E2: 실제 pg 드라이버 연결 런타임
+
+- 수행 에이전트: Codex
+- 재개 문서·Git 상태 확인, Vercel React Best Practices의 서버 전용 데이터 처리 원칙 적용.
+- `postgres-runtime.ts`에 pg 풀과 기존 세션 저장소 연결. URL 값 분리·TLS 인증서 검증·풀 상한·연결/질의 시간 제한·일반 오류·멱등 종료 구현. 환경 변수를 자동 읽거나 가져오기만으로 DB 질의를 실행하지 않음.
+- PostgreSQL 연결에 필요한 `pg`, 개발 타입 `@types/pg`와 잠금 파일 추가. npm의 무관한 선택 의존성 정리를 제외하고 신규 의존성 항목만 보존.
+- 모의 풀 계약과 실제 pg 풀의 미연결 생성/종료 테스트 6개 추가, 전체 129개 통과. SESSION_DATABASE_URL 이름만 예제에 기록하며 비밀값은 미설정.
+- 운영 DB가 제공되지 않아 실제 접속·마이그레이션·재시작·동시성 검증 미실시. 입장 처리·공개 라우트·UI 연결은 남음. 게임 v1.2.8 유지.
+- 검증: Node 22 테스트 129개·`npm run verify`·`npm run docs:build`·생성 문서 본문/사이드바·diff 공백 검사 통과. React 화면 미변경으로 React Doctor 미실행.
+
 ## 2026-11-26
 
 ### E2: PostgreSQL 참가자 세션 저장소 어댑터

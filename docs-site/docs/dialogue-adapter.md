@@ -55,6 +55,20 @@ SQL 실행 계약과 세션·로그아웃 연결의 모의 테스트 6개 포함
 
 SQL 기준은 [PostgreSQL 테이블 제약](https://www.postgresql.org/docs/current/sql-createtable.html)과 [매개변수](https://www.postgresql.org/docs/current/sql-prepare.html)를 참고했습니다.
 
+## pg 드라이버 연결 런타임
+
+`src/server/auth/postgres-runtime.ts`는 `pg` 드라이버와 기존 PostgreSQL 저장소를 연결합니다. 서버에서 `createPostgresSessionRuntime({ databaseUrl })`를 구성한 뒤 반환된 `store`를 참가자 세션 모듈에 전달합니다. 서버 환경 변수 이름은 `SESSION_DATABASE_URL`이며 함수가 환경 변수를 자동 읽지는 않습니다. 빈 값이면 호출자에서 런타임을 구성하지 않아야 합니다.
+
+- PostgreSQL URL을 사용자·비밀번호·호스트·DB 필드로 분리하며 SSL 매개변수가 TLS 설정을 덮어쓰지 않게 합니다. URL 쿼리는 sslmode의 require/verify-full/disable만 허용합니다.
+- 기본은 인증서 검증 TLS입니다. 평문 연결은 localhost·127.0.0.1·::1에서 `allowInsecureLocal: true`와 sslmode=disable을 모두 명시한 경우에만 허용합니다. 자체 인증서 CA와 추가 접속 옵션은 현재 지원하지 않습니다.
+- 기본 풀 상한은 3개(설정 범위 1~20), 연결 대기 3초, 유휴 종료 10초, 서버 명령 제한 3초, 클라이언트 질의 제한 4초입니다. 총 연결 수는 서버 인스턴스 수를 곱해 운영 DB 한도에 맞춥니다.
+- 자동 커밋 pool.query를 사용합니다. 오류에는 연결 주소·비밀번호를 포함하지 않으며 자동 재시도하지 않습니다. 유휴 연결 오류 이벤트를 처리하고 이후 질의의 성공 여부를 호출자에게 반환합니다.
+- 서버 수명 동안 런타임을 재사용하고 요청마다 풀을 만들거나 종료하지 않습니다. `close()`는 서버 종료·독립 스크립트 정리에 사용하며 한 번만 종료합니다. 생성 시 풀은 비어 있고 질의 전까지 접속하지 않습니다.
+
+현재 공개 라우트와 연결하지 않았습니다. 운영 DB가 없으므로 실접속·마이그레이션·동시성·재시작 검증은 남아 있습니다. 모의 풀 계약과 실제 드라이버의 접속 없는 생성/종료 테스트 6개를 추가해 전체 129개가 통과했습니다. 실제 운영에서는 선택한 DB 제공자의 TLS·풀러 호환성을 별도로 확인해야 합니다.
+
+드라이버 계약은 [node-postgres Pool](https://node-postgres.com/apis/pool), [TLS 설정](https://node-postgres.com/features/ssl)을 참고했습니다.
+
 ## 로그아웃 HTTP 처리기
 
 `src/server/auth/logout-handler.ts`의 `createLogoutHandler({ origin, sessions })`에 기존 참가자 세션 모듈을 전달하면 `(Request) => Promise<Response>` 처리기를 얻습니다. 공개 Next 라우트는 자동 생성하지 않습니다.
